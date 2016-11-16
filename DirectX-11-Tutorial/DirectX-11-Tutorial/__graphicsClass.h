@@ -12,13 +12,22 @@
 #include "__lightShaderClass.h"
 #include "__lightClass.h"
 #include "__bitmapClass.h"
+#include "__textOutClass.h"
 
+#define fullScreen
+#undef  fullScreen
 
+#if defined fullScreen
+	const bool	FULL_SCREEN   = true;
+#else
+	const bool	FULL_SCREEN   = false;
+#endif
 
-const bool	FULL_SCREEN   = false;
 const bool	VSYNC_ENABLED = true;
 const float SCREEN_DEPTH  = 1000.0f;
 const float SCREEN_NEAR   = 0.1f;
+
+
 
 class GraphicsClass {
  public:
@@ -54,6 +63,9 @@ class GraphicsClass {
 	 struct PT { float X; float Y; };
 
 	 vector<PT> m_coordsVec;
+
+	// There is a new private variable for the TextClass object.
+	TextOutClass			*m_TextOut;
 };
 
 #endif

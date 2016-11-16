@@ -1,4 +1,4 @@
-//The TextureShaderClass is just an updated version of the ColorShaderClass from the previous tutorial.
+// The TextureShaderClass is just an updated version of the ColorShaderClass from the previous tutorial.
 // This class will be used to draw the 3D models using vertex and pixel shaders.
 
 #ifndef _TEXTURESHADERCLASS_H_
