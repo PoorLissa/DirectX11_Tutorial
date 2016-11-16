@@ -6,7 +6,8 @@
 #include "__d3dClass.h"
 #include "__cameraClass.h"
 #include "__modelClass.h"
-#include "__colorShaderClass.h"
+//#include "__colorShaderClass.h"
+#include "__textureShaderClass.h"
 
 
 
@@ -34,7 +35,9 @@ class GraphicsClass {
 	 d3dClass			*m_d3d;
 	 CameraClass		*m_Camera;
 	 ModelClass			*m_Model;
-	 ColorShaderClass	*m_ColorShader;
+
+	 //ColorShaderClass	*m_ColorShader;
+	 TextureShaderClass	*m_TextureShader;
 };
 
 #endif

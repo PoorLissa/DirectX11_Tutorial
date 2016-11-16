@@ -35,6 +35,12 @@
     <ClCompile Include="__colorShaderClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="__textureClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureShaderClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__graphicsClass.h">
@@ -55,12 +61,27 @@
     <ClInclude Include="__cameraClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__textureClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureShaderClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__colorShaderClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderColor.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTexture.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTexture.vs">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

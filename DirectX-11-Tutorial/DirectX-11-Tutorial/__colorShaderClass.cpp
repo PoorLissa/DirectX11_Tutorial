@@ -1,5 +1,6 @@
 #include "__colorShaderClass.h"
 
+// для функции D3DCompileFromFile
 #pragma comment(lib, "d3dcompiler.lib")
 #include "D3Dcompiler.h"
 
