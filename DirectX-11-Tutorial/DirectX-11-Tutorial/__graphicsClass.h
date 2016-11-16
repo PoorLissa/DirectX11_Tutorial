@@ -58,25 +58,25 @@ class GraphicsClass {
 	bool Render(const float &, const float &, const int &, const int &);
 
  private:
-	d3dClass			*m_d3d;
-	CameraClass			*m_Camera;
-	ModelClass			*m_Model;
+	 d3dClass				*m_d3d;
+	 CameraClass			*m_Camera;
+	 ModelClass				*m_Model;
 
-	//ColorShaderClass	*m_ColorShader;
-	TextureShaderClass	*m_TextureShader;
+	 //ColorShaderClass		*m_ColorShader;
+	 TextureShaderClass		*m_TextureShader;
 
-	LightShaderClass	*m_LightShader;
-	LightClass			*m_Light;
+	 LightShaderClass		*m_LightShader;
+	 LightClass				*m_Light;
 
-	// We create a new private BitmapClass object here.
-	BitmapClass			*m_Bitmap;
-	BitmapClass			*m_Cursor;
+	 // We create a new private BitmapClass object here.
+	 BitmapClass			*m_Bitmap;
+	 BitmapClass			*m_Cursor;
 
-	vector<Sprite*>		 m_spriteVec;
-	BitmapClass			*m_BitmapSprite;
+	 vector<Sprite*>		 m_spriteVec;
+	 BitmapClass			*m_BitmapSprite;
 
 	// There is a new private variable for the TextClass object.
-	TextOutClass		*m_TextOut;
+	TextOutClass			*m_TextOut;
 };
 
 #endif

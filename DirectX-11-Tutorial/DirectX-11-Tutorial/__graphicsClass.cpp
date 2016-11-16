@@ -2,6 +2,7 @@
 #include "___Sprite.h"
 
 BitmapClass* Sprite::Bitmap = 0;
+#define NUM 5000					// Sprite Vector Size
 
 GraphicsClass::GraphicsClass()
 {
@@ -209,10 +210,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 			return false;
 		}
 
-		// lala
-		int NUM2 = 15000;
-
-		for (int i = 0; i < NUM2; i++) {
+		// lala Sprite Vector
+		for (int i = 0; i < NUM; i++) {
 
 			int X = (float)rand() / (RAND_MAX + 1) * 800;
 			int Y = (float)rand() / (RAND_MAX + 1) * 600;
@@ -458,7 +457,6 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		// Координаты центра экрана
 		int xCenter = 800/2;
 		int yCenter = 600/2;
-		int bitMapSize = 256;
 
 		// Рендерим точно в центр
 		if (!m_Bitmap->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
@@ -499,31 +497,154 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 #if 1
 		// test-fast-render
 
+		// при смене разрешения вот это влияет на масштаб
+		xCenter = 600;
+		yCenter = 450;
+
 		if (!m_spriteVec.size() || !m_spriteVec[0]->Render(m_d3d->GetDeviceContext(), xCenter - 24, yCenter - 24))
 			return false;
 
+		ID3D11DeviceContext		 *device   = m_d3d->GetDeviceContext();
+		ID3D11ShaderResourceView *texture  = m_spriteVec[0]->getTexture();
+		int						  indexCnt = m_spriteVec[0]->getIndexCount();
 		int x, y;
+
+		static int selector;
+		static float frameCount = 1001.0f;
+		frameCount++;
+
+		if( frameCount > 1000 ) {
+			frameCount = 0.0f;
+			selector = (float)rand() / (RAND_MAX + 1) * 20;
+		}
 
 		for (int i = 0; i < m_spriteVec.size(); i++) {
 
 			m_spriteVec[i]->getCoords(x, y);
 
-			D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i)/ 5);
-			D3DXMatrixTranslation(&matTrans, x + 10*cos(rotation + 2*i) - 400.0f, y - 300.0f, 0.0f);
-			D3DXMatrixScaling(&matScale, 1.0f + 0.5*sin(rotation*i/500) + 0.0005*zoom, 1.0f + 0.5*sin(rotation*i/500) + 0.0005*zoom, 1.0f);
+			switch( selector ) {
+			
+				case 0:
+					// лайк геоид
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.5*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.05*zoom, 1.0f);
+					break;
+
+				case 1:
+					// половина геоида
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.25*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.05*zoom, 1.0f);
+					break;
+
+				case 2:
+					// густая окружность, при масштабировании мышью типа ефекты
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 3:
+					// Opera
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 4:
+					// Big Opera
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 5:
+					// Big ROUND Opera
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 6:
+					// Big SQUARE Opera
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 7:
+					// Moebeus DNA 1
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.03*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + sin(i) * 0.03*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 8:
+					// square MOBEUS DNA 2
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + cos(i) * 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 9:
+					// round pulsing jaws of atan
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 2*sin(rotation*0.5)*atan(i) * 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 10:
+					// majic ninja mask
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 5*sin(rotation*0.5)* 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 11:
+					// rotating circles 1
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.75*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.751*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 12:
+					// rotating wheel of crawling bugs
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.101*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 13:
+					// circle of changing phases 1
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/3000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 14:
+					// circle of SLOW changing phases 2
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/50000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/25000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 15:
+					// circle of SLOW changing phases 3 - eye of the Dragon
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.35*sin(rotation*i/50000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/25000) + 0.0005*zoom, 1.0f);
+					break;
+
+				case 16:
+
+					break;
+
+				default:
+					D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i) / 10);
+					//D3DXMatrixTranslation(&matTrans, x * cos(rotation/100 + .002*i) - 400.0f, y - 300.0f, 0.0f);
+					//D3DXMatrixScaling(&matScale, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
+					D3DXMatrixScaling(&matScale, 0.5f + 0.35*sin(rotation*i/10000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/15000) + 0.0005*zoom, 1.0f);
+			}
+
+			// **********************************************************************************************************************************
 
 			if( i == 0 ) {
 
-				if (!m_TextureShader->Render(m_d3d->GetDeviceContext(), m_spriteVec[i]->getIndexCount(),
+				if (!m_TextureShader->Render(device, indexCnt,
 					worldMatrixZ * matScale * matTrans,
-					viewMatrix, orthoMatrix, m_spriteVec[i]->getTexture(), true))
+					viewMatrix, orthoMatrix, texture, true))
 					return false;
 			}
 			else {
 
-				if (!m_TextureShader->Render(m_d3d->GetDeviceContext(), m_spriteVec[i]->getIndexCount(),
+				if (!m_TextureShader->Render(device, indexCnt,
 					worldMatrixZ * matScale * matTrans,
-					viewMatrix, orthoMatrix, m_spriteVec[i]->getTexture(), false))
+					viewMatrix, orthoMatrix, texture, false))
 					return false;
 			}
 		}
