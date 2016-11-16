@@ -1,7 +1,13 @@
 #ifndef _GRAPHICSCLASS_H_
 #define _GRAPHICSCLASS_H_
 
+#include <stdio.h>
+
 #include "__d3dClass.h"
+#include "__cameraClass.h"
+#include "__modelClass.h"
+#include "__colorShaderClass.h"
+
 
 
 const bool	FULL_SCREEN   = false;
@@ -19,11 +25,16 @@ class GraphicsClass {
 	void Shutdown();
 	bool Frame();
 
+	void logMsg(char *);
+
  private:
 	bool Render();
 
  private:
-	 d3dClass *m_d3d;
+	 d3dClass			*m_d3d;
+	 CameraClass		*m_Camera;
+	 ModelClass			*m_Model;
+	 ColorShaderClass	*m_ColorShader;
 };
 
 #endif

@@ -82,16 +82,25 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="__colorShaderClass.cpp" />
     <ClCompile Include="Main.cpp" />
+    <ClCompile Include="__cameraClass.cpp" />
     <ClCompile Include="__d3dClass.cpp" />
     <ClCompile Include="__graphicsClass.cpp" />
+    <ClCompile Include="__modelClass.cpp" />
     <ClCompile Include="__systemClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="__cameraClass.h" />
     <ClInclude Include="__d3dClass.h" />
     <ClInclude Include="__graphicsClass.h" />
     <ClInclude Include="__inputClass.h" />
+    <ClInclude Include="__modelClass.h" />
     <ClInclude Include="__systemClass.h" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_shaderColor.ps" />
+    <None Include="_shaderColor.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

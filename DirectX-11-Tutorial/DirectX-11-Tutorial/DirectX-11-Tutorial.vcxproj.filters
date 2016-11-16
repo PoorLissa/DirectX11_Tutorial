@@ -9,6 +9,9 @@
       <UniqueIdentifier>{93995380-89BD-4b04-88EB-625FBE52EBFB}</UniqueIdentifier>
       <Extensions>h;hh;hpp;hxx;hm;inl;inc;xsd</Extensions>
     </Filter>
+    <Filter Include="Shader Files">
+      <UniqueIdentifier>{09ddff11-2f4c-49a4-9709-17f29719f931}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -21,6 +24,15 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="__d3dClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__modelClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__cameraClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__colorShaderClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -37,5 +49,19 @@
     <ClInclude Include="__d3dClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__modelClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__cameraClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="_shaderColor.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderColor.vs">
+      <Filter>Shader Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

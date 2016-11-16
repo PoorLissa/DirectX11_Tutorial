@@ -3,8 +3,14 @@
 
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "d3d11.lib")
-#pragma comment(lib, "d3dx11.lib")
-#pragma comment(lib, "d3dx10d.lib")
+
+#if defined _DEBUG
+	#pragma comment(lib, "d3dx11d.lib")
+	#pragma comment(lib, "d3dx10d.lib")
+#else
+	#pragma comment(lib, "d3dx11.lib")
+	#pragma comment(lib, "d3dx10.lib")
+#endif
 
 #include <dxgi.h>
 #include <d3dcommon.h>
