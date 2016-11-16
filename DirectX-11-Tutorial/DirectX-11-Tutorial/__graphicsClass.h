@@ -2,6 +2,7 @@
 #define _GRAPHICSCLASS_H_
 
 #include <stdio.h>
+#include <vector>
 
 #include "__d3dClass.h"
 #include "__cameraClass.h"
@@ -36,18 +37,23 @@ class GraphicsClass {
 	 bool Render(float);
 
  private:
-	 d3dClass			*m_d3d;
-	 CameraClass		*m_Camera;
-	 ModelClass			*m_Model;
+	 d3dClass				*m_d3d;
+	 CameraClass			*m_Camera;
+	 ModelClass				*m_Model;
 
-	 //ColorShaderClass	*m_ColorShader;
-	 TextureShaderClass	*m_TextureShader;
+	 //ColorShaderClass		*m_ColorShader;
+	 TextureShaderClass		*m_TextureShader;
 
-	 LightShaderClass	*m_LightShader;
-	 LightClass			*m_Light;
+	 LightShaderClass		*m_LightShader;
+	 LightClass				*m_Light;
 
 	 // We create a new private BitmapClass object here.
-	 BitmapClass		*m_Bitmap;
+	 BitmapClass			*m_Bitmap;
+	 vector<BitmapClass*>	 m_BitmapVector;
+
+	 struct PT { float X; float Y; };
+
+	 vector<PT> m_coordsVec;
 };
 
 #endif

@@ -44,6 +44,10 @@ class d3dClass {
 	void TurnZBufferOn();
 	void TurnZBufferOff();
 
+	// Turning Alpha Blending Mode On and Off
+	void TurnOnAlphaBlending();
+	void TurnOffAlphaBlending();
+
  private:
 	bool m_vsync_enabled;
 	int	 m_videoCardMemory;
@@ -64,6 +68,10 @@ class d3dClass {
 
 	// There is also a new depth stencil state for 2D drawing.
 	ID3D11DepthStencilState	*m_depthDisabledStencilState;
+
+	// adding these in order to use alpha-channel
+	ID3D11BlendState* m_alphaEnableBlendingState;
+	ID3D11BlendState* m_alphaDisableBlendingState;
 };
 
 #endif

@@ -1,3 +1,6 @@
+// Some info in how to optimize the renderer
+// https://docs.unity3d.com/Manual/OptimizingGraphicsPerformance.html
+
 #include "__bitmapClass.h"
 
 BitmapClass::BitmapClass()
@@ -214,13 +217,6 @@ void BitmapClass::ShutdownBuffers()
 // to re-position the 2D bitmap image on the screen if need be.
 bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int positionX, int positionY)
 {
-	float		 left, right, top, bottom;
-	VertexType	*vertices;
-	VertexType	*verticesPtr;
-	HRESULT		 result;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-
-
 	// We check if the position to render this image has changed.
 	// If it hasn't changed then we just exit since the vertex buffer doesn't need any changes for this frame.
 	// This check can save us a lot of processing.
@@ -232,9 +228,15 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int position
 	m_previousPosY = positionY;
 
 
+	float		 left, right, top, bottom;
+	VertexType	*vertices;
+	VertexType	*verticesPtr;
+	HRESULT		 result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+
 	// The four sides of the image need to be calculated.
 	// See the diagram at the top of the tutorial for a complete explaination:
-	// In DirectX the point (0, 0) lies at the center of the screen.
+	// In DirectX's 2d scene the point (0, 0) lies at the center of the screen.
 
 	// Calculate the screen coordinates of the left side of the bitmap.
 	left = (float)positionX - (float)((m_screenWidth / 2));
@@ -312,7 +314,9 @@ void BitmapClass::RenderBuffers(ID3D11DeviceContext *deviceContext)
 
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
+	//deviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
 
+	// Следующий шаг - обратиться к шейдеру, чтобы он отрисовал указанный примитив на основе активных буферов: вершинного и индексного
 	return;
 }
 

@@ -298,7 +298,7 @@ bool TextureShaderClass::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 
 	// Transpose the matrices to prepare them for the shader.
 	D3DXMatrixTranspose(&worldMatrix, &worldMatrix);
-	D3DXMatrixTranspose(&viewMatrix, &viewMatrix);
+	D3DXMatrixTranspose(&viewMatrix,  &viewMatrix);
 	D3DXMatrixTranspose(&projectionMatrix, &projectionMatrix);
 
 	// Lock the constant buffer so it can be written to.
