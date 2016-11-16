@@ -474,6 +474,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 
 	// new instancing
+	if(true)
 	{
 		m_d3d->TurnOnAlphaBlending();
 		m_d3d->GetOrthoMatrix(orthoMatrix);
@@ -492,15 +493,13 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		if (!m_BitmapIns->initializeInstances(m_d3d->GetDevice()))
 			return false;
 
-		//if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
-		if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), 0, 0))
+		// Рендерим точно в центр !!!
+		if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), 400-12, 300-12))
 			return false;
 
-/*
 		D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
 		D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
 		D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
-*/
 
 		// The Render function for the shader now requires the vertex and instance count from the model object.
 		// Render the model using the texture shader.

@@ -237,7 +237,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
 	// Set the number of instances in the array.
-	m_instanceCount = 11;
+	m_instanceCount = 30000;
 
 	// Next we create a temporary instance array using the instance count.
 	// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -253,14 +253,25 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	// An instance can be modified in any way you want it to be.
 	// For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
 
-	D3DXMATRIX mat;
-	D3DXMatrixRotationZ(&mat, 5.0f);
+	static float angle = 0.0f;
 
-
+	// ¬ качестве координат передаем смещение от центра
 	for (int i = 0; i < m_instanceCount; i++) {
 		//instances[i].position = D3DXVECTOR3(-50.0f + 333 * cos(100.0*i)*sin(float(.2*i)), -50.0f + 333 * cos(100.0*i)*cos(float(.2*i)), i);
-		instances[i].position = D3DXVECTOR3(0.0f + 10.0*i, 0.0f - 10.0*i, float(i));
+		//instances[i].position = D3DXVECTOR3(400.0f - 15.0*i, -300.0f - 15.0*i, 10*angle/i);
+
+		int X = 400 + 12 + ( 300 * sin(float(i))) * cos(float(100*i))*sin(float(0.2*i));
+		int Y = -300 + 12 + (- 300 * cos(float(i))) * cos(float(100*i))*sin(float(0.2*i));;
+
+		int Width  = 800;
+		int Height = 600;
+
+		int Size = 24;
+
+		instances[i].position = D3DXVECTOR3(float(X - Width/2 - Size/2), float(Y + Height/2 - Size/2), 10*angle/i);
 	}
+
+	angle += m_instanceCount / 1000;
 
 
 	// The instance buffer description is setup exactly the same as a vertex buffer description.
