@@ -168,13 +168,13 @@ bool GraphicsClass::Frame()
 
 bool GraphicsClass::Render()
 {
-	D3DXMATRIX viewMatrix, projectionMatrix, worldMatrix;
+	D3DXMATRIX viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ;
 	bool result;
 
+	static float zoom = 0.0f;
 	if (true) {
-		static float zoom = 0.0f;
 		zoom += 0.002;
-		m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 10 * sin(10 * zoom));
+		m_Camera->SetPosition(0.0f, 0.0f, -30.0f + 20 * sin(50 * zoom));
 	}
 
 	// Clear the buffers to begin the scene.
@@ -186,8 +186,13 @@ bool GraphicsClass::Render()
 
 	// Get the world, view, and projection matrices from the camera and d3d objects.
 	m_Camera->GetViewMatrix(viewMatrix);
-	m_d3d->GetWorldMatrix(worldMatrix);
+	m_d3d->GetWorldMatrix(worldMatrixX);
 	m_d3d->GetProjectionMatrix(projectionMatrix);
+
+D3DXMatrixRotationX(&worldMatrixX, 10*zoom);
+D3DXMatrixRotationY(&worldMatrixY, 11*zoom);
+D3DXMatrixRotationZ(&worldMatrixZ, 500*zoom);
+
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
 	m_Model->Render(m_d3d->GetDeviceContext());
@@ -200,7 +205,7 @@ bool GraphicsClass::Render()
 */
 
 	// Render the model using the texture shader.
-	result = m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrix, viewMatrix, projectionMatrix, m_Model->GetTexture());
+	result = m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(), worldMatrixZ, viewMatrix, projectionMatrix, m_Model->GetTexture());
 
 	if (!result)
 		return false;
