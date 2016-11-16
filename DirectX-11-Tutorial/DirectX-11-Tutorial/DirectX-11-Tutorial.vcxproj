@@ -109,7 +109,7 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps" />
-    <None Include="_shadercolor.vs" />
+    <None Include="_shaderColor.vs" />
     <None Include="_shaderLight.ps" />
     <None Include="_shaderLight.vs" />
     <None Include="_shaderTexture.ps" />

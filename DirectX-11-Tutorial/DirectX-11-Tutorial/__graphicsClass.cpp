@@ -136,9 +136,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		return false;
 	
 	// Initialize the light object.
-	// The color of the light is set to purple and the light direction is set to point down the positive Z axis.
+
+	// Set Ambient Color
+	m_Light->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
+
+	// Set Diffuse Color
 	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
+	m_Light->SetDirection(1.0f, 0.0f, 0.0f);
 #endif
 
 
@@ -252,7 +256,7 @@ bool GraphicsClass::Render(float rotation)
 	static float zoom = 0.0f;
 	if (true) {
 		zoom += 0.002;
-		m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 10 * sin(10 * zoom));
+		m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 15 * sin(10 * zoom));
 	}
 
 
@@ -293,7 +297,7 @@ bool GraphicsClass::Render(float rotation)
 		return false;
 #endif
 
-#if 1
+#if 0
 	// Render the model using the light shader.
 	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
 									worldMatrixX * worldMatrixY * worldMatrixZ, viewMatrix, projectionMatrix,
@@ -301,6 +305,16 @@ bool GraphicsClass::Render(float rotation)
 	if (!result)
 		return false;
 #endif
+
+#if 1
+	// Render the model using the light shader with AmbientColor.
+	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
+									worldMatrixX * worldMatrixY * worldMatrixZ, viewMatrix, projectionMatrix,
+									m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor());
+	if (!result)
+		return false;
+#endif
+
 
 	// Present the rendered scene to the screen.
 	m_d3d->EndScene();
