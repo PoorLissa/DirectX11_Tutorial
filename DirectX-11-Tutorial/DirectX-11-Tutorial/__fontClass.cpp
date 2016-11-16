@@ -42,14 +42,14 @@ void FontClass::Shutdown()
 	ReleaseFontData();
 }
 
-// The LoadFontData function is where we load the 'fontdata.txt' file which contains the indexing information for the texture.
+// The LoadFontData function is where we load the '_fontdata.txt' file which contains the indexing information for the texture.
 bool FontClass::LoadFontData(char* filename)
 {
 	ifstream fin;
 	char temp;
 
 	// First we create an array of the FontType structure.
-	// The size of the array is set to 95 as that is the number of characters in the texture and hence the number of indexes in the 'fontdata.txt' file.
+	// The size of the array is set to 95 as that is the number of characters in the texture and hence the number of indexes in the '_fontdata.txt' file.
 
 	// Create the font spacing buffer.
 	m_Font = new FontType[95];

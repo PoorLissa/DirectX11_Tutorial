@@ -1,4 +1,7 @@
 #include "__graphicsClass.h"
+#include "___Sprite.h"
+
+BitmapClass* Sprite::Bitmap = 0;
 
 GraphicsClass::GraphicsClass()
 {
@@ -191,24 +194,34 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
 		result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
-
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
 			return false;
 		}
 
-		int NUM = 100;
-		PT  pt;
+		m_BitmapSprite = new BitmapClass;
+		if (!m_BitmapSprite)
+			return false;
 
-		for (int i = 0; i < NUM; i++) {
-			BitmapClass *bm1 = new BitmapClass();
-			bm1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-			m_BitmapVector.push_back(bm1);
-
-			pt.X = (float)rand() / (RAND_MAX + 1) * 800;
-			pt.Y = (float)rand() / (RAND_MAX + 1) * 600;
-			m_coordsVec.push_back(pt);
+		result = m_BitmapSprite->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+		if (!result) {
+			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
+			return false;
 		}
+
+		// lala
+		int NUM2 = 15000;
+
+		for (int i = 0; i < NUM2; i++) {
+
+			int X = (float)rand() / (RAND_MAX + 1) * 800;
+			int Y = (float)rand() / (RAND_MAX + 1) * 600;
+
+			Sprite *spr = new Sprite(X, Y);
+			spr->setBitmap(m_BitmapSprite);
+			m_spriteVec.push_back(spr);
+		}
+
 	}
 
 
@@ -280,6 +293,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraphicsClass::Shutdown()
 {
+	if (m_spriteVec.size() > 0) {
+		for (int i = 0; i < m_spriteVec.size(); i++) {
+			delete m_spriteVec[i];
+			m_spriteVec[i] = 0;
+		}
+	}
+
 	// Release the text object.
 	if(m_TextOut) {
 		m_TextOut->Shutdown();
@@ -295,18 +315,17 @@ void GraphicsClass::Shutdown()
 	}
 
 	// Release the bitmap object.
+	if (m_BitmapSprite) {
+		m_BitmapSprite->Shutdown();
+		delete m_BitmapSprite;
+		m_BitmapSprite = 0;
+	}
+
+	// Release the bitmap object.
 	if (m_Cursor) {
 		m_Cursor->Shutdown();
 		delete m_Cursor;
 		m_Cursor = 0;
-	}
-
-	if( m_BitmapVector.size() > 0 ) {
-		for(int i = 0; i < m_BitmapVector.size(); i++) {
-			m_BitmapVector[i]->Shutdown();
-			delete m_BitmapVector[i];
-			m_BitmapVector[i] = 0;
-		}
 	}
 
 #if 0
@@ -475,29 +494,41 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 			return false;
 
 		// render bitmaps from vector
+
+
 #if 1
-		for (int i = 0; i < m_BitmapVector.size(); i++) {
+		// test-fast-render
 
-			if ( !m_BitmapVector[i]->Render(m_d3d->GetDeviceContext(), xCenter - 24, yCenter - 24) )
-				return false;
+		if (!m_spriteVec.size() || !m_spriteVec[0]->Render(m_d3d->GetDeviceContext(), xCenter - 24, yCenter - 24))
+			return false;
 
-			int x = m_coordsVec[i].X;
-			int y = m_coordsVec[i].Y;
+		int x, y;
+
+		for (int i = 0; i < m_spriteVec.size(); i++) {
+
+			m_spriteVec[i]->getCoords(x, y);
 
 			D3DXMatrixRotationZ(&worldMatrixZ, (rotation+i)/ 5);
 			D3DXMatrixTranslation(&matTrans, x + 10*cos(rotation + 2*i) - 400.0f, y - 300.0f, 0.0f);
 			D3DXMatrixScaling(&matScale, 1.0f + 0.5*sin(rotation*i/500) + 0.0005*zoom, 1.0f + 0.5*sin(rotation*i/500) + 0.0005*zoom, 1.0f);
 
-			if (!m_TextureShader->Render(m_d3d->GetDeviceContext(), m_BitmapVector[i]->GetIndexCount(),
-											worldMatrixZ
-										  * matScale
-										  * matTrans
-											,
-											viewMatrix, orthoMatrix, m_BitmapVector[i]->GetTexture()) )
-				return false;
-		}
-#endif
+			if( i == 0 ) {
 
+				if (!m_TextureShader->Render(m_d3d->GetDeviceContext(), m_spriteVec[i]->getIndexCount(),
+					worldMatrixZ * matScale * matTrans,
+					viewMatrix, orthoMatrix, m_spriteVec[i]->getTexture(), true))
+					return false;
+			}
+			else {
+
+				if (!m_TextureShader->Render(m_d3d->GetDeviceContext(), m_spriteVec[i]->getIndexCount(),
+					worldMatrixZ * matScale * matTrans,
+					viewMatrix, orthoMatrix, m_spriteVec[i]->getTexture(), false))
+					return false;
+			}
+		}
+
+#endif
 
 		// text Out
 		// We call the text object to render all its sentences to the screen here.

@@ -121,6 +121,7 @@
     <ClInclude Include="__textOutClass.h" />
     <ClInclude Include="__textureClass.h" />
     <ClInclude Include="__textureShaderClass.h" />
+    <ClInclude Include="___Sprite.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps" />

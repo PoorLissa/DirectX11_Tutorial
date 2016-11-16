@@ -124,6 +124,9 @@
     <ClInclude Include="__directInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="___Sprite.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="__colorShaderClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>

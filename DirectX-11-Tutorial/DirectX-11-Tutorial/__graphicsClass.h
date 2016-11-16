@@ -21,6 +21,7 @@
 #include "__lightClass.h"
 #include "__bitmapClass.h"
 #include "__textOutClass.h"
+#include "___Sprite.h"
 
 // ---------------------------------------------------------------------------------------
 #define fullScreen
@@ -36,7 +37,7 @@ const int  windowedWidth  = 800;
 const int  windowedHeight = 600;
 #endif
 
-const bool	VSYNC_ENABLED = true;
+const bool	VSYNC_ENABLED = false;
 const float SCREEN_DEPTH  = 1000.0f;
 const float SCREEN_NEAR   = 0.1f;
 // ---------------------------------------------------------------------------------------
@@ -57,27 +58,25 @@ class GraphicsClass {
 	bool Render(const float &, const float &, const int &, const int &);
 
  private:
-	 d3dClass				*m_d3d;
-	 CameraClass			*m_Camera;
-	 ModelClass				*m_Model;
+	d3dClass			*m_d3d;
+	CameraClass			*m_Camera;
+	ModelClass			*m_Model;
 
-	 //ColorShaderClass		*m_ColorShader;
-	 TextureShaderClass		*m_TextureShader;
+	//ColorShaderClass	*m_ColorShader;
+	TextureShaderClass	*m_TextureShader;
 
-	 LightShaderClass		*m_LightShader;
-	 LightClass				*m_Light;
+	LightShaderClass	*m_LightShader;
+	LightClass			*m_Light;
 
-	 // We create a new private BitmapClass object here.
-	 BitmapClass			*m_Bitmap;
-	 BitmapClass			*m_Cursor;
-	 vector<BitmapClass*>	 m_BitmapVector;
+	// We create a new private BitmapClass object here.
+	BitmapClass			*m_Bitmap;
+	BitmapClass			*m_Cursor;
 
-	 struct PT { float X; float Y; };
-
-	 vector<PT> m_coordsVec;
+	vector<Sprite*>		 m_spriteVec;
+	BitmapClass			*m_BitmapSprite;
 
 	// There is a new private variable for the TextClass object.
-	TextOutClass			*m_TextOut;
+	TextOutClass		*m_TextOut;
 };
 
 #endif
