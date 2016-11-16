@@ -87,7 +87,7 @@
     <None Include="_shaderColor.ps">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="_shaderColor.vs">
+    <None Include="_shadercolor.vs">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderLight.ps">

@@ -60,9 +60,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	if (!m_Model)
 		return false;
 
-	// Initialize the model object.
+	// Initialize the model object
 	//result = m_Model->Initialize(m_d3d->GetDevice(), L"../DirectX-11-Tutorial/data/seafloor.dds");
-	result = m_Model->Initialize(m_d3d->GetDevice(), L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
+	//result = m_Model->Initialize(m_d3d->GetDevice(), L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
+
+	// The model initialization now takes in the filename of the model file it is loading.
+	// In this tutorial we will use the cube.txt file so this model loads in a 3D cube object for rendering.
+	result = m_Model->Initialize(m_d3d->GetDevice(), "../DirectX-11-Tutorial/data/_model_cube.txt", L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
 
 	if (!result) {
 		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
@@ -133,7 +137,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	
 	// Initialize the light object.
 	// The color of the light is set to purple and the light direction is set to point down the positive Z axis.
-	m_Light->SetDiffuseColor(1.0f, 0.0f, 1.0f, 1.0f);
+	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 	m_Light->SetDirection(0.0f, 0.0f, 1.0f);
 #endif
 
@@ -241,16 +245,16 @@ bool GraphicsClass::Frame()
 
 bool GraphicsClass::Render(float rotation)
 {
-	D3DXMATRIX viewMatrix, projectionMatrix, worldMatrix;
+	D3DXMATRIX viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ;
 	bool result;
 
-/*
+
 	static float zoom = 0.0f;
 	if (true) {
 		zoom += 0.002;
 		m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 10 * sin(10 * zoom));
 	}
-*/
+
 
 	// Clear the buffers to begin the scene.
 	//m_d3d->BeginScene(0.25f, 0.5f, 0.5f, 1.0f);		// blue/green
@@ -261,14 +265,16 @@ bool GraphicsClass::Render(float rotation)
 
 	// Get the world, view, and projection matrices from the camera and d3d objects.
 	m_Camera->GetViewMatrix(viewMatrix);
-	m_d3d->GetWorldMatrix(worldMatrix);
+	m_d3d->GetWorldMatrix(worldMatrixX);
 	m_d3d->GetProjectionMatrix(projectionMatrix);
 
 	// Here we rotate the world matrix by the rotation value so that when we render the triangle using this updated world matrix
 	// it will spin the triangle by the rotation amount.
 
 	// Rotate the world matrix by the rotation value so that the triangle will spin.
-	D3DXMatrixRotationY(&worldMatrix, rotation/2.0);
+	D3DXMatrixRotationX(&worldMatrixX, sin(rotation));
+	D3DXMatrixRotationY(&worldMatrixY, cos(rotation));
+	D3DXMatrixRotationZ(&worldMatrixZ, tan( sin(rotation/3)) );
 
 	// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
 	m_Model->Render(m_d3d->GetDeviceContext());
@@ -290,7 +296,7 @@ bool GraphicsClass::Render(float rotation)
 #if 1
 	// Render the model using the light shader.
 	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
-									worldMatrix, viewMatrix, projectionMatrix,
+									worldMatrixX * worldMatrixY * worldMatrixZ, viewMatrix, projectionMatrix,
 									m_Model->GetTexture(), m_Light->GetDirection(), m_Light->GetDiffuseColor());
 	if (!result)
 		return false;
