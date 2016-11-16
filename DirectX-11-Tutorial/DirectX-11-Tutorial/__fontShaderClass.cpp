@@ -267,7 +267,7 @@ void FontShaderClass::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hw
 	bufferSize = errorMessage->GetBufferSize();
 
 	// Open a file to write the error message to.
-	fout.open("shader-error.txt");
+	fout.open("__shader-error.txt");
 
 	// Write out the error message.
 	for(i=0; i<bufferSize; i++)
@@ -281,7 +281,7 @@ void FontShaderClass::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hw
 	errorMessage = 0;
 
 	// Pop a message up on the screen to notify the user to check the text file for compile errors.
-	MessageBox(hwnd, L"Error compiling shader.  Check shader-error.txt for message.", shaderFilename, MB_OK);
+	MessageBox(hwnd, L"Error compiling shader. Check '__shader-error.txt' for message.", shaderFilename, MB_OK);
 }
 
 // The SetShaderParameters function sets all the shader variables before rendering.

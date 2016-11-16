@@ -30,6 +30,10 @@ class TextOutClass {
 	void Shutdown();
 	bool Render(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX);
 
+	// We now have two new functions for setting the fps count and the cpu usage.
+	bool SetFps(int, ID3D11DeviceContext *);
+	bool SetCpu(int, ID3D11DeviceContext *);
+
  private:
  	bool InitializeSentence(SentenceType**, int, ID3D11Device*);
 	bool UpdateSentence(SentenceType*, char*, int, int, float, float, float, ID3D11DeviceContext*);

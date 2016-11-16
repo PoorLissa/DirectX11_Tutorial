@@ -59,15 +59,24 @@
     <ClCompile Include="__textOutClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="__fpsClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__cpuClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__highPrecTimer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__directInput.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__graphicsClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="__systemClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__inputClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="__d3dClass.h">
@@ -101,6 +110,18 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="__textOutClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__fpsClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__cpuClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__highPrecTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__directInput.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="__colorShaderClass.h">

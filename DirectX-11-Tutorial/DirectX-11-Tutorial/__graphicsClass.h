@@ -1,3 +1,11 @@
+/*
+	LINKS:
+
+	--- Instancing ---
+	http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter03.html	// it's rather about DirectX 9 than 11. Not sure if this fits me right.
+
+*/
+
 #ifndef _GRAPHICSCLASS_H_
 #define _GRAPHICSCLASS_H_
 
@@ -14,19 +22,24 @@
 #include "__bitmapClass.h"
 #include "__textOutClass.h"
 
+// ---------------------------------------------------------------------------------------
 #define fullScreen
 #undef  fullScreen
 
 #if defined fullScreen
-	const bool	FULL_SCREEN   = true;
+const bool FULL_SCREEN    = true;
+const int  windowedWidth  = 0;
+const int  windowedHeight = 0;
 #else
-	const bool	FULL_SCREEN   = false;
+const bool FULL_SCREEN    = false;
+const int  windowedWidth  = 800;
+const int  windowedHeight = 600;
 #endif
 
 const bool	VSYNC_ENABLED = true;
 const float SCREEN_DEPTH  = 1000.0f;
 const float SCREEN_NEAR   = 0.1f;
-
+// ---------------------------------------------------------------------------------------
 
 
 class GraphicsClass {
@@ -37,13 +50,11 @@ class GraphicsClass {
 
 	bool Initialize(int, int, HWND);
 	void Shutdown();
-	bool Frame();
+	bool Frame(const int &, const int &, const float &);
 
 	void logMsg(char *);
 
- private:
-	//bool Render();
-	 bool Render(float);
+	bool Render(const float &, const float &, const int &, const int &);
 
  private:
 	 d3dClass				*m_d3d;
@@ -58,6 +69,7 @@ class GraphicsClass {
 
 	 // We create a new private BitmapClass object here.
 	 BitmapClass			*m_Bitmap;
+	 BitmapClass			*m_Cursor;
 	 vector<BitmapClass*>	 m_BitmapVector;
 
 	 struct PT { float X; float Y; };
