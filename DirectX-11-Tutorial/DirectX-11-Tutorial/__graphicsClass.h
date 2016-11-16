@@ -23,6 +23,9 @@
 #include "__textOutClass.h"
 #include "___Sprite.h"
 
+#include "__bitmapClassInstancing.h"
+#include "__textureShaderClassInstancing.h"
+
 // ---------------------------------------------------------------------------------------
 #define fullScreen
 #undef  fullScreen
@@ -77,6 +80,9 @@ class GraphicsClass {
 
 	// There is a new private variable for the TextClass object.
 	TextOutClass			*m_TextOut;
+
+	BitmapClass_Instancing	*m_BitmapIns;
+	TextureShaderClass_Instancing *m_TextureShaderIns;
 };
 
 #endif

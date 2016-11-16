@@ -10,7 +10,7 @@ cbuffer MatrixBuffer
 cbuffer CameraBuffer
 {
 	float3 cameraPosition;
-	float padding;
+	float  padding;
 };
 
 // Both structures now have a 3 float normal vector.

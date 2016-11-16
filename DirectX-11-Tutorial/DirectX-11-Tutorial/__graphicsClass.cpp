@@ -11,9 +11,11 @@ GraphicsClass::GraphicsClass()
 	m_Model			= 0;
 	//m_ColorShader	= 0;
 	m_TextureShader = 0;
+	m_TextureShaderIns = 0;
 	m_LightShader	= 0;
 	m_Light			= 0;
 	m_Bitmap		= 0;
+	m_BitmapIns		= 0;
 	m_TextOut		= 0;
 }
 
@@ -169,8 +171,18 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		if (!m_TextureShader)
 			return false;
 
+		m_TextureShaderIns = new TextureShaderClass_Instancing;
+		if (!m_TextureShaderIns)
+			return false;
+
 		// Initialize the texture shader object.
 		result = m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd);
+		if (!result) {
+			MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
+			return false;
+		}
+
+		result = m_TextureShaderIns->Initialize(m_d3d->GetDevice(), hwnd);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
 			return false;
@@ -189,12 +201,22 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		if (!m_Bitmap)
 			return false;
 
+		m_BitmapIns = new BitmapClass_Instancing;
+		if (!m_BitmapIns)
+			return false;
+
 		// Initialize the bitmap object.
 
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
 		result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
+		if (!result) {
+			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
+			return false;
+		}
+
+		result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
 			return false;
@@ -210,7 +232,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 			return false;
 		}
 
-		// lala Sprite Vector
+		// lala
 		for (int i = 0; i < NUM; i++) {
 
 			int X = (float)rand() / (RAND_MAX + 1) * 800;
@@ -314,6 +336,13 @@ void GraphicsClass::Shutdown()
 	}
 
 	// Release the bitmap object.
+	if (m_BitmapIns) {
+		m_BitmapIns->Shutdown();
+		delete m_BitmapIns;
+		m_BitmapIns = 0;
+	}
+
+	// Release the bitmap object.
 	if (m_BitmapSprite) {
 		m_BitmapSprite->Shutdown();
 		delete m_BitmapSprite;
@@ -342,6 +371,13 @@ void GraphicsClass::Shutdown()
 		m_TextureShader->Shutdown();
 		delete m_TextureShader;
 		m_TextureShader = 0;
+	}
+
+	// Release the texture shader object.
+	if (m_TextureShaderIns) {
+		m_TextureShaderIns->Shutdown();
+		delete m_TextureShaderIns;
+		m_TextureShaderIns = 0;
 	}
 #endif
 
@@ -408,7 +444,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		//m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 15 * sin(10 * zoom));
 
 		// zoom with the mouse wheel
-		m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 0.005*zoom);
+		m_Camera->SetPosition(0.0f, 0.0f, -10.0f + 0.005*zoom);
 	}
 
 	// Clear the buffers to begin the scene.
@@ -435,7 +471,60 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	// http://stackoverflow.com/questions/3884885/what-is-the-best-pratice-to-render-sprites-in-directx-11
 	// http://www.gamedev.net/topic/588291-sprites-in-directx11/
 
-	if(true)
+
+
+	// new instancing
+	{
+		m_d3d->TurnOnAlphaBlending();
+		m_d3d->GetOrthoMatrix(orthoMatrix);
+
+		D3DXMATRIX matScale;
+		D3DXMATRIX matTrans;
+		m_d3d->GetWorldMatrix(matTrans);
+		m_d3d->GetWorldMatrix(matScale);
+
+		m_d3d->TurnZBufferOff();
+
+		// Рендерим точно в центр
+		int xCenter = 800 / 2;
+		int yCenter = 600 / 2;
+
+		if (!m_BitmapIns->initializeInstances(m_d3d->GetDevice()))
+			return false;
+
+		//if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
+		if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), 0, 0))
+			return false;
+
+/*
+		D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
+		D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
+		D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
+*/
+
+		// The Render function for the shader now requires the vertex and instance count from the model object.
+		// Render the model using the texture shader.
+		result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+						m_BitmapIns->GetVertexCount(), m_BitmapIns->GetInstanceCount(),
+						worldMatrixZ * matTrans * matScale,
+						viewMatrix, orthoMatrix, m_BitmapIns->GetTexture());
+
+		if (!result)
+			return false;
+
+		result = m_TextOut->Render(m_d3d->GetDeviceContext(), worldMatrixX, orthoMatrix);
+		if (!result)
+			return false;
+
+		m_d3d->TurnOffAlphaBlending();
+
+		m_d3d->TurnZBufferOn();
+	}
+
+
+
+
+	if(false)
 	{
 		// Если нужен вывод текстур с прозрачностью, включаем режим прозрачности
 		// Наверное, можно его включить один раз и до конца работы, чтобы не выполнять лишнюю работу

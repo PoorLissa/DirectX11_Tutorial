@@ -71,6 +71,12 @@
     <ClCompile Include="__directInput.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="__bitmapClassInstancing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureShaderClassInstancing.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__graphicsClass.h">
@@ -130,6 +136,12 @@
     <ClInclude Include="__colorShaderClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__bitmapClassInstancing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureShaderClassInstancing.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps">
@@ -154,6 +166,12 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderTexture.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTextureInstancing.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTextureInstancing.ps">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

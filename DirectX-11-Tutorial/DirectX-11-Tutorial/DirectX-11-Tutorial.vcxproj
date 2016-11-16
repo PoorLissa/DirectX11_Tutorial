@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="__bitmapClassInstancing.cpp" />
     <ClCompile Include="__cpuClass.cpp" />
     <ClCompile Include="__directInput.cpp" />
     <ClCompile Include="__fpsClass.cpp" />
@@ -101,9 +102,11 @@
     <ClCompile Include="__systemClass.cpp" />
     <ClCompile Include="__textureClass.cpp" />
     <ClCompile Include="__textureShaderClass.cpp" />
+    <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__bitmapClass.h" />
+    <ClInclude Include="__bitmapClassInstancing.h" />
     <ClInclude Include="__colorShaderClass.h" />
     <ClInclude Include="__cpuClass.h" />
     <ClInclude Include="__directInput.h" />
@@ -121,6 +124,7 @@
     <ClInclude Include="__textOutClass.h" />
     <ClInclude Include="__textureClass.h" />
     <ClInclude Include="__textureShaderClass.h" />
+    <ClInclude Include="__textureShaderClassInstancing.h" />
     <ClInclude Include="___Sprite.h" />
   </ItemGroup>
   <ItemGroup>
@@ -132,6 +136,8 @@
     <None Include="_shaderLight.vs" />
     <None Include="_shaderTexture.ps" />
     <None Include="_shaderTexture.vs" />
+    <None Include="_shaderTextureInstancing.ps" />
+    <None Include="_shaderTextureInstancing.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -267,7 +267,7 @@ void FontShaderClass::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hw
 	bufferSize = errorMessage->GetBufferSize();
 
 	// Open a file to write the error message to.
-	fout.open("__shader-error.txt");
+	fout.open("____shader-error.txt");
 
 	// Write out the error message.
 	for(i=0; i<bufferSize; i++)
