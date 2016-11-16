@@ -7,7 +7,9 @@
 #include "__cameraClass.h"
 #include "__modelClass.h"
 //#include "__colorShaderClass.h"
-#include "__textureShaderClass.h"
+//#include "__textureShaderClass.h"
+#include "__lightShaderClass.h"
+#include "__lightClass.h"
 
 
 
@@ -29,7 +31,8 @@ class GraphicsClass {
 	void logMsg(char *);
 
  private:
-	bool Render();
+	//bool Render();
+	 bool Render(float);
 
  private:
 	 d3dClass			*m_d3d;
@@ -37,7 +40,10 @@ class GraphicsClass {
 	 ModelClass			*m_Model;
 
 	 //ColorShaderClass	*m_ColorShader;
-	 TextureShaderClass	*m_TextureShader;
+	 //TextureShaderClass	*m_TextureShader;
+
+	 LightShaderClass	*m_LightShader;
+	 LightClass			*m_Light;
 };
 
 #endif

@@ -87,14 +87,18 @@
     <ClCompile Include="__cameraClass.cpp" />
     <ClCompile Include="__d3dClass.cpp" />
     <ClCompile Include="__graphicsClass.cpp" />
+    <ClCompile Include="__lightClass.cpp" />
+    <ClCompile Include="__lightShaderClass.cpp" />
     <ClCompile Include="__modelClass.cpp" />
     <ClCompile Include="__systemClass.cpp" />
     <ClCompile Include="__textureClass.cpp" />
     <ClCompile Include="__textureShaderClass.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__cameraClass.h" />
     <ClInclude Include="__colorShaderClass.h" />
+    <ClInclude Include="__lightClass.h" />
+    <ClInclude Include="__lightShaderClass.h" />
+    <ClInclude Include="__cameraClass.h" />
     <ClInclude Include="__d3dClass.h" />
     <ClInclude Include="__graphicsClass.h" />
     <ClInclude Include="__inputClass.h" />
@@ -106,6 +110,8 @@
   <ItemGroup>
     <None Include="_shaderColor.ps" />
     <None Include="_shaderColor.vs" />
+    <None Include="_shaderLight.ps" />
+    <None Include="_shaderLight.vs" />
     <None Include="_shaderTexture.ps" />
     <None Include="_shaderTexture.vs" />
   </ItemGroup>

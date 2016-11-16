@@ -101,6 +101,9 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 
 
 
+	// --- texturing ---
+#if 0
+
 	// The vertex array now has a texture component instead of a color component.
 	// The texture vector is always U first and V second. For example the first texture coordinate is bottom left of the triangle which corresponds to U 0.0, V 1.0.
 	// Use the diagram at the top of this page to figure out what your coordinates need to be.
@@ -128,6 +131,54 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	//vertices[3].texture = D3DXVECTOR2(1.0f, 1.0f);
 	vertices[3].texture = D3DXVECTOR2(1.0f, 1.0f);
 
+	// Load the index array with data.
+	indices[0] = 1;  // Bottom left.
+	indices[1] = 2;  // Top middle.
+	indices[2] = 3;  // Bottom right.
+
+	indices[3] = 0;
+	indices[4] = 1;
+	indices[5] = 2;
+
+#endif
+
+	// --- lighting ---
+#if 1
+
+	// The only change to the InitializeBuffers function is here in the vertex setup.
+	// Each vertex now has normals associated with it for lighting calculations.
+	// The normal is a line that is perpendicular to the face of the polygon so that the exact direction the face is pointing can be calculated.
+	// For simplicity purposes I set the normal for each vertex along the Z axis by setting each Z component to -1.0f, which makes the normal point towards the viewer.
+
+	// Load the vertex array with data.
+/*
+	vertices[0].position = D3DXVECTOR3(-1.0f, -1.0f, 0.0f);  // Bottom left.
+	vertices[0].texture  = D3DXVECTOR2(0.0f, 1.0f);
+	vertices[0].normal   = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+
+	vertices[1].position = D3DXVECTOR3(0.0f, 1.0f, 0.0f);  // Top middle.
+	vertices[1].texture  = D3DXVECTOR2(0.5f, 0.0f);
+	vertices[1].normal   = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+
+	vertices[2].position = D3DXVECTOR3(1.0f, -1.0f, 0.0f);  // Bottom right.
+	vertices[2].texture  = D3DXVECTOR2(1.0f, 1.0f);
+	vertices[2].normal   = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+*/
+	vertices[0].position = D3DXVECTOR3(-2.0f, -2.0f, 0.0f);  // Bottom left.
+	vertices[0].texture = D3DXVECTOR2(1.0f, 0.0f);
+	vertices[0].normal = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+
+	vertices[1].position = D3DXVECTOR3(-2.0f, 2.0f, 0.0f);  // Top middle.
+	vertices[1].texture = D3DXVECTOR2(0.0f, 0.0f);
+	vertices[1].normal = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+
+	vertices[2].position = D3DXVECTOR3(2.0f, 2.0f, 0.0f);  // Bottom right.
+	vertices[2].texture = D3DXVECTOR2(0.0f, 1.0f);
+	vertices[2].normal = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
+
+	vertices[3].position = D3DXVECTOR3(2.0f, -2.0f, 0.0f);
+	vertices[3].texture = D3DXVECTOR2(1.0f, 1.0f);
+	vertices[3].normal = D3DXVECTOR3(0.0f, 0.0f, -1.0f);
 
 	// Load the index array with data.
 	indices[0] = 1;  // Bottom left.
@@ -137,6 +188,9 @@ bool ModelClass::InitializeBuffers(ID3D11Device* device)
 	indices[3] = 0;
 	indices[4] = 1;
 	indices[5] = 2;
+
+#endif
+
 
 
 	// Set up the description of the static vertex buffer.

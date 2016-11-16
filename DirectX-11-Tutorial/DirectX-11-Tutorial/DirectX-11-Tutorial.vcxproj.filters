@@ -41,6 +41,12 @@
     <ClCompile Include="__textureShaderClass.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="__lightShaderClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="__lightClass.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__graphicsClass.h">
@@ -67,6 +73,12 @@
     <ClInclude Include="__textureShaderClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__lightShaderClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__lightClass.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
     <ClInclude Include="__colorShaderClass.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -76,6 +88,12 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderColor.vs">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderLight.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderLight.vs">
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderTexture.ps">
