@@ -139,10 +139,15 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	// Set Ambient Color
 	m_Light->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
+	//m_Light->SetAmbientColor(0.0f, 0.0f, 0.0f, 1.0f);
 
 	// Set Diffuse Color
 	m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
-	m_Light->SetDirection(1.0f, 0.0f, 0.0f);
+	m_Light->SetDirection(1.0f, 0.0f, 1.0f);
+
+	// Set Specular Color
+	m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
+	m_Light->SetSpecularPower(32.0f);
 #endif
 
 
@@ -270,6 +275,8 @@ bool GraphicsClass::Render(float rotation)
 	// Get the world, view, and projection matrices from the camera and d3d objects.
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_d3d->GetWorldMatrix(worldMatrixX);
+	m_d3d->GetWorldMatrix(worldMatrixY);
+	m_d3d->GetWorldMatrix(worldMatrixZ);
 	m_d3d->GetProjectionMatrix(projectionMatrix);
 
 	// Here we rotate the world matrix by the rotation value so that when we render the triangle using this updated world matrix
@@ -306,7 +313,7 @@ bool GraphicsClass::Render(float rotation)
 		return false;
 #endif
 
-#if 1
+#if 0
 	// Render the model using the light shader with AmbientColor.
 	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
 									worldMatrixX * worldMatrixY * worldMatrixZ, viewMatrix, projectionMatrix,
@@ -315,6 +322,16 @@ bool GraphicsClass::Render(float rotation)
 		return false;
 #endif
 
+#if 1
+	// Render the model using the light shader with AmbientColor and SpecularColor.
+	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
+									worldMatrixX * worldMatrixY * worldMatrixZ, viewMatrix, projectionMatrix,
+									m_Model->GetTexture(),
+									m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+									m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower());
+	if (!result)
+		return false;
+#endif
 
 	// Present the rendered scene to the screen.
 	m_d3d->EndScene();
