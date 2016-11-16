@@ -27,8 +27,9 @@ private:
 	// In this tutorial we are modifying the position of each instance of the triangle so we use a position vector.
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
+
 	struct InstanceType {
-		D3DXVECTOR3 position;
+		D3DXVECTOR3 position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
 		//float		angle;
 	};
 

@@ -76,7 +76,7 @@ bool SystemClass::Initialize()
 		return false;
 
 	// Initialize the timer object ()
-	result = m_Timer->Initialize(15);
+	result = m_Timer->Initialize(appTimerInterval);
 	if (!result) {
 		MessageBox(m_hwnd, L"Could not initialize the Timer object.", L"Error", MB_OK);
 		return false;
@@ -217,7 +217,7 @@ bool SystemClass::Frame()
 		}
 
 		// Finally render the graphics to the screen anyway
-		result = m_Graphics->Render(rotation, mouseZ, mouseX, mouseY);
+		result = m_Graphics->Render(rotation, mouseZ, mouseX, mouseY, onTimer);
 		if (!result)
 			return false;
 	}

@@ -43,6 +43,14 @@ class Sprite {
 		return Bitmap->GetTexture();
 	}
 
+	void setX(int x) {
+		posX = x;
+	}
+
+	void setY(int y) {
+		posY = y;
+	}
+
  private:
 	static bool setBitmap(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename, int bitmapWidth, int bitmapHeight) {
 

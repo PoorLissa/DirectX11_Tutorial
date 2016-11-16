@@ -4,6 +4,9 @@
 	--- Instancing ---
 	http://http.developer.nvidia.com/GPUGems2/gpugems2_chapter03.html	// it's rather about DirectX 9 than 11. Not sure if this fits me right.
 
+	--- Sprite Atlas ---
+	http://dallinwellington.com/rendering/sprite-atlas-rendering-with-dx-hlsl/
+
 */
 
 #ifndef _GRAPHICSCLASS_H_
@@ -58,7 +61,7 @@ class GraphicsClass {
 
 	void logMsg(char *);
 
-	bool Render(const float &, const float &, const int &, const int &);
+	bool Render(const float &, const float &, const int &, const int &, bool = false);
 
  private:
 	 d3dClass				*m_d3d;

@@ -53,7 +53,7 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 	bool result;
 
 	// Set the shader parameters that it will use for rendering.
-	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture);
+	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, -1, -1);
 	if (!result)
 		return false;
 
@@ -65,12 +65,12 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 
 // The Render function now takes as input a vertex count and an instance count instead of the old index count.
 bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
-											D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture)
+											D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, int X, int Y)
 {
 	bool result;
 
 	// Set the shader parameters that it will use for rendering.
-	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture);
+	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, X, Y);
 	if (!result)
 		return false;
 
@@ -107,7 +107,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	unsigned int numElements;
 	D3D11_BUFFER_DESC matrixBufferDesc;
 
-	//We have a new variable to hold the description of the texture sampler that will be setup in this function.
+	// We have a new variable to hold the description of the texture sampler that will be setup in this function.
 	D3D11_SAMPLER_DESC samplerDesc;
 
 
@@ -223,11 +223,11 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	pixelShaderBuffer = 0;
 
 	// Setup the description of the dynamic matrix constant buffer that is in the vertex shader.
-	matrixBufferDesc.Usage = D3D11_USAGE_DYNAMIC;
-	matrixBufferDesc.ByteWidth = sizeof(MatrixBufferType);
-	matrixBufferDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
-	matrixBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	matrixBufferDesc.MiscFlags = 0;
+	matrixBufferDesc.Usage				 = D3D11_USAGE_DYNAMIC;
+	matrixBufferDesc.ByteWidth			 = sizeof(MatrixBufferType);
+	matrixBufferDesc.BindFlags			 = D3D11_BIND_CONSTANT_BUFFER;
+	matrixBufferDesc.CPUAccessFlags		 = D3D11_CPU_ACCESS_WRITE;
+	matrixBufferDesc.MiscFlags			 = 0;
 	matrixBufferDesc.StructureByteStride = 0;
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
@@ -345,39 +345,43 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
 bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
-	D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture)
+										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, int X, int Y)
 {
-	HRESULT result;
+	HRESULT					 result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
-	MatrixBufferType* dataPtr;
-	unsigned int bufferNumber;
+	unsigned int			 bufferNumber;
+	MatrixBufferType		*dataPtr;
 
 
-	// Transpose the matrices to prepare them for the shader.
-	D3DXMatrixTranspose(&worldMatrix, &worldMatrix);
-	D3DXMatrixTranspose(&viewMatrix, &viewMatrix);
+	// Transpose the matrices to prepare them for the shader
+	D3DXMatrixTranspose(&worldMatrix,	   &worldMatrix     );
+	D3DXMatrixTranspose(&viewMatrix,	   &viewMatrix      );
 	D3DXMatrixTranspose(&projectionMatrix, &projectionMatrix);
 
-	// Lock the constant buffer so it can be written to.
+	// Lock the constant buffer so it can be written to
 	result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
 	if (FAILED(result))
 		return false;
 
-	// Get a pointer to the data in the constant buffer.
+	// Get a pointer to the data in the constant buffer
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 
-	// Copy the matrices into the constant buffer.
-	dataPtr->world = worldMatrix;
-	dataPtr->view  = viewMatrix;
+	// Copy the matrices into the constant buffer
+	dataPtr->world		= worldMatrix;
+	dataPtr->view		= viewMatrix;
 	dataPtr->projection = projectionMatrix;
+	dataPtr->testX		= X;
+	dataPtr->testY		= Y;
+	dataPtr->z1 = 0.0;
+	dataPtr->z2 = 0.0;
 
 	// Unlock the constant buffer.
 	deviceContext->Unmap(m_matrixBuffer, 0);
 
-	// Set the position of the constant buffer in the vertex shader.
+	// Set the position of the constant buffer in the vertex shader
 	bufferNumber = 0;
 
-	// Now set the constant buffer in the vertex shader with the updated values.
+	// Now set the constant buffer in the vertex shader with the updated values
 	deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
 
 	// The SetShaderParameters function has been modified from the previous tutorial to include setting the texture in the pixel shader now.
@@ -388,7 +392,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 }
 
 bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
-	D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, bool sendTexture)
+										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, bool sendTexture)
 {
 	HRESULT result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -413,6 +417,8 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 	dataPtr->world = worldMatrix;
 	dataPtr->view = viewMatrix;
 	dataPtr->projection = projectionMatrix;
+	dataPtr->testX = 0.0f;
+	dataPtr->testY = 0.0f;
 
 	// Unlock the constant buffer.
 	deviceContext->Unmap(m_matrixBuffer, 0);

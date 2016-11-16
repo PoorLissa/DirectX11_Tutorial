@@ -166,14 +166,14 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 	vertices = 0;
 
 	// new part instancing
-	if(false)
+#if 0
 	{
 		// We will now setup the new instance buffer.
 		// We start by first setting the number of instances of the triangle that will need to be rendered.
 		// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
 		// Set the number of instances in the array.
-		m_instanceCount = 10000;
+		m_instanceCount = 1000;
 		
 		// Next we create a temporary instance array using the instance count.
 		// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -192,7 +192,6 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 		// Load the instance array with data.
 		for (int i = 0; i < m_instanceCount; i++)
 			instances[i].position = D3DXVECTOR3(-50.0f + 333*cos(100.0*i)*sin(float(.2*i)), -50.0f + 333*cos(100.0*i)*cos(float(.2*i)), 0.0f);
-
 
 		// The instance buffer description is setup exactly the same as a vertex buffer description.
 
@@ -222,6 +221,7 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 		delete[] instances;
 		instances = 0;
 	}
+#endif
 
 	return true;
 }
@@ -237,7 +237,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
 	// Set the number of instances in the array.
-	m_instanceCount = 30000;
+	m_instanceCount = 3000;
 
 	// Next we create a temporary instance array using the instance count.
 	// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -254,33 +254,37 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	// For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
 
 	static float angle = 0.0f;
+	int Width  = 800;
+	int Height = 600;
+	int Size   = 24;
 
-	// ¬ качестве координат передаем смещение от центра
+	//  оординаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
 	for (int i = 0; i < m_instanceCount; i++) {
 		//instances[i].position = D3DXVECTOR3(-50.0f + 333 * cos(100.0*i)*sin(float(.2*i)), -50.0f + 333 * cos(100.0*i)*cos(float(.2*i)), i);
 		//instances[i].position = D3DXVECTOR3(400.0f - 15.0*i, -300.0f - 15.0*i, 10*angle/i);
-
+#if 1
 		int X = 400 + 12 + ( 300 * sin(float(i))) * cos(float(100*i))*sin(float(0.2*i));
-		int Y = -300 + 12 + (- 300 * cos(float(i))) * cos(float(100*i))*sin(float(0.2*i));;
+		int Y = 300 - 12 + ( 300 * cos(float(i))) * cos(float(100*i))*sin(float(0.2*i));
+#else
+		int X = 400 + 400*sin((float)rand() / (RAND_MAX + 1) * Width);
+		int Y = 300 + 300*cos((float)rand() / (RAND_MAX + 1) * Height);
+#endif
 
-		int Width  = 800;
-		int Height = 600;
-
-		int Size = 24;
-
-		instances[i].position = D3DXVECTOR3(float(X - Width/2 - Size/2), float(Y + Height/2 - Size/2), 10*angle/i);
+		//instances[i].position = D3DXVECTOR3(float(X - Width/2 - Size/2)*sin(angle), float(-Y + Height/2 - Size/2)*sin(angle), 10 * angle/(i+1));
+		instances[i].position = D3DXVECTOR3(float(X - Width / 2 - Size / 2), float(-Y + Height / 2 - Size / 2), 10 * angle / (i + 1));
 	}
 
-	angle += m_instanceCount / 1000;
+	angle += m_instanceCount / 1000000.0;
+
 
 
 	// The instance buffer description is setup exactly the same as a vertex buffer description.
 	// Set up the description of the instance buffer.
-	instanceBufferDesc.Usage = D3D11_USAGE_DEFAULT;
-	instanceBufferDesc.ByteWidth = sizeof(InstanceType)* m_instanceCount;
-	instanceBufferDesc.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	instanceBufferDesc.Usage		  = D3D11_USAGE_DEFAULT;
+	instanceBufferDesc.ByteWidth	  = sizeof(InstanceType) * m_instanceCount;
+	instanceBufferDesc.BindFlags	  = D3D11_BIND_VERTEX_BUFFER;
 	instanceBufferDesc.CPUAccessFlags = 0;
-	instanceBufferDesc.MiscFlags = 0;
+	instanceBufferDesc.MiscFlags	  = 0;
 	instanceBufferDesc.StructureByteStride = 0;
 
 	// Just like the vertex buffer we get the pointer to the instance array and then create the instance buffer.
@@ -290,6 +294,11 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	instanceData.pSysMem		  = instances;
 	instanceData.SysMemPitch	  = 0;
 	instanceData.SysMemSlicePitch = 0;
+
+	if ( m_instanceBuffer ) {
+		m_instanceBuffer->Release();
+		m_instanceBuffer = 0;
+	}
 
 	// Create the instance buffer.
 	HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);

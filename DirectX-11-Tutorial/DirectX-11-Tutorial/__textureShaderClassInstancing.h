@@ -11,14 +11,17 @@
 using namespace std;
 
 class TextureShaderClass_Instancing {
-private:
+ private:
 	struct MatrixBufferType {
 		D3DXMATRIX world;
 		D3DXMATRIX view;
 		D3DXMATRIX projection;
+		float	   testX;
+		float	   testY;
+		float	   z1, z2;
 	};
 
-public:
+ public:
 	TextureShaderClass_Instancing();
 	TextureShaderClass_Instancing(const TextureShaderClass_Instancing &);
    ~TextureShaderClass_Instancing();
@@ -29,21 +32,21 @@ public:
 	// new
 	bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, bool);
 	// new instancing
-	bool Render(ID3D11DeviceContext*, int, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*);
+	bool Render(ID3D11DeviceContext*, int, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, int, int);
 
-private:
+ private:
 	bool InitializeShader(ID3D11Device*, HWND, WCHAR*, WCHAR*);
 	void ShutdownShader();
 	void OutputShaderErrorMessage(ID3D10Blob*, HWND, WCHAR*);
 
-	bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*);
+	bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, int, int);
 	// new
 	bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, bool);
 	void RenderShader(ID3D11DeviceContext*, int);
 	// new instancing
 	void RenderShader(ID3D11DeviceContext*, int, int);
 
-private:
+ private:
 	ID3D11VertexShader	*m_vertexShader;
 	ID3D11PixelShader	*m_pixelShader;
 	ID3D11InputLayout	*m_layout;

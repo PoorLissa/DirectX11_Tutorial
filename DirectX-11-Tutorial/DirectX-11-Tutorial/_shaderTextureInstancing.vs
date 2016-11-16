@@ -5,6 +5,10 @@ cbuffer MatrixBuffer
 	matrix worldMatrix;
 	matrix viewMatrix;
 	matrix projectionMatrix;
+	float  testX;
+	float testY;
+	float z1;
+	float z2;
 };
 
 // The VertexInputType structure now has the third element which will hold the instanced input position data.
@@ -64,9 +68,34 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	rot = rot * 2 - 1;
 */
 
+	float centerX = testX;
+	float centerY = testY;
+
+	float dX = input.instancePosition.x - centerX;
+	float dY = input.instancePosition.y - centerY;
+
+	float Angle;
+
+	if( dX == 0.0 ) {
+		Angle = dY > 0 ? 180.0 : 0.0;
+	}
+	else {
+		Angle = 180 * atan(dY/dX) / 3.14;
+		Angle = dX > 0.0 ? Angle + 90.0 : Angle + 270.0;
+	}
+
+	// Angle to Radians:
+	Angle = Angle * 3.14 / 180.0;
+
+
+
 	// https://ru.wikipedia.org/wiki/Матрица_поворота
+/*
 	float Cos = cos(input.instancePosition.z);
 	float Sin = sin(input.instancePosition.z);
+*/
+	float Cos = cos(Angle);
+	float Sin = sin(Angle);
 	//sincos(input.instancePosition.z, Sin, Cos);
 	//float4 rotation = float4(Cos, -Sin, Sin, Cos);
 
@@ -79,18 +108,13 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	output.position.x += input.instancePosition.x;
 	output.position.y += input.instancePosition.y;
 
-
+	// Добавляем матричные преобразования для всей сцены
 	output.position = mul(output.position, worldMatrix);
 	output.position = mul(output.position, viewMatrix);
 	output.position = mul(output.position, projectionMatrix);
 
-
-
 	// Store the texture coordinates for the pixel shader.
 	output.tex = input.tex;
-
-//	output.position.x += input.instancePosition.x;
-//	output.position.y += input.instancePosition.y;
 
 	return output;
 }

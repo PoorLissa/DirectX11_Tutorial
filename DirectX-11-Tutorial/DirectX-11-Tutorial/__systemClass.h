@@ -2,6 +2,7 @@
 #define _SYSTEMCLASS_H_
 
 #define WIN32_LEAN_AND_MEAN
+#define appTimerInterval 20
 
 #include <windows.h>
 

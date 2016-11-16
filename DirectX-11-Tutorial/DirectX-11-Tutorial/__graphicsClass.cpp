@@ -216,6 +216,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 			return false;
 		}
 
+		// от размера изображения скорость работы не зависит. Для 15k битмапов 3x3 и 256x256 FPS - одинаковый 
 		result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
@@ -435,7 +436,7 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 	return true;
 }
 
-bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY)
+bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, bool onTimer)
 {
 	bool		 result;
 	D3DXMATRIX	 viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ, orthoMatrix;
@@ -470,60 +471,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	// http://www.rastertek.com/dx11tut37.html
 	// http://stackoverflow.com/questions/3884885/what-is-the-best-pratice-to-render-sprites-in-directx-11
 	// http://www.gamedev.net/topic/588291-sprites-in-directx11/
-
-
-
-	// new instancing
-	if(true)
-	{
-		m_d3d->TurnOnAlphaBlending();
-		m_d3d->GetOrthoMatrix(orthoMatrix);
-
-		D3DXMATRIX matScale;
-		D3DXMATRIX matTrans;
-		m_d3d->GetWorldMatrix(matTrans);
-		m_d3d->GetWorldMatrix(matScale);
-
-		m_d3d->TurnZBufferOff();
-
-		// Рендерим точно в центр
-		int xCenter = 800 / 2;
-		int yCenter = 600 / 2;
-
-		if (!m_BitmapIns->initializeInstances(m_d3d->GetDevice()))
-			return false;
-
-		// Рендерим точно в центр !!!
-		if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), 400-12, 300-12))
-			return false;
-
-		D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
-		D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
-		D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
-
-		// The Render function for the shader now requires the vertex and instance count from the model object.
-		// Render the model using the texture shader.
-		result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
-						m_BitmapIns->GetVertexCount(), m_BitmapIns->GetInstanceCount(),
-						worldMatrixZ * matTrans * matScale,
-						viewMatrix, orthoMatrix, m_BitmapIns->GetTexture());
-
-		if (!result)
-			return false;
-
-		result = m_TextOut->Render(m_d3d->GetDeviceContext(), worldMatrixX, orthoMatrix);
-		if (!result)
-			return false;
-
-		m_d3d->TurnOffAlphaBlending();
-
-		m_d3d->TurnZBufferOn();
-	}
-
-
-
-
-	if(false)
+	if( true )
 	{
 		// Если нужен вывод текстур с прозрачностью, включаем режим прозрачности
 		// Наверное, можно его включить один раз и до конца работы, чтобы не выполнять лишнюю работу
@@ -579,10 +527,51 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		if (!result)
 			return false;
 
-		// render bitmaps from vector
 
 
+		// render bitmaps using Instancing
 #if 1
+		{
+			// reset world matrices
+			m_d3d->GetWorldMatrix(worldMatrixZ);
+			m_d3d->GetWorldMatrix(matTrans);
+			m_d3d->GetWorldMatrix(matScale);
+
+			// Рендерим точно в центр
+			int xCenter = 800 / 2;
+			int yCenter = 600 / 2;
+			int bmpSize = 24;
+
+			// не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
+			if( onTimer )
+				if ( !m_BitmapIns->initializeInstances(m_d3d->GetDevice()) )
+					return false;
+
+			// Рендерим модель точно в центр !!!
+			if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), xCenter - bmpSize/2, yCenter - bmpSize/2))
+				return false;
+/*
+			D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
+			D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
+			D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
+*/
+
+			// The Render function for the shader now requires the vertex and instance count from the model object.
+			// Render the model using the texture shader.
+			result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+						m_BitmapIns->GetVertexCount(), m_BitmapIns->GetInstanceCount(),
+							worldMatrixZ * matTrans * matScale,
+								viewMatrix, orthoMatrix, m_BitmapIns->GetTexture(), mouseX - 400, 300 - mouseY);
+
+			if (!result)
+				return false;
+		}
+#endif
+
+
+
+		// render bitmaps from vector
+#if 0
 		// test-fast-render
 
 		// при смене разрешения вот это влияет на масштаб
@@ -606,11 +595,19 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 			selector = (float)rand() / (RAND_MAX + 1) * 20;
 		}
 
+selector = -1;
+
 		for (int i = 0; i < m_spriteVec.size(); i++) {
 
 			m_spriteVec[i]->getCoords(x, y);
 
 			switch( selector ) {
+
+				case -1:
+
+					D3DXMatrixRotationZ(&worldMatrixZ, i/100.0);
+					D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 1.0f);
+					break;
 			
 				case 0:
 					// лайк геоид
