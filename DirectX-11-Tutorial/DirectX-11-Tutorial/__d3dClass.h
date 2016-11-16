@@ -40,6 +40,10 @@ class d3dClass {
 
 	void GetVideoCardInfo(char *, int &);
 
+	// We now have two new function in the D3DClass for turning the Z buffer on and off when rendering 2D images.
+	void TurnZBufferOn();
+	void TurnZBufferOff();
+
  private:
 	bool m_vsync_enabled;
 	int	 m_videoCardMemory;
@@ -57,6 +61,9 @@ class d3dClass {
 	D3DXMATRIX				m_projectionMatrix;
 	D3DXMATRIX				m_worldMatrix;
 	D3DXMATRIX				m_orthoMatrix;
+
+	// There is also a new depth stencil state for 2D drawing.
+	ID3D11DepthStencilState	*m_depthDisabledStencilState;
 };
 
 #endif

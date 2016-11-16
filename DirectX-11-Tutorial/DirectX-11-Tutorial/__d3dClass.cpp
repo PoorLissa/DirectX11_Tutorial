@@ -10,6 +10,9 @@ d3dClass::d3dClass()
 	m_depthStencilState  = 0;
 	m_depthStencilView   = 0;
 	m_rasterState		 = 0;
+
+	// Initialize the new depth stencil state to null in the class constructor.
+	m_depthDisabledStencilState = 0;
 }
 
 d3dClass::d3dClass(const d3dClass &other)
@@ -42,8 +45,11 @@ bool d3dClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	D3D11_RASTERIZER_DESC			 rasterDesc;
 	D3D11_VIEWPORT					 viewport;
 
-	float fieldOfView, screenAspect;
+	float							fieldOfView;
+	float							screenAspect;
 
+	// We have a new depth stencil description variable for setting up the new depth stencil.
+	D3D11_DEPTH_STENCIL_DESC		depthDisabledStencilDesc;
 
 
 	// Store the vsync setting.
@@ -324,8 +330,39 @@ bool d3dClass::Initialize(int screenWidth, int screenHeight, bool vsync, HWND hw
 	// Initialize the world matrix to the identity matrix.
 	D3DXMatrixIdentity(&m_worldMatrix);
 
-	// Create an orthographic projection matrix for 2D rendering.
-	D3DXMatrixOrthoLH(&m_orthoMatrix, (float)screenWidth, (float)screenHeight, screenNear, screenDepth);
+	// --- for 2D Rendering ---
+	{
+		// Create an orthographic projection matrix for 2D rendering.
+		D3DXMatrixOrthoLH(&m_orthoMatrix, (float)screenWidth, (float)screenHeight, screenNear, screenDepth);
+
+		// Here we setup the second description of the depth stencil.
+		// Notice the only difference between this new depth stencil and the old one is the DepthEnable is set to false here for 2D drawing.
+
+		// Clear the second depth stencil state before setting the parameters.
+		ZeroMemory(&depthDisabledStencilDesc, sizeof(depthDisabledStencilDesc));
+
+		depthDisabledStencilDesc.DepthEnable					= false;
+		depthDisabledStencilDesc.DepthWriteMask					= D3D11_DEPTH_WRITE_MASK_ALL;
+		depthDisabledStencilDesc.DepthFunc						= D3D11_COMPARISON_LESS;
+		depthDisabledStencilDesc.StencilEnable					= true;
+		depthDisabledStencilDesc.StencilReadMask				= 0xFF;
+		depthDisabledStencilDesc.StencilWriteMask				= 0xFF;
+		depthDisabledStencilDesc.FrontFace.StencilFailOp		= D3D11_STENCIL_OP_KEEP;
+		depthDisabledStencilDesc.FrontFace.StencilDepthFailOp	= D3D11_STENCIL_OP_INCR;
+		depthDisabledStencilDesc.FrontFace.StencilPassOp		= D3D11_STENCIL_OP_KEEP;
+		depthDisabledStencilDesc.FrontFace.StencilFunc			= D3D11_COMPARISON_ALWAYS;
+		depthDisabledStencilDesc.BackFace.StencilFailOp			= D3D11_STENCIL_OP_KEEP;
+		depthDisabledStencilDesc.BackFace.StencilDepthFailOp	= D3D11_STENCIL_OP_DECR;
+		depthDisabledStencilDesc.BackFace.StencilPassOp			= D3D11_STENCIL_OP_KEEP;
+		depthDisabledStencilDesc.BackFace.StencilFunc			= D3D11_COMPARISON_ALWAYS;
+	
+		// Now create the new depth stencil.
+
+		// Create the state using the device.
+		result = m_device->CreateDepthStencilState(&depthDisabledStencilDesc, &m_depthDisabledStencilState);
+		if (FAILED(result))
+			return false;
+	}
 
 	return true;
 }
@@ -335,6 +372,12 @@ void d3dClass::Shutdown()
 	// Before shutting down set to windowed mode or when you release the swap chain it will throw an exception.
 	if (m_swapChain)
 		m_swapChain->SetFullscreenState(false, NULL);
+
+	// Here we release the new (second) depth stencil
+	if (m_depthDisabledStencilState) {
+		m_depthDisabledStencilState->Release();
+		m_depthDisabledStencilState = 0;
+	}
 
 	if (m_rasterState) {
 		m_rasterState->Release();
@@ -446,4 +489,19 @@ void d3dClass::GetVideoCardInfo(char* cardName, int& memory)
 	strcpy_s(cardName, 128, m_videoCardDescription);
 	memory = m_videoCardMemory;
 	return;
+}
+
+// These are the new functions for enabling and disabling the Z buffer.
+// To turn Z buffering on we set the original depth stencil.
+// To turn Z buffering off we set the new depth stencil that has depthEnable set to false.
+// Generally the best way to use these functions is first do all your 3D rendering,
+// then turn the Z buffer off and do your 2D rendering, and then turn the Z buffer on again.
+void d3dClass::TurnZBufferOn()
+{
+	m_deviceContext->OMSetDepthStencilState(m_depthStencilState, 1);
+}
+
+void d3dClass::TurnZBufferOff()
+{
+	m_deviceContext->OMSetDepthStencilState(m_depthDisabledStencilState, 1);
 }

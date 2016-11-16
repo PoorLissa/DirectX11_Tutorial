@@ -19,7 +19,7 @@ bool TextureClass::Initialize(ID3D11Device* device, WCHAR* filename)
 {
 	HRESULT result;
 
-	// Load the texture in.
+	// Load the texture in (we can use DDS, BMP, PNG and JPG).
 	result = D3DX11CreateShaderResourceViewFromFile(device, filename, NULL, NULL, &m_texture, NULL);
 	if( FAILED(result) )
 		return false;

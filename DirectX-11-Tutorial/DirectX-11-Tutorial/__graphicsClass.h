@@ -6,10 +6,11 @@
 #include "__d3dClass.h"
 #include "__cameraClass.h"
 #include "__modelClass.h"
-//#include "__colorShaderClass.h"
-//#include "__textureShaderClass.h"
+#include "__colorShaderClass.h"
+#include "__textureShaderClass.h"
 #include "__lightShaderClass.h"
 #include "__lightClass.h"
+#include "__bitmapClass.h"
 
 
 
@@ -40,10 +41,13 @@ class GraphicsClass {
 	 ModelClass			*m_Model;
 
 	 //ColorShaderClass	*m_ColorShader;
-	 //TextureShaderClass	*m_TextureShader;
+	 TextureShaderClass	*m_TextureShader;
 
 	 LightShaderClass	*m_LightShader;
 	 LightClass			*m_Light;
+
+	 // We create a new private BitmapClass object here.
+	 BitmapClass		*m_Bitmap;
 };
 
 #endif

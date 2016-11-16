@@ -15,5 +15,26 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
     // Sample the pixel color from the texture using the sampler at this texture coordinate location.
     textureColor = shaderTexture.Sample(SampleType, input.tex);
 
+	//if (textureColor.rgb == vec3(1.0, 0.4, 0.8))
+	//if (textureColor.rgb = (1.0, 1.0, 1.0))
+		//discard;
+
+	//textureColor.color.rgba = float4(0.1f, 0.9f, 0.1f, 1.0f);
+
+	//if (textureColor.rgb == float3(1.0f, 1.0f, 1.0f))
+		//discard;
+
+	return textureColor;
+
+	float4 testColor = float4(1.0f, 0.3922f, 1.0f, 0.0f);
+
+	float4 diff = testColor - textureColor.rgba;
+
+	if (dot(diff, float4(65536.0f, 256.0f, 1.0f, 0.0f)) < 0)
+		discard;
+
+
+//	return float4(0.1f, 0.2f, 0.9f, 1.0f);
+
     return textureColor;
 }

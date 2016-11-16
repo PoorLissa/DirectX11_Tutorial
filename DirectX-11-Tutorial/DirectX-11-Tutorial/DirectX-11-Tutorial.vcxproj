@@ -82,6 +82,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="__bitmapClass.cpp" />
     <ClCompile Include="__colorShaderClass.cpp" />
     <ClCompile Include="Main.cpp" />
     <ClCompile Include="__cameraClass.cpp" />
@@ -95,6 +96,7 @@
     <ClCompile Include="__textureShaderClass.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="__bitmapClass.h" />
     <ClInclude Include="__colorShaderClass.h" />
     <ClInclude Include="__lightClass.h" />
     <ClInclude Include="__lightShaderClass.h" />
