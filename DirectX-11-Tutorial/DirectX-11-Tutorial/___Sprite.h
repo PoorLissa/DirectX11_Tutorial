@@ -1,3 +1,5 @@
+#pragma once
+
 // Класс-обертка для BitmapClass, сделанный для того, чтобы иметь возможность задавать вектор спрайтов,
 // у которых была бы одна и та же текстура, которая бы всего один раз на весь вектор передавалась бы в GPU
 
@@ -7,18 +9,13 @@
 
 // См. __graphicsClass.cpp -> "test-fast-render"
 
-#pragma once
-
 #include "__bitmapClass.h"
 
 class Sprite {
  public:
 
-	Sprite(int x, int y) : posX(x), posY(y) {
-	}
-
-   ~Sprite() {
-	}
+	Sprite(int x, int y) : posX(x), posY(y) {}
+   ~Sprite() {}
 
 	bool Render(ID3D11DeviceContext *deviceContext, int positionX, int positionY) {
 		Bitmap->Render(deviceContext, positionX, positionY);
@@ -59,6 +56,7 @@ class Sprite {
 			return false;
 
 		// Initialize the bitmap object.
+		// ??? why 256?
 		return Bitmap->Initialize(device, screenWidth, screenHeight, textureFilename, 256, 256);
 	}
 
@@ -66,5 +64,3 @@ class Sprite {
 	 int posX, posY;
 	 static BitmapClass *Bitmap;
 };
-
-

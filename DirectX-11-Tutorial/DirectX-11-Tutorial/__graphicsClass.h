@@ -25,6 +25,7 @@
 #include "__bitmapClass.h"
 #include "__textOutClass.h"
 #include "___Sprite.h"
+#include "___SpriteInstanced.h"
 
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
@@ -64,28 +65,35 @@ class GraphicsClass {
 	bool Render(const float &, const float &, const int &, const int &, bool = false);
 
  private:
-	 d3dClass				*m_d3d;
-	 CameraClass			*m_Camera;
-	 ModelClass				*m_Model;
+    int scrWidth;
+    int scrHeight;
 
-	 //ColorShaderClass		*m_ColorShader;
-	 TextureShaderClass		*m_TextureShader;
+    d3dClass				*m_d3d;
+    CameraClass			*m_Camera;
+    ModelClass				*m_Model;
 
-	 LightShaderClass		*m_LightShader;
-	 LightClass				*m_Light;
+    //ColorShaderClass		*m_ColorShader;
+    TextureShaderClass		*m_TextureShader;
 
-	 // We create a new private BitmapClass object here.
-	 BitmapClass			*m_Bitmap;
-	 BitmapClass			*m_Cursor;
+    LightShaderClass		*m_LightShader;
+    LightClass				*m_Light;
 
-	 vector<Sprite*>		 m_spriteVec;
-	 BitmapClass			*m_BitmapSprite;
+    // We create a new private BitmapClass object here.
+    BitmapClass			*m_Bitmap;
+    BitmapClass			*m_Cursor;
 
-	// There is a new private variable for the TextClass object.
+    vector<Sprite*>		 m_spriteVec;
+    BitmapClass			*m_BitmapSprite;
+
+    // There is a new private variable for the TextClass object.
 	TextOutClass			*m_TextOut;
 
 	BitmapClass_Instancing	*m_BitmapIns;
 	TextureShaderClass_Instancing *m_TextureShaderIns;
+
+    // test
+    InstancedSprite            *sprIns1;
+    InstancedSprite_PersistBuf *sprIns2;
 };
 
 #endif

@@ -1,8 +1,10 @@
 #include "__graphicsClass.h"
-#include "___Sprite.h"
 
-BitmapClass* Sprite::Bitmap = 0;
+BitmapClass* Sprite::Bitmap = 0;	// Инициализируем статический объект класса в глобальной области. Почему-то он не хочет инициализироваться в файле класса, а хочет только здесь.
 #define NUM 5000					// Sprite Vector Size
+
+std::vector<gameObjectBase*> monstersVector;
+std::vector<gameObjectBase*> bulletVector2;
 
 GraphicsClass::GraphicsClass()
 {
@@ -17,6 +19,9 @@ GraphicsClass::GraphicsClass()
 	m_Bitmap		= 0;
 	m_BitmapIns		= 0;
 	m_TextOut		= 0;
+
+    sprIns1 = 0;
+    sprIns2 = 0;
 }
 
 GraphicsClass::GraphicsClass(const GraphicsClass &other)
@@ -42,6 +47,10 @@ void GraphicsClass::logMsg(char *str) {
 bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	bool result;
+
+	// Запомним размеры текущего экрана
+	scrWidth  = screenWidth;
+	scrHeight = screenHeight;
 
 	// Create the Direct3D object
 	m_d3d = new d3dClass;
@@ -197,11 +206,11 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		// You can change this size to whatever you like as it does not need to reflect the exact size of the texture.
 
 		// Create the bitmap object.
-		m_Bitmap = new BitmapClass;
+		m_Bitmap = new BitmapClass();
 		if (!m_Bitmap)
 			return false;
 
-		m_BitmapIns = new BitmapClass_Instancing;
+		m_BitmapIns = new BitmapClass_Instancing();
 		if (!m_BitmapIns)
 			return false;
 
@@ -216,12 +225,44 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 			return false;
 		}
 
-		// от размера изображения скорость работы не зависит. Для 15k битмапов 3x3 и 256x256 FPS - одинаковый 
+		// от размера изображения при работе с Instancing скорость работы не зависит. Для 15k битмапов (3x3) и (256x256) FPS - одинаковый 
 		result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
 			return false;
 		}
+
+sprIns1 = new InstancedSprite(scrWidth, scrHeight);
+if (!sprIns1)
+    return false;
+sprIns2 = new InstancedSprite_PersistBuf;
+if (!sprIns2)
+    return false;
+
+result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+if (!result) {
+    MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
+    return false;
+}
+
+result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+if (!result) {
+    MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
+    return false;
+}
+
+int numPic = 3;
+for (int i = 0; i < numPic; i++) {
+
+    int x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
+    int y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+
+    Monster *b = new Monster(x, y, rand()%50 * 0.1f);
+
+    monstersVector.push_back(b);
+}
+
+monstersVector.push_back(new Player(100, 100));
 
 		m_BitmapSprite = new BitmapClass;
 		if (!m_BitmapSprite)
@@ -236,14 +277,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		// lala
 		for (int i = 0; i < NUM; i++) {
 
-			int X = (float)rand() / (RAND_MAX + 1) * 800;
-			int Y = (float)rand() / (RAND_MAX + 1) * 600;
+			int X = (float)rand() / (RAND_MAX + 1) * scrWidth;
+			int Y = (float)rand() / (RAND_MAX + 1) * scrHeight;
 
 			Sprite *spr = new Sprite(X, Y);
 			spr->setBitmap(m_BitmapSprite);
 			m_spriteVec.push_back(spr);
 		}
-
 	}
 
 
@@ -315,6 +355,32 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraphicsClass::Shutdown()
 {
+    if (monstersVector.size() > 0) {
+        for (int i = 0; i < monstersVector.size(); i++) {
+            delete monstersVector[i];
+            monstersVector[i] = 0;
+        }
+    }
+
+    if (bulletVector2.size() > 0) {
+        for (int i = 0; i < bulletVector2.size(); i++) {
+            delete bulletVector2[i];
+            bulletVector2[i] = 0;
+        }
+    }
+
+    if ( sprIns1 ) {
+        sprIns1->Shutdown();
+        delete sprIns1;
+        sprIns1 = 0;
+    }
+
+    if (sprIns2) {
+        sprIns2->Shutdown();
+        delete sprIns2;
+        sprIns2 = 0;
+    }
+
 	if (m_spriteVec.size() > 0) {
 		for (int i = 0; i < m_spriteVec.size(); i++) {
 			delete m_spriteVec[i];
@@ -449,7 +515,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	}
 
 	// Clear the buffers to begin the scene.
-	m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+	//m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    m_d3d->BeginScene(0.9f, 0.9f, 0.9f, 1.0f);
 
 	// Generate the view matrix based on the camera's position.
 	m_Camera->Render();
@@ -491,8 +558,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 
 		// Координаты центра экрана
-		int xCenter = 800/2;
-		int yCenter = 600/2;
+		int xCenter = scrWidth /2;
+		int yCenter = scrHeight/2;
 
 		// Рендерим точно в центр
 		if (!m_Bitmap->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
@@ -530,17 +597,12 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 
 		// render bitmaps using Instancing
-#if 1
+#if 0
 		{
 			// reset world matrices
 			m_d3d->GetWorldMatrix(worldMatrixZ);
 			m_d3d->GetWorldMatrix(matTrans);
 			m_d3d->GetWorldMatrix(matScale);
-
-			// Рендерим точно в центр
-			int xCenter = 800 / 2;
-			int yCenter = 600 / 2;
-			int bmpSize = 24;
 
 			// не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
 			if( onTimer )
@@ -548,24 +610,80 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 					return false;
 
 			// Рендерим модель точно в центр !!!
+			int xCenter = scrWidth  / 2;
+			int yCenter = scrHeight / 2;
+			int bmpSize = 24;
 			if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), xCenter - bmpSize/2, yCenter - bmpSize/2))
 				return false;
-/*
+#if 0
 			D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
 			D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
 			D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
-*/
+#endif
 
 			// The Render function for the shader now requires the vertex and instance count from the model object.
 			// Render the model using the texture shader.
 			result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
 						m_BitmapIns->GetVertexCount(), m_BitmapIns->GetInstanceCount(),
 							worldMatrixZ * matTrans * matScale,
-								viewMatrix, orthoMatrix, m_BitmapIns->GetTexture(), mouseX - 400, 300 - mouseY);
+								viewMatrix, orthoMatrix, m_BitmapIns->GetTexture(), mouseX - xCenter, yCenter - mouseY);
 
 			if (!result)
 				return false;
 		}
+#endif
+
+
+
+
+        // render sprites using Instancing from vector
+#if 1
+        {
+            // reset world matrices
+            m_d3d->GetWorldMatrix(worldMatrixZ);
+            m_d3d->GetWorldMatrix(matTrans);
+            m_d3d->GetWorldMatrix(matScale);
+
+            int xCenter = scrWidth  / 2;
+            int yCenter = scrHeight / 2;
+            int bmpSize = 24;
+
+            // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
+
+#if 1
+            if (onTimer) {
+
+                for (int i = 0; i < monstersVector.size(); i++) {
+                    monstersVector[i]->Move(mouseX, mouseY);
+                }
+
+//                bulletVector1.push_back(new Bullet(50 + rand() % 700, 50 + rand() % 500));
+
+                if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector))
+                    return false;
+            }
+
+            // Рендерим модель точно в центр !!!
+            if (!sprIns1->Render(m_d3d->GetDeviceContext(), xCenter - bmpSize/2, yCenter - bmpSize/2))
+                return false;
+
+            //D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
+            //D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
+            //D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
+
+
+            // The Render function for the shader now requires the vertex and instance count from the model object.
+            // Render the model using the texture shader.
+            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
+                    worldMatrixZ * matTrans * matScale,
+                        viewMatrix, orthoMatrix, sprIns1->GetTexture(), mouseX - xCenter, yCenter - mouseY);
+
+            if (!result)
+                return false;
+#endif
+        }
+
 #endif
 
 

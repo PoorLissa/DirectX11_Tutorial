@@ -9,13 +9,14 @@
 
 #include <d3d11.h>
 #include <d3dx10math.h>
+#include <vector>
 
 #include "__textureClass.h"
 
 
 
 class BitmapClass_Instancing {
-private:
+ protected:
 	// Each bitmap image is still a polygon object that gets rendered similar to 3D objects.
 	// For 2D images we just need a position vector and texture coordinates.
 	struct VertexType {
@@ -27,13 +28,12 @@ private:
 	// In this tutorial we are modifying the position of each instance of the triangle so we use a position vector.
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
-
 	struct InstanceType {
 		D3DXVECTOR3 position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
 		//float		angle;
 	};
 
-public:
+ public:
 	BitmapClass_Instancing();
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
    ~BitmapClass_Instancing();
@@ -51,7 +51,7 @@ public:
 
 	bool initializeInstances(ID3D11Device *);
 
-private:
+ protected:
 	bool InitializeBuffers(ID3D11Device *);
 	void ShutdownBuffers();
 	bool UpdateBuffers(ID3D11DeviceContext *, int, int);
@@ -60,7 +60,7 @@ private:
 	bool LoadTexture(ID3D11Device *, WCHAR *);
 	void ReleaseTexture();
 
-private:
+ protected:
 	ID3D11Buffer	*m_vertexBuffer;
 	int				 m_vertexCount;
 	TextureClass	*m_Texture;

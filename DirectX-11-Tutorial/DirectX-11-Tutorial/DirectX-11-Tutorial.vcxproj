@@ -126,6 +126,7 @@
     <ClInclude Include="__textureShaderClass.h" />
     <ClInclude Include="__textureShaderClassInstancing.h" />
     <ClInclude Include="___Sprite.h" />
+    <ClInclude Include="___SpriteInstanced.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps" />

@@ -5,14 +5,13 @@ cbuffer MatrixBuffer
 	matrix worldMatrix;
 	matrix viewMatrix;
 	matrix projectionMatrix;
-	float  testX;
-	float testY;
-	float z1;
-	float z2;
+	float  rotateToX;
+    float  rotateToY;
+	float  z1;      //  <-- dummy
+	float  z2;      //  <-- dummy
 };
 
 // The VertexInputType structure now has the third element which will hold the instanced input position data.
-
 struct VertexInputType
 {
 	float4 position			: POSITION;
@@ -35,7 +34,6 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	//input.position.w = 1.0f;
 
 	// Here is where we use the instanced position information to modify the position of each triangle we are drawing.
-	// Update the position of the vertices based on the data for this particular instance.
 
 /*
 	float x = 0.0;
@@ -68,24 +66,24 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	rot = rot * 2 - 1;
 */
 
-	float centerX = testX;
-	float centerY = testY;
+    static const float PI         = 3.14159265f;
+    static const float divPIby180 = PI / 180.0f;
+    static const float div180byPI = 180.0f / PI;
 
-	float dX = input.instancePosition.x - centerX;
-	float dY = input.instancePosition.y - centerY;
+    float dX = input.instancePosition.x - rotateToX;
+    float dY = input.instancePosition.y - rotateToY;
+	float Angle, Sin, Cos;
 
-	float Angle;
-
-	if( dX == 0.0 ) {
-		Angle = dY > 0 ? 180.0 : 0.0;
+	if( dX == 0.0f ) {
+		Angle = dY > 0.0f ? 180.0f : 0.0f;
 	}
 	else {
-		Angle = 180 * atan(dY/dX) / 3.14;
-		Angle = dX > 0.0 ? Angle + 90.0 : Angle + 270.0;
+		Angle = atan(dY/dX) * div180byPI;
+		Angle = dX > 0.0f ? Angle + 90.0f : Angle + 270.0f;
 	}
 
 	// Angle to Radians:
-	Angle = Angle * 3.14 / 180.0;
+    Angle = Angle * divPIby180;
 
 
 
@@ -94,9 +92,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	float Cos = cos(input.instancePosition.z);
 	float Sin = sin(input.instancePosition.z);
 */
-	float Cos = cos(Angle);
-	float Sin = sin(Angle);
-	//sincos(input.instancePosition.z, Sin, Cos);
+	sincos(Angle, Sin, Cos);
 	//float4 rotation = float4(Cos, -Sin, Sin, Cos);
 
 	output.position.x = input.position.x * Cos - input.position.y * Sin;
@@ -105,7 +101,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	output.position.z = 1.0f;
 	output.position.w = 1.0f;
 
-	output.position.x += input.instancePosition.x;
+    output.position.x += input.instancePosition.x;
 	output.position.y += input.instancePosition.y;
 
 	// Добавляем матричные преобразования для всей сцены
@@ -114,7 +110,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	output.position = mul(output.position, projectionMatrix);
 
 	// Store the texture coordinates for the pixel shader.
-	output.tex = input.tex;
+    output.tex = input.tex;
 
 	return output;
 }
