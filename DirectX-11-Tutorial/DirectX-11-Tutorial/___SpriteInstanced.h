@@ -36,7 +36,9 @@ class gameObjectBase {
     inline void setX(const int &x) {  _X = (float)x; }
     inline void setY(const int &y) {  _Y = (float)y; }
 
-    // метод для перемещения объекта, вызывается в общем цикле
+    // Метод для перемещения объекта, вызывается в общем цикле
+    // Параметр void* - указатель на опциональную структуру для передачи дополнительных параметров в метод
+    // Саму структуру придется определить внутри унаследованных классов
     virtual void Move(const int &, const int &, void* = 0) = 0;
 
  protected:
@@ -65,14 +67,19 @@ class Monster : public gameObjectBase {
     Monster(int x, int y, float speed) : gameObjectBase(x, y, speed) {}
    ~Monster() {}
 
-    virtual void Move(const int &x, const int &y, void *Param) {
+    virtual void Move(const int &x, const int &y, void *param) {
+
+        if( param ) {
+            Params *p = (Params*)param;
+            int num = p->num;
+        }
 
         float dX = float(x) - _X;
         float dY = float(y) - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-        dX = /*float(rand()%20) * */div_Speed_by_Dist * dX * 0.1f;
-        dY = /*float(rand()%20) * */div_Speed_by_Dist * dY * 0.1f;
+        dX = div_Speed_by_Dist * dX * 0.1f;     // /* *float(rand()%20)*/
+        dY = div_Speed_by_Dist * dY * 0.1f;     // /* *float(rand()%20)*/
 
         _X += dX;
         _Y += dY;
@@ -80,6 +87,10 @@ class Monster : public gameObjectBase {
 
  private:
 
+ public:
+    struct Params {
+        int num;
+    };
 };
 
 
@@ -119,18 +130,31 @@ class InstancedSprite : public BitmapClass_Instancing {
 
         static float angle = 0.0f;
         static int   Size  = 0;
+        static int counter = 0;
+        static int zzz = 1;
 
         // Координаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         std::vector<gameObjectBase*>::iterator iter, end;
         int i;
-        for (i = 0, iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i)
+        for (i = 0, iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
+
+            instances[i].material = zzz;
+
             instances[i].position = D3DXVECTOR3(
                 float( (*iter)->getX() - 0.5f * scrWidth  - 0.5f * Size ),
                 float(-(*iter)->getY() + 0.5f * scrHeight - 0.5f * Size ),
                 float( 10 * angle / (i + 1) )
             );
+        }
 
         angle += m_instanceCount * 1e-6f;
+        counter++;
+
+        if (counter > 10) {
+        
+            zzz = zzz == 2 ? 1 : 2;
+            counter = 0;
+        }
 
 
         // The instance buffer description is setup exactly the same as a vertex buffer description.

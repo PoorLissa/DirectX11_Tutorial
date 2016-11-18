@@ -100,6 +100,7 @@
     <ClCompile Include="__lightShaderClass.cpp" />
     <ClCompile Include="__modelClass.cpp" />
     <ClCompile Include="__systemClass.cpp" />
+    <ClCompile Include="__textureArrayClass.cpp" />
     <ClCompile Include="__textureClass.cpp" />
     <ClCompile Include="__textureShaderClass.cpp" />
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
@@ -122,6 +123,7 @@
     <ClInclude Include="__modelClass.h" />
     <ClInclude Include="__systemClass.h" />
     <ClInclude Include="__textOutClass.h" />
+    <ClInclude Include="__textureArrayClass.h" />
     <ClInclude Include="__textureClass.h" />
     <ClInclude Include="__textureShaderClass.h" />
     <ClInclude Include="__textureShaderClassInstancing.h" />

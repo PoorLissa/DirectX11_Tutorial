@@ -45,7 +45,7 @@ void TextureShaderClass_Instancing::Shutdown()
 	return;
 }
 
-// The Render function now takes a new parameter called texture which is the pointer to the texture resource.
+// The Render 1 function now takes a new parameter called texture which is the pointer to the texture resource.
 // This is then sent into the SetShaderParameters function so that the texture can be set in the shader and then used for rendering.
 bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
 	D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture)
@@ -63,7 +63,7 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 	return true;
 }
 
-// The Render function now takes as input a vertex count and an instance count instead of the old index count.
+// The Render 2 function now takes as input a vertex count and an instance count instead of the old index count.
 bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
 											D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, int X, int Y)
 {
@@ -78,6 +78,24 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 	RenderShader(deviceContext, vertexCount, instanceCount);
 
 	return true;
+}
+
+// The Render 3 function now takes as input a vertex count and an instance count instead of the old index count.
+// The Render 3 function now takes as input a pointer to the texture array. This will give the shader access to the two textures for blending operations.
+bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
+    D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView** textureArray, int X, int Y)
+{
+    bool result;
+
+    // Set the shader parameters that it will use for rendering.
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, textureArray, X, Y);
+    if (!result)
+        return false;
+
+    // Now render the prepared buffers with the shader.
+    RenderShader(deviceContext, vertexCount, instanceCount);
+
+    return true;
 }
 
 bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
@@ -99,16 +117,14 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 // InitializeShader sets up the texture shader.
 bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
 {
-	HRESULT result;
-	ID3D10Blob* errorMessage;
-	ID3D10Blob* vertexShaderBuffer;
-	ID3D10Blob* pixelShaderBuffer;
-	D3D11_INPUT_ELEMENT_DESC polygonLayout[3];
-	unsigned int numElements;
-	D3D11_BUFFER_DESC matrixBufferDesc;
-
-	// We have a new variable to hold the description of the texture sampler that will be setup in this function.
-	D3D11_SAMPLER_DESC samplerDesc;
+	HRESULT                   result;
+	ID3D10Blob               *errorMessage;
+	ID3D10Blob               *vertexShaderBuffer;
+	ID3D10Blob               *pixelShaderBuffer;
+	D3D11_INPUT_ELEMENT_DESC  polygonLayout[4];
+	unsigned int              numElements;
+	D3D11_BUFFER_DESC         matrixBufferDesc;
+    D3D11_SAMPLER_DESC        samplerDesc;          // We have a new variable to hold the description of the texture sampler that will be setup in this function.
 
 
 	// Initialize the pointers this function will use to null.
@@ -167,20 +183,20 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Create the vertex input layout description.
 	// This setup needs to match the VertexType stucture in the ModelClass and in the shader.
-	polygonLayout[0].SemanticName = "POSITION";
-	polygonLayout[0].SemanticIndex = 0;
-	polygonLayout[0].Format = DXGI_FORMAT_R32G32B32_FLOAT;
-	polygonLayout[0].InputSlot = 0;
-	polygonLayout[0].AlignedByteOffset = 0;
-	polygonLayout[0].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	polygonLayout[0].SemanticName         = "POSITION";
+	polygonLayout[0].SemanticIndex        = 0;
+	polygonLayout[0].Format               = DXGI_FORMAT_R32G32B32_FLOAT;
+	polygonLayout[0].InputSlot            = 0;
+	polygonLayout[0].AlignedByteOffset    = 0;
+	polygonLayout[0].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[0].InstanceDataStepRate = 0;
 
-	polygonLayout[1].SemanticName = "TEXCOORD";
-	polygonLayout[1].SemanticIndex = 0;
-	polygonLayout[1].Format = DXGI_FORMAT_R32G32_FLOAT;
-	polygonLayout[1].InputSlot = 0;
-	polygonLayout[1].AlignedByteOffset = D3D11_APPEND_ALIGNED_ELEMENT;
-	polygonLayout[1].InputSlotClass = D3D11_INPUT_PER_VERTEX_DATA;
+	polygonLayout[1].SemanticName         = "TEXCOORD";
+	polygonLayout[1].SemanticIndex        = 0;
+	polygonLayout[1].Format               = DXGI_FORMAT_R32G32_FLOAT;
+	polygonLayout[1].InputSlot            = 0;
+	polygonLayout[1].AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+	polygonLayout[1].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
 	polygonLayout[1].InstanceDataStepRate = 0;
 
 	// new instancing
@@ -198,13 +214,33 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 		// Note also that this is the first unit in the instance buffer so we set the AlignedByteOffset to 0 again since we are not aligning to the vertex buffer
 		// with the instance data.
 
-		polygonLayout[2].SemanticName		= "TEXCOORD";
-		polygonLayout[2].SemanticIndex		= 1;
-		polygonLayout[2].Format				= DXGI_FORMAT_R32G32B32_FLOAT;
-		polygonLayout[2].InputSlot			= 1;
-		polygonLayout[2].AlignedByteOffset  = 0;
-		polygonLayout[2].InputSlotClass		= D3D11_INPUT_PER_INSTANCE_DATA;
+		polygonLayout[2].SemanticName		  = "TEXCOORD";
+		polygonLayout[2].SemanticIndex		  = 1;
+		polygonLayout[2].Format				  = DXGI_FORMAT_R32G32B32_FLOAT;
+		polygonLayout[2].InputSlot			  = 1;
+		polygonLayout[2].AlignedByteOffset    = 0;
+		polygonLayout[2].InputSlotClass		  = D3D11_INPUT_PER_INSTANCE_DATA;
 		polygonLayout[2].InstanceDataStepRate = 1;
+
+        polygonLayout[3].SemanticName         = "BLENDINDICES";
+        polygonLayout[3].SemanticIndex        = 0;
+        polygonLayout[3].Format               = DXGI_FORMAT_R32G32B32A32_UINT;
+        polygonLayout[3].InputSlot            = 1;
+        polygonLayout[3].AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+        polygonLayout[3].InputSlotClass       = D3D11_INPUT_PER_INSTANCE_DATA;
+        polygonLayout[3].InstanceDataStepRate = 1;
+
+
+/*
+        polygonLayout[3].SemanticName         = "BLENDINDICES";
+        polygonLayout[3].SemanticIndex        = 0;
+        polygonLayout[3].Format               = DXGI_FORMAT_R32G32B32A32_UINT;
+        polygonLayout[3].InputSlot            = 1;
+        polygonLayout[3].AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+        polygonLayout[3].InputSlotClass       = D3D11_INPUT_PER_INSTANCE_DATA;
+        polygonLayout[3].InstanceDataStepRate = 1;
+*/
+
 	}
 
 	// Get a count of the elements in the layout.
@@ -248,19 +284,19 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	// All other settings for the sampler state description are defaults.
 
 	// Create a texture sampler state description.
-	samplerDesc.Filter = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
-	samplerDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
-	samplerDesc.MipLODBias = 0.0f;
-	samplerDesc.MaxAnisotropy = 1;
+	samplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
+	samplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.AddressW       = D3D11_TEXTURE_ADDRESS_WRAP;
+	samplerDesc.MipLODBias     = 0.0f;
+	samplerDesc.MaxAnisotropy  = 1;
 	samplerDesc.ComparisonFunc = D3D11_COMPARISON_ALWAYS;
 	samplerDesc.BorderColor[0] = 0;
 	samplerDesc.BorderColor[1] = 0;
 	samplerDesc.BorderColor[2] = 0;
 	samplerDesc.BorderColor[3] = 0;
-	samplerDesc.MinLOD = 0;
-	samplerDesc.MaxLOD = D3D11_FLOAT32_MAX;
+	samplerDesc.MinLOD         = 0;
+	samplerDesc.MaxLOD         = D3D11_FLOAT32_MAX;
 
 	// Create the texture sampler state.
 	result = device->CreateSamplerState(&samplerDesc, &m_sampleState);
@@ -340,6 +376,62 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 	MessageBox(hwnd, L"Error compiling shader. Check '__shader-error.txt' for message.", shaderFilename, MB_OK);
 
 	return;
+}
+
+// SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
+// Note that the texture has to be set before rendering of the buffer occurs.
+// Теперь метод принимает в качестве параметра массив стекстур
+bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView **textureArray, int X, int Y)
+{
+	HRESULT					 result;
+	D3D11_MAPPED_SUBRESOURCE mappedResource;
+	unsigned int			 bufferNumber;
+	MatrixBufferType		*dataPtr;
+
+
+	// Transpose the matrices to prepare them for the shader
+	D3DXMatrixTranspose(&worldMatrix,	   &worldMatrix     );
+	D3DXMatrixTranspose(&viewMatrix,	   &viewMatrix      );
+	D3DXMatrixTranspose(&projectionMatrix, &projectionMatrix);
+
+	// Lock the constant buffer so it can be written to
+	result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
+	if (FAILED(result))
+		return false;
+
+	// Get a pointer to the data in the constant buffer
+	dataPtr = (MatrixBufferType*)mappedResource.pData;
+
+	// Copy the matrices into the constant buffer
+	dataPtr->world		= worldMatrix;
+	dataPtr->view		= viewMatrix;
+	dataPtr->projection = projectionMatrix;
+	dataPtr->testX		= X;
+	dataPtr->testY		= Y;
+	dataPtr->z1         = 0.0;
+	dataPtr->z2         = 0.0;
+
+	// Unlock the constant buffer.
+	deviceContext->Unmap(m_matrixBuffer, 0);
+
+	// Set the position of the constant buffer in the vertex shader
+	bufferNumber = 0;
+
+	// Now set the constant buffer in the vertex shader with the updated values
+	deviceContext->VSSetConstantBuffers(bufferNumber, 1, &m_matrixBuffer);
+
+	// The SetShaderParameters function has been modified from the previous tutorial to include setting the texture in the pixel shader now.
+	// Set shader texture resource in the pixel shader.
+    // +++
+    // Here is where the texture array is set before rendering.
+    // The PSSetShaderResources function is used to set the texture array.
+    // The first parameter is where to start in the array.
+    // The second parameter is how many textures are in the array that is being passed in.
+    // And the third parameter is a pointer to the texture array.
+	deviceContext->PSSetShaderResources(0, 2, textureArray);
+
+	return true;
 }
 
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
@@ -445,7 +537,7 @@ void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceCont
 
 	// Set the vertex and pixel shaders that will be used to render this triangle.
 	deviceContext->VSSetShader(m_vertexShader, NULL, 0);
-	deviceContext->PSSetShader(m_pixelShader, NULL, 0);
+	deviceContext->PSSetShader(m_pixelShader,  NULL, 0);
 
 	// The RenderShader function has been changed to include setting the sample state in the pixel shader before rendering.
 	// Set the sampler state in the pixel shader.

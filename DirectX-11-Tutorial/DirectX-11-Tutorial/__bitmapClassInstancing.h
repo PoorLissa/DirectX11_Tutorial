@@ -1,18 +1,15 @@
+#pragma once
 // --------------------------------------------------------------------------------------------------------
 // BitmapClass will be used to represent an individual 2D image that needs to be rendered to the screen.
 // For every 2D image you have you will need a new BitmapClass for each.
 // Note that this class is just the ModelClass re-written to handle 2D images instead of 3D objects.
 // --------------------------------------------------------------------------------------------------------
 
-#ifndef _BITMAPCLASSINSTANCING_H_
-#define _BITMAPCLASSINSTANCING_H_
-
 #include <d3d11.h>
 #include <d3dx10math.h>
 #include <vector>
 
-#include "__textureClass.h"
-
+#include "__textureArrayClass.h"
 
 
 class BitmapClass_Instancing {
@@ -30,7 +27,7 @@ class BitmapClass_Instancing {
 	// You can modify multiple things at once for each instance also.
 	struct InstanceType {
 		D3DXVECTOR3 position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
-		//float		angle;
+        unsigned int material;
 	};
 
  public:
@@ -38,11 +35,11 @@ class BitmapClass_Instancing {
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
    ~BitmapClass_Instancing();
 
-	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);
+	bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);
 	void Shutdown();
 	bool Render(ID3D11DeviceContext *, int, int);
 
-	ID3D11ShaderResourceView* GetTexture();
+	ID3D11ShaderResourceView** GetTextureArray();
 
 	// We have two new functions for getting the vertex and instance counts.
 	// We also removed the helper function which previously returned the index count as the instance count has replaced that.
@@ -57,13 +54,13 @@ class BitmapClass_Instancing {
 	bool UpdateBuffers(ID3D11DeviceContext *, int, int);
 	void RenderBuffers(ID3D11DeviceContext *);
 
-	bool LoadTexture(ID3D11Device *, WCHAR *);
-	void ReleaseTexture();
+    bool LoadTextures(ID3D11Device *, WCHAR *, WCHAR *);
+	void ReleaseTextures();
 
  protected:
-	ID3D11Buffer	*m_vertexBuffer;
-	int				 m_vertexCount;
-	TextureClass	*m_Texture;
+	ID3D11Buffer	  *m_vertexBuffer;
+	int				   m_vertexCount;
+	TextureArrayClass *m_TextureArray;
 
 	// The BitmapClass will need to maintain some extra information that a 3D model wouldn't,
 	// such as the screen size, the bitmap size, and the last place it was rendered.
@@ -78,5 +75,3 @@ class BitmapClass_Instancing {
 	// The index count has been replaced with the instance count.
 	int				 m_instanceCount;
 };
-
-#endif

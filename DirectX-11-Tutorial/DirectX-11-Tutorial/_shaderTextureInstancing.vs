@@ -17,12 +17,14 @@ struct VertexInputType
 	float4 position			: POSITION;
 	float2 tex				: TEXCOORD0;
 	float3 instancePosition : TEXCOORD1;
+    uint material           : BLENDINDICES0;
 };
 
 struct PixelInputType
 {
 	float4 position : SV_POSITION;
 	float2 tex		: TEXCOORD0;
+    uint material   : BLENDINDICES0;
 };
 
 // Vertex Shader
@@ -99,7 +101,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 	output.position.y = input.position.x * Sin + input.position.y * Cos;
 
 	output.position.z = 1.0f;
-	output.position.w = 1.0f;
+    output.position.w = 1.0f;
 
     output.position.x += input.instancePosition.x;
 	output.position.y += input.instancePosition.y;
@@ -111,6 +113,8 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
 	// Store the texture coordinates for the pixel shader.
     output.tex = input.tex;
+
+    output.material = input.material;
 
 	return output;
 }

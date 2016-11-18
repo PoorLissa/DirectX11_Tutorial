@@ -226,7 +226,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		}
 
 		// от размера изображения при работе с Instancing скорость работы не зависит. Для 15k битмапов (3x3) и (256x256) FPS - одинаковый 
-		result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+        result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
 			return false;
@@ -239,20 +239,20 @@ sprIns2 = new InstancedSprite_PersistBuf;
 if (!sprIns2)
     return false;
 
-result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic4.png", 24, 24);
 if (!result) {
     MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
     return false;
 }
 
-result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
 if (!result) {
     MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
     return false;
 }
 
-int numPic = 3;
-for (int i = 0; i < numPic; i++) {
+int numPic = 5;
+for (int i = 0; i < numPic+1; i++) {
 
     int x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
     int y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
@@ -261,8 +261,6 @@ for (int i = 0; i < numPic; i++) {
 
     monstersVector.push_back(b);
 }
-
-monstersVector.push_back(new Player(100, 100));
 
 		m_BitmapSprite = new BitmapClass;
 		if (!m_BitmapSprite)
@@ -677,7 +675,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                 sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
                     worldMatrixZ * matTrans * matScale,
-                        viewMatrix, orthoMatrix, sprIns1->GetTexture(), mouseX - xCenter, yCenter - mouseY);
+                        viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), mouseX - xCenter, yCenter - mouseY);
 
             if (!result)
                 return false;
