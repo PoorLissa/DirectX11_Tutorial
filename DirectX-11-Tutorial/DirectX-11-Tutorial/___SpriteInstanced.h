@@ -141,7 +141,10 @@ class InstancedSprite : public BitmapClass_Instancing {
 
         counter++;
         if (counter > 20) {
-            zzz = zzz == 0 ? 1 : 0;
+            zzz++;
+            if (zzz > 3)
+                zzz = 0;
+
             counter = 0;
         }
 

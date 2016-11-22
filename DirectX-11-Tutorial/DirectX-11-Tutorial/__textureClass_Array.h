@@ -15,6 +15,7 @@ class TextureArrayClass {
    ~TextureArrayClass();
 
     bool Initialize(ID3D11Device*, WCHAR*, WCHAR*);
+    bool Initialize(ID3D11Device*, WCHAR**, const UINT);
     void Shutdown();
 
     // The GetTextureArray function returns a pointer to the texture Array resource so that it can be used for rendering by shaders
@@ -22,6 +23,6 @@ class TextureArrayClass {
 
  private:
     //ID3D11ShaderResourceView *m_textures[2];
-    unsigned int texCount;
+    UINT m_texQty;
     ID3D11ShaderResourceView   *m_textures;
 };

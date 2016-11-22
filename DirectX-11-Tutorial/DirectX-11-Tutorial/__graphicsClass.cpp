@@ -189,7 +189,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
-		result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
+		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
+        result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
 		if (!result) {
 			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
 			return false;
@@ -211,7 +212,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             return false;
 
         //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic1.bmp", L"../DirectX-11-Tutorial/data/pic2.bmp", 48, 48);
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", L"../DirectX-11-Tutorial/data/pic5.png", 256, 256);
+        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight,
+            L"../DirectX-11-Tutorial/data/pic4.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
         //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/_pic1.png", L"../DirectX-11-Tutorial/data/_pic2.png", 48, 48);
         if (!result) {
             MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
@@ -219,7 +221,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         }
 
         // ??? показыает меньше на один
-        int numPic = 2;
+        int numPic = 3;
         for (int i = 0; i < numPic; i++) {
             int x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
             int y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
@@ -550,7 +552,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             //D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
             //D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
             //D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
-            //D3DXMatrixScaling(&matScale, 0.3f, 0.3f, 1.0f);
+            //D3DXMatrixScaling(&matScale, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f);
 
             // The Render function for the shader now requires the vertex and instance count from the model object.
             // Render the model using the texture shader.

@@ -1,10 +1,9 @@
-// We have added a two element texture array resource here for the two different textures.
-// Texture arrays are more efficient that using single texture resources in terms of performance on the graphics card.
-// Switching textures was very costly in earlier versions of DirectX forcing most engines to be written around texture and material switches.
-// Texture arrays help reduce that performance cost.
+// Шейдер теперь принимает на вход массив текстур
+// Доступ к разным текстурам осуществляется посредством третьего параметра, передаваемого в семплер
+//  Пример:
+// float4 textureColor1 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 0));
+// float4 textureColor2 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 1));
 
-//Texture2D shaderTexture;
-//Texture2D    ShaderTextures[128];   // maximum ps_5_0 texture register index is 128
 Texture2DArray myTextureArray;
 SamplerState   SampleType;
 
@@ -20,40 +19,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 {
     float4 textureColor;
 
-    //textureColor = myTexture.Sample(SampleType, float3(0.5, 0.5, 1));
-
     textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.material));
 
-    //textureColor = myTexture.Sample(SampleType, float3(input.tex.x, input.tex.y, 1));
-
     return textureColor;
-
-    //discard;
-
-	// Sample the pixel color from the texture using the sampler at this texture coordinate location.
-	//textureColor1 = ShaderTextures[0].Sample(SampleType, input.tex);
-    //textureColor2 = ShaderTextures[1].Sample(SampleType, input.tex);
-/*
-    switch (input.material) {
-    
-        case 0:
-            discard;
-            return float4(0.85, 0.85, 0.25, 1.0);
-            break;
-
-        case 1:
-            textureColor = ShaderTextures[0].Sample(SampleType, input.tex);
-            break;
-
-        case 2:
-            textureColor = ShaderTextures[1].Sample(SampleType, input.tex);
-            break;
-
-
-        default:
-            return float4(0.0, 0.0, 1.0, 1.0);
-    }
-
-    return textureColor;
-*/
 }

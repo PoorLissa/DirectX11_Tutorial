@@ -90,7 +90,7 @@ bool TextureShaderClass::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR
 	unsigned int numElements;
 	D3D11_BUFFER_DESC matrixBufferDesc;
 
-	//We have a new variable to hold the description of the texture sampler that will be setup in this function.
+	// We have a new variable to hold the description of the texture sampler that will be setup in this function.
 	D3D11_SAMPLER_DESC samplerDesc;
 
 

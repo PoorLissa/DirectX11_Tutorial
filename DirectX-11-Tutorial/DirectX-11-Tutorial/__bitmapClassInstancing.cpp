@@ -532,8 +532,21 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename1,
     if (!m_TextureArray)
         return false;
 
+    // ****************************************************************************
+
+    WCHAR *names[] = {
+        L"../DirectX-11-Tutorial/data/pic4.png",
+        L"../DirectX-11-Tutorial/data/pic5.png",
+        L"../DirectX-11-Tutorial/data/_pic1.png",
+        L"../DirectX-11-Tutorial/data/_pic2.png"
+    };
+
+    result = m_TextureArray->Initialize(device, names, sizeof(names) / sizeof(names[0]));
+
+    // ****************************************************************************
+
     // Initialize the texture object.
-    result = m_TextureArray->Initialize(device, filename1, filename2);
+    //result = m_TextureArray->Initialize(device, filename1, filename2);
     if (!result)
         return false;
 

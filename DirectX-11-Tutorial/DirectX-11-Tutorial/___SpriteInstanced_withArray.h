@@ -101,7 +101,7 @@ class Monster : public gameObjectBase {
 class InstancedSprite : public BitmapClass_Instancing {
  public:
     InstancedSprite(int width, int height) : scrWidth(width), scrHeight(height) {}
-    ~InstancedSprite() {}
+   ~InstancedSprite() {}
 
     bool initializeInstances(ID3D11Device *device, std::vector<gameObjectBase*> *vec) {
 
