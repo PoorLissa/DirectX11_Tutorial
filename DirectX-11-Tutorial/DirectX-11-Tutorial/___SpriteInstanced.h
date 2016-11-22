@@ -1,7 +1,8 @@
 #pragma once
 
-#include "__bitmapClassInstancing.h"
 #include <iterator>
+#include "__bitmapClassInstancing.h"
+#include "Helpers.h"
 
 /*
     Класс инстанцированного спрайта.
@@ -11,18 +12,19 @@
     Логика использования:
 1. Инициализируем объект InstancedSprite
 2. Задаем вектор/список объектов, унаследованных от gameObjectBase
-3. При наступлении события onTimer пересчитываем координаты всех объектов списка и вызываем метод initializeInstances:
+3. При наступлении события onTimer пересчитываем координаты и параметры всех объектов списка и вызываем метод initializeInstances:
     if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector))
         return false;
-4. Вне зависимости от наступления собыитя onTimer вызываем метод Render...
+4. Вне зависимости от наступления события onTimer вызываем метод Render...
     if (!sprIns1->Render(m_d3d->GetDeviceContext(), xCenter - bmpSize / 2, yCenter - bmpSize / 2))
         return false;
-5. ... и отрисовывапем все при помощи шейдера:
+5. ... и отрисовываем все при помощи шейдера:
     result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                 sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
                     worldMatrixZ * matTrans * matScale,
                         viewMatrix, orthoMatrix, sprIns1->GetTexture(), mouseX - xCenter, yCenter - mouseY);
 */
+
 
 
 // Базовый класс для игрового объекта
@@ -36,9 +38,7 @@ class gameObjectBase {
     inline void setX(const int &x) {  _X = (float)x; }
     inline void setY(const int &y) {  _Y = (float)y; }
 
-    // Метод для перемещения объекта, вызывается в общем цикле
-    // Параметр void* - указатель на опциональную структуру для передачи дополнительных параметров в метод
-    // Саму структуру придется определить внутри унаследованных классов
+    // метод для перемещения объекта, вызывается в общем цикле
     virtual void Move(const int &, const int &, void* = 0) = 0;
 
  protected:
@@ -67,19 +67,14 @@ class Monster : public gameObjectBase {
     Monster(int x, int y, float speed) : gameObjectBase(x, y, speed) {}
    ~Monster() {}
 
-    virtual void Move(const int &x, const int &y, void *param) {
-
-        if( param ) {
-            Params *p = (Params*)param;
-            int num = p->num;
-        }
+    virtual void Move(const int &x, const int &y, void *Param) {
 
         float dX = float(x) - _X;
         float dY = float(y) - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-        dX = div_Speed_by_Dist * dX * 0.1f;     // /* *float(rand()%20)*/
-        dY = div_Speed_by_Dist * dY * 0.1f;     // /* *float(rand()%20)*/
+        dX = /*float(rand()%20) * */div_Speed_by_Dist * dX * 0.1f;
+        dY = /*float(rand()%20) * */div_Speed_by_Dist * dY * 0.1f;
 
         _X += dX;
         _Y += dY;
@@ -87,10 +82,6 @@ class Monster : public gameObjectBase {
 
  private:
 
- public:
-    struct Params {
-        int num;
-    };
 };
 
 
@@ -128,31 +119,29 @@ class InstancedSprite : public BitmapClass_Instancing {
         // An instance can be modified in any way you want it to be.
         // For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
 
-        static float angle = 0.0f;
-        static int   Size  = 0;
-        static int counter = 0;
-        static int zzz = 1;
+        static float angle   = 0.0f;
+        static int   Size    = 0;
+        static int   counter = 0;
+        static int   zzz     = 0;
 
         // Координаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         std::vector<gameObjectBase*>::iterator iter, end;
         int i;
         for (i = 0, iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
-
-            instances[i].material = zzz;
-
             instances[i].position = D3DXVECTOR3(
                 float( (*iter)->getX() - 0.5f * scrWidth  - 0.5f * Size ),
                 float(-(*iter)->getY() + 0.5f * scrHeight - 0.5f * Size ),
                 float( 10 * angle / (i + 1) )
             );
+
+            instances[i].material = zzz;
         }
 
         angle += m_instanceCount * 1e-6f;
-        counter++;
 
-        if (counter > 10) {
-        
-            zzz = zzz == 2 ? 1 : 2;
+        counter++;
+        if (counter > 20) {
+            zzz = zzz == 0 ? 1 : 0;
             counter = 0;
         }
 
@@ -175,10 +164,7 @@ class InstancedSprite : public BitmapClass_Instancing {
         instanceData.SysMemSlicePitch = 0;
 
         // очищаем m_instanceBuffer, иначе при каждой новой отрисовке теряем память
-        if (m_instanceBuffer) {
-            m_instanceBuffer->Release();
-            m_instanceBuffer = 0;
-        }
+        SAFE_RELEASE(m_instanceBuffer);
 
         // Create the instance buffer.
         HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
@@ -186,8 +172,7 @@ class InstancedSprite : public BitmapClass_Instancing {
             return false;
 
         // Release the instance array now that the instance buffer has been created and loaded.
-        delete[] instances;
-        instances = 0;
+        SAFE_DELETE_ARRAY(instances);
 
         return true;
     }
@@ -211,7 +196,7 @@ class InstancedSprite_PersistBuf : public BitmapClass_Instancing {
         m_instanceBuffer = 0;
     }
 
-    ~InstancedSprite_PersistBuf() {
+   ~InstancedSprite_PersistBuf() {
         // Release the instance array only once
         delete[] instances;
         instances = 0;

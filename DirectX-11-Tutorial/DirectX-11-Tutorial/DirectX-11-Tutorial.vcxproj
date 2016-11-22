@@ -100,12 +100,13 @@
     <ClCompile Include="__lightShaderClass.cpp" />
     <ClCompile Include="__modelClass.cpp" />
     <ClCompile Include="__systemClass.cpp" />
-    <ClCompile Include="__textureArrayClass.cpp" />
     <ClCompile Include="__textureClass.cpp" />
+    <ClCompile Include="__textureClass_Array.cpp" />
     <ClCompile Include="__textureShaderClass.cpp" />
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Helpers.h" />
     <ClInclude Include="__bitmapClass.h" />
     <ClInclude Include="__bitmapClassInstancing.h" />
     <ClInclude Include="__colorShaderClass.h" />
@@ -123,12 +124,13 @@
     <ClInclude Include="__modelClass.h" />
     <ClInclude Include="__systemClass.h" />
     <ClInclude Include="__textOutClass.h" />
-    <ClInclude Include="__textureArrayClass.h" />
     <ClInclude Include="__textureClass.h" />
+    <ClInclude Include="__textureClass_Array.h" />
     <ClInclude Include="__textureShaderClass.h" />
     <ClInclude Include="__textureShaderClassInstancing.h" />
     <ClInclude Include="___Sprite.h" />
     <ClInclude Include="___SpriteInstanced.h" />
+    <ClInclude Include="___SpriteInstanced_withArray.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="_shaderColor.ps" />
@@ -141,6 +143,8 @@
     <None Include="_shaderTexture.vs" />
     <None Include="_shaderTextureInstancing.ps" />
     <None Include="_shaderTextureInstancing.vs" />
+    <None Include="_shaderTextureInstancing_Arr.ps" />
+    <None Include="_shaderTextureInstancing_Arr.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

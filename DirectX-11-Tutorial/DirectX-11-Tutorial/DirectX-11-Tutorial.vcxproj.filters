@@ -77,7 +77,7 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="__textureArrayClass.cpp">
+    <ClCompile Include="__textureClass_Array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -148,7 +148,13 @@
     <ClInclude Include="___SpriteInstanced.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="__textureArrayClass.h">
+    <ClInclude Include="__textureClass_Array.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="___SpriteInstanced_withArray.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -181,6 +187,12 @@
       <Filter>Shader Files</Filter>
     </None>
     <None Include="_shaderTextureInstancing.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTextureInstancing_Arr.ps">
+      <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_shaderTextureInstancing_Arr.vs">
       <Filter>Shader Files</Filter>
     </None>
   </ItemGroup>

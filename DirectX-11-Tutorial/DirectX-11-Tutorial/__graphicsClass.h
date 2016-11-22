@@ -30,6 +30,8 @@
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
 
+#include "Helpers.h"
+
 // ---------------------------------------------------------------------------------------
 #define fullScreen
 #undef  fullScreen
@@ -69,11 +71,14 @@ class GraphicsClass {
     int scrHeight;
 
     d3dClass				*m_d3d;
-    CameraClass			*m_Camera;
+    CameraClass			    *m_Camera;
     ModelClass				*m_Model;
 
-    //ColorShaderClass		*m_ColorShader;
-    TextureShaderClass		*m_TextureShader;
+    //ColorShaderClass		        *m_ColorShader;
+
+    TextureShaderClass		        *m_TextureShader;
+    TextureShaderClass_Instancing   *m_TextureShaderIns;
+    TextureShaderClass_Instancing   *m_TextureShaderInsArr;
 
     LightShaderClass		*m_LightShader;
     LightClass				*m_Light;
@@ -89,11 +94,11 @@ class GraphicsClass {
 	TextOutClass			*m_TextOut;
 
 	BitmapClass_Instancing	*m_BitmapIns;
-	TextureShaderClass_Instancing *m_TextureShaderIns;
+    BitmapClass_Instancing	*m_BitmapInsArray;
 
     // test
-    InstancedSprite            *sprIns1;
-    InstancedSprite_PersistBuf *sprIns2;
+    InstancedSprite *sprIns1;
+    InstancedSprite *sprIns2;
 };
 
 #endif

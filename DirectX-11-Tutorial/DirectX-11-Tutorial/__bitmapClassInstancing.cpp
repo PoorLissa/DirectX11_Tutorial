@@ -6,7 +6,8 @@
 BitmapClass_Instancing::BitmapClass_Instancing()
 {
 	m_vertexBuffer   = 0;
-	m_TextureArray   = 0;
+	m_Texture	     = 0;
+    m_TextureArray   = 0;
 	m_instanceBuffer = 0;
 }
 
@@ -18,7 +19,7 @@ BitmapClass_Instancing::~BitmapClass_Instancing()
 {
 }
 
-bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename1, WCHAR* textureFilename2, int bitmapWidth, int bitmapHeight)
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename, int bitmapWidth, int bitmapHeight)
 {
 	bool result;
 
@@ -28,7 +29,7 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	// you can set this to any size and use any size texture you want also.
 
 	// Store the screen size.
-	m_screenWidth  = screenWidth;
+	m_screenWidth =  screenWidth;
 	m_screenHeight = screenHeight;
 
 	// Store the size in pixels that this bitmap should be rendered at.
@@ -53,20 +54,62 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 		return false;
 
 	// Load the texture for this model.
-    // We call the LoadTextures function which takes in multiple file names for textures
-    // that will be loaded into the texture array and rendered as a blended result on this model.
-    result = LoadTextures(device, textureFilename1, textureFilename2);
+	result = LoadTexture(device, textureFilename);
 	if (!result)
 		return false;
 
 	return true;
 }
 
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename1, WCHAR* textureFilename2, int bitmapWidth, int bitmapHeight)
+{
+    bool result;
+
+    // In the Initialize function both the screen size and image size are stored.
+    // These will be required for generating exact vertex locations during rendering.
+    // Note that the pixels of the image do not need to be exactly the same as the texture that is used,
+    // you can set this to any size and use any size texture you want also.
+
+    // Store the screen size.
+    m_screenWidth  = screenWidth;
+    m_screenHeight = screenHeight;
+
+    // Store the size in pixels that this bitmap should be rendered at.
+    m_bitmapWidth  = bitmapWidth;
+    m_bitmapHeight = bitmapHeight;
+
+    // The previous rendering location is first initialized to negative one.
+    // This will be an important variable that will locate where it last drew this image.
+    // If the image location hasn't changed since last frame then it won't modify the dynamic vertex buffer which will save us some cycles.
+
+    // Initialize the previous rendering position to negative one.
+    m_previousPosX = -1;
+    m_previousPosY = -1;
+
+
+
+    // The buffers are then created and the texture for this bitmap image is also loaded in.
+
+    // Initialize the vertex and index buffers.
+    result = InitializeBuffers(device);
+    if (!result)
+        return false;
+
+    // Load the texture for this model.
+    // We call the LoadTextures function which takes in multiple file names for textures
+    // that will be loaded into the texture array.
+    result = LoadTexture(device, textureFilename1, textureFilename2);
+    if (!result)
+        return false;
+
+    return true;
+}
+
 // The Shutdown function will release the vertex and index buffers as well as the texture that was used for the bitmap image.
 void BitmapClass_Instancing::Shutdown()
 {
 	// Release the model texture.
-	ReleaseTextures();
+	ReleaseTexture();
 
 	// Shutdown the vertex and index buffers.
 	ShutdownBuffers();
@@ -108,6 +151,11 @@ int BitmapClass_Instancing::GetInstanceCount()
 
 // The GetTexture function returns a pointer to the texture resource for this 2D image.
 // The shader will call this function so it has access to the image when drawing the buffers.
+ID3D11ShaderResourceView* BitmapClass_Instancing::GetTexture()
+{
+	return m_Texture->GetTexture();
+}
+
 ID3D11ShaderResourceView** BitmapClass_Instancing::GetTextureArray()
 {
     return m_TextureArray->GetTextureArray();
@@ -146,7 +194,7 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 	// To make it dynamic we set Usage to D3D11_USAGE_DYNAMIC and CPUAccessFlags to D3D11_CPU_ACCESS_WRITE in the description.
 
 	// Set up the description of the static vertex buffer.
-	vertexBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;
+	vertexBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;              // ??? how to get it to be default ???
 	vertexBufferDesc.ByteWidth		= sizeof(VertexType)* m_vertexCount;
 	vertexBufferDesc.BindFlags		= D3D11_BIND_VERTEX_BUFFER;
 	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
@@ -175,7 +223,7 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 		// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
 		// Set the number of instances in the array.
-		m_instanceCount = 1000;
+		m_instanceCount = 10;
 		
 		// Next we create a temporary instance array using the instance count.
 		// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -228,7 +276,8 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
 	return true;
 }
 
-// не используется с массивами данных, для этого существует класс-наследник
+// это был вариант для отладки, сейчас не используется, т.к. для этого существует класс-наследник,
+// который умеет инициализировать данные из входящего массива
 bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 
 	InstanceType			*instances;
@@ -455,32 +504,58 @@ void BitmapClass_Instancing::RenderBuffers(ID3D11DeviceContext *deviceContext)
 }
 
 // The following function loads the texture that will be used for drawing the 2D image.
-bool BitmapClass_Instancing::LoadTextures(ID3D11Device *device, WCHAR *filename1, WCHAR *filename2)
+bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
 	bool result;
 
 	// Create the texture object.
-	m_TextureArray = new TextureArrayClass;
-	if (!m_TextureArray)
+	m_Texture = new TextureClass;
+	if (!m_Texture)
 		return false;
 
 	// Initialize the texture object.
-    result = m_TextureArray->Initialize(device, filename1, filename2);
+	result = m_Texture->Initialize(device, filename);
 	if (!result)
 		return false;
 
 	return true;
 }
 
-//This ReleaseTexture function releases the texture that was loaded.
-void BitmapClass_Instancing::ReleaseTextures()
+// The following function loads the texture that will be used for drawing the 2D image
+// Версия для загрузки массива текстур
+bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename1, WCHAR *filename2)
 {
-	// Release the texture object.
-	if (m_TextureArray) {
+    bool result;
+
+    // Create the texture object.
+    m_TextureArray = new TextureArrayClass;
+    if (!m_TextureArray)
+        return false;
+
+    // Initialize the texture object.
+    result = m_TextureArray->Initialize(device, filename1, filename2);
+    if (!result)
+        return false;
+
+    return true;
+}
+
+//This ReleaseTexture function releases the texture that was loaded.
+void BitmapClass_Instancing::ReleaseTexture()
+{
+	// Release the texture object
+	if (m_Texture) {
+		m_Texture->Shutdown();
+		delete m_Texture;
+		m_Texture = 0;
+	}
+
+    // Release the texture array
+    if (m_TextureArray) {
         m_TextureArray->Shutdown();
         delete m_TextureArray;
         m_TextureArray = 0;
-	}
+    }
 
 	return;
 }

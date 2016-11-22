@@ -9,7 +9,9 @@
 #include <d3dx10math.h>
 #include <vector>
 
-#include "__textureArrayClass.h"
+#include "__textureClass.h"
+#include "__textureClass_Array.h"
+
 
 
 class BitmapClass_Instancing {
@@ -26,7 +28,7 @@ class BitmapClass_Instancing {
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
 	struct InstanceType {
-		D3DXVECTOR3 position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
+		D3DXVECTOR3  position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
         unsigned int material;
 	};
 
@@ -35,16 +37,22 @@ class BitmapClass_Instancing {
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
    ~BitmapClass_Instancing();
 
-	bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);
+	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);           // инициализация одной текстурой
+    bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);  // инициализация двумя текстурами - для массива текстур
 	void Shutdown();
 	bool Render(ID3D11DeviceContext *, int, int);
 
-	ID3D11ShaderResourceView** GetTextureArray();
+	ID3D11ShaderResourceView*  GetTexture();
+    ID3D11ShaderResourceView** GetTextureArray();
 
 	// We have two new functions for getting the vertex and instance counts.
 	// We also removed the helper function which previously returned the index count as the instance count has replaced that.
 	int GetVertexCount();
 	int GetInstanceCount();
+
+    // Получить размеры битмапа, переданные в класс при инициализации
+    inline int getBitmapWidth()     { return m_bitmapWidth;  }
+    inline int getBitmapHeight()    { return m_bitmapHeight; }
 
 	bool initializeInstances(ID3D11Device *);
 
@@ -54,13 +62,15 @@ class BitmapClass_Instancing {
 	bool UpdateBuffers(ID3D11DeviceContext *, int, int);
 	void RenderBuffers(ID3D11DeviceContext *);
 
-    bool LoadTextures(ID3D11Device *, WCHAR *, WCHAR *);
-	void ReleaseTextures();
+	bool LoadTexture(ID3D11Device *, WCHAR *);              // загрузка одной текстуры
+    bool LoadTexture(ID3D11Device *, WCHAR *, WCHAR *);     // загрузка двух текстур
+	void ReleaseTexture();                                  // освобождение одной текстуры
 
  protected:
-	ID3D11Buffer	  *m_vertexBuffer;
-	int				   m_vertexCount;
-	TextureArrayClass *m_TextureArray;
+	ID3D11Buffer	    *m_vertexBuffer;
+	int				     m_vertexCount;
+	TextureClass	    *m_Texture;
+    TextureArrayClass   *m_TextureArray;
 
 	// The BitmapClass will need to maintain some extra information that a 3D model wouldn't,
 	// such as the screen size, the bitmap size, and the last place it was rendered.
