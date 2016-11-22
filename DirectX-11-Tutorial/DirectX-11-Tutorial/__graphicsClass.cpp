@@ -210,11 +210,26 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         sprIns1 = new InstancedSprite(scrWidth, scrHeight);
         if (!sprIns1)
             return false;
+/*
+		WCHAR *names[] = {	L"../DirectX-11-Tutorial/data/001.png",
+							L"../DirectX-11-Tutorial/data/002.png",
+							L"../DirectX-11-Tutorial/data/003.png",
+							L"../DirectX-11-Tutorial/data/004.png",
+							L"../DirectX-11-Tutorial/data/005.png"
+		};
+*/
+		WCHAR *names[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
+							L"../DirectX-11-Tutorial/data/monster1/002.png",
+							L"../DirectX-11-Tutorial/data/monster1/003.png",
+							L"../DirectX-11-Tutorial/data/monster1/004.png",
+							L"../DirectX-11-Tutorial/data/monster1/005.png",
+							L"../DirectX-11-Tutorial/data/monster1/006.png",
+							L"../DirectX-11-Tutorial/data/monster1/007.png",
+							L"../DirectX-11-Tutorial/data/monster1/008.png"
+		};
 
-        //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic1.bmp", L"../DirectX-11-Tutorial/data/pic2.bmp", 48, 48);
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight,
-            L"../DirectX-11-Tutorial/data/pic4.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-        //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/_pic1.png", L"../DirectX-11-Tutorial/data/_pic2.png", 48, 48);
+        //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic1.bmp", 48, 48);
+        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, names, sizeof(names) / sizeof(names[0]), 30, 30);
         if (!result) {
             MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
             return false;
@@ -222,10 +237,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
         // ??? показыает меньше на один
         int numPic = 3;
+		srand(time(0));
         for (int i = 0; i < numPic; i++) {
             int x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
             int y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
-            monstersVector.push_back(new Monster(x, y, rand() % 50 * 0.1f));
+			float speed = (rand() % 250 + 1) * 0.1f;
+			int interval = 50/speed;
+            monstersVector.push_back(new Monster(x, y, speed, interval, 8));
         }
 /*
         sprIns2 = new InstancedSprite(scrWidth, scrHeight);
@@ -397,8 +415,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	}
 
 	// Clear the buffers to begin the scene.
-	//m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
-    m_d3d->BeginScene(0.9f, 0.9f, 0.9f, 1.0f);
+	m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+    //m_d3d->BeginScene(0.9f, 0.9f, 0.9f, 1.0f);
 
 	// Generate the view matrix based on the camera's position.
 	m_Camera->Render();

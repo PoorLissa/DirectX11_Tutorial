@@ -40,6 +40,8 @@ class gameObjectBase {
 
     // метод для перемещения объекта, вызывается в общем цикле
     virtual void Move(const int &, const int &, void* = 0) = 0;
+	// метод для получения текущей фазы анимации
+	virtual int  getAnimPhase() = 0;
 
  protected:
     bool    _Alive;
@@ -64,7 +66,7 @@ public:
 // Класс игрового объекта - Монстр
 class Monster : public gameObjectBase {
  public:
-    Monster(int x, int y, float speed) : gameObjectBase(x, y, speed) {}
+    Monster(int x, int y, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, speed), animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {}
    ~Monster() {}
 
     virtual void Move(const int &x, const int &y, void *Param) {
@@ -78,9 +80,26 @@ class Monster : public gameObjectBase {
 
         _X += dX;
         _Y += dY;
+
+		animInterval1--;
+
+		if( animInterval1 < 0 ) {
+			animInterval1 = animInterval0;
+
+			animPhase++;
+
+			if(animPhase > animQty)
+				animPhase = 0;
+		}
     }
 
+	int getAnimPhase() {
+		return animPhase;
+	}
+
  private:
+	 int animInterval0, animInterval1;
+	 int animQty, animPhase;
 
 };
 
@@ -121,8 +140,6 @@ class InstancedSprite : public BitmapClass_Instancing {
 
         static float angle   = 0.0f;
         static int   Size    = 0;
-        static int   counter = 0;
-        static int   zzz     = 0;
 
         // Координаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         std::vector<gameObjectBase*>::iterator iter, end;
@@ -134,19 +151,11 @@ class InstancedSprite : public BitmapClass_Instancing {
                 float( 10 * angle / (i + 1) )
             );
 
-            instances[i].material = zzz;
+            instances[i].material = (*iter)->getAnimPhase();
         }
 
         angle += m_instanceCount * 1e-6f;
 
-        counter++;
-        if (counter > 20) {
-            zzz++;
-            if (zzz > 3)
-                zzz = 0;
-
-            counter = 0;
-        }
 
 
         // The instance buffer description is setup exactly the same as a vertex buffer description.

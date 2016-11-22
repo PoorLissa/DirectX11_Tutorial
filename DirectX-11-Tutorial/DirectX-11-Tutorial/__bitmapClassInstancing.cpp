@@ -61,7 +61,7 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	return true;
 }
 
-bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename1, WCHAR* textureFilename2, int bitmapWidth, int bitmapHeight)
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR** textureFilenames, unsigned int filesQty, int bitmapWidth, int bitmapHeight)
 {
     bool result;
 
@@ -98,7 +98,7 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
     // Load the texture for this model.
     // We call the LoadTextures function which takes in multiple file names for textures
     // that will be loaded into the texture array.
-    result = LoadTexture(device, textureFilename1, textureFilename2);
+    result = LoadTexture(device, textureFilenames, filesQty);
     if (!result)
         return false;
 
@@ -347,10 +347,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	instanceData.SysMemPitch	  = 0;
 	instanceData.SysMemSlicePitch = 0;
 
-	if ( m_instanceBuffer ) {
-		m_instanceBuffer->Release();
-		m_instanceBuffer = 0;
-	}
+	SAFE_RELEASE(m_instanceBuffer);
 
 	// Create the instance buffer.
 	HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
@@ -358,8 +355,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 		return false;
 
 	// Release the instance array now that the instance buffer has been created and loaded.
-	delete[] instances;
-	instances = 0;
+	SAFE_DELETE_ARRAY(instances);
 
 	return true;
 }
@@ -367,17 +363,11 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 // ShutdownBuffers releases the vertex and index buffers.
 void BitmapClass_Instancing::ShutdownBuffers()
 {
-	// Release the instance buffer.
-	if (m_instanceBuffer) {
-		m_instanceBuffer->Release();
-		m_instanceBuffer = 0;
-	}
+	// Release the instance buffer
+	SAFE_RELEASE(m_instanceBuffer);
 
-	// Release the vertex buffer.
-	if (m_vertexBuffer) {
-		m_vertexBuffer->Release();
-		m_vertexBuffer = 0;
-	}
+	// Release the vertex buffer
+	SAFE_RELEASE(m_vertexBuffer);
 
 	return;
 }
@@ -459,8 +449,7 @@ bool BitmapClass_Instancing::UpdateBuffers(ID3D11DeviceContext *deviceContext, i
 	deviceContext->Unmap(m_vertexBuffer, 0);
 
 	// Release the vertex array as it is no longer needed.
-	delete[] vertices;
-	vertices = 0;
+	SAFE_DELETE_ARRAY(vertices);
 
 	return true;
 }
@@ -508,10 +497,8 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
 	bool result;
 
-	// Create the texture object.
-	m_Texture = new TextureClass;
-	if (!m_Texture)
-		return false;
+	// Create the texture object
+	SAFE_INIT(m_Texture, TextureClass);
 
 	// Initialize the texture object.
 	result = m_Texture->Initialize(device, filename);
@@ -523,30 +510,14 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 
 // The following function loads the texture that will be used for drawing the 2D image
 // Версия для загрузки массива текстур
-bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename1, WCHAR *filename2)
+bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR **fileNames, unsigned int fileQty)
 {
     bool result;
 
-    // Create the texture object.
-    m_TextureArray = new TextureArrayClass;
-    if (!m_TextureArray)
-        return false;
+    // Create the texture object
+	SAFE_INIT(m_TextureArray, TextureArrayClass);
 
-    // ****************************************************************************
-
-    WCHAR *names[] = {
-        L"../DirectX-11-Tutorial/data/pic4.png",
-        L"../DirectX-11-Tutorial/data/pic5.png",
-        L"../DirectX-11-Tutorial/data/_pic1.png",
-        L"../DirectX-11-Tutorial/data/_pic2.png"
-    };
-
-    result = m_TextureArray->Initialize(device, names, sizeof(names) / sizeof(names[0]));
-
-    // ****************************************************************************
-
-    // Initialize the texture object.
-    //result = m_TextureArray->Initialize(device, filename1, filename2);
+    result = m_TextureArray->Initialize(device, fileNames, fileQty);
     if (!result)
         return false;
 
@@ -557,18 +528,10 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename1,
 void BitmapClass_Instancing::ReleaseTexture()
 {
 	// Release the texture object
-	if (m_Texture) {
-		m_Texture->Shutdown();
-		delete m_Texture;
-		m_Texture = 0;
-	}
+	SAFE_SHUTDOWN(m_Texture);
 
     // Release the texture array
-    if (m_TextureArray) {
-        m_TextureArray->Shutdown();
-        delete m_TextureArray;
-        m_TextureArray = 0;
-    }
+	SAFE_SHUTDOWN(m_TextureArray);
 
 	return;
 }

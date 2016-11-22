@@ -11,6 +11,7 @@
 
 #include "__textureClass.h"
 #include "__textureClass_Array.h"
+#include "Helpers.h"
 
 
 
@@ -37,8 +38,10 @@ class BitmapClass_Instancing {
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
    ~BitmapClass_Instancing();
 
-	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);           // инициализация одной текстурой
-    bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);  // инициализация двумя текстурами - для массива текстур
+	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);					// инициализация одной текстурой
+    //bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);			// инициализация двумя текстурами - для массива текстур
+	bool Initialize(ID3D11Device *, int, int, WCHAR**, unsigned int, int, int);		// инициализация масивом текстур
+
 	void Shutdown();
 	bool Render(ID3D11DeviceContext *, int, int);
 
@@ -62,9 +65,11 @@ class BitmapClass_Instancing {
 	bool UpdateBuffers(ID3D11DeviceContext *, int, int);
 	void RenderBuffers(ID3D11DeviceContext *);
 
-	bool LoadTexture(ID3D11Device *, WCHAR *);              // загрузка одной текстуры
-    bool LoadTexture(ID3D11Device *, WCHAR *, WCHAR *);     // загрузка двух текстур
-	void ReleaseTexture();                                  // освобождение одной текстуры
+	bool LoadTexture(ID3D11Device *, WCHAR *);					// загрузка одной текстуры
+    bool LoadTexture(ID3D11Device *, WCHAR *, WCHAR *);			// загрузка двух текстур
+	bool LoadTexture(ID3D11Device *, WCHAR**, unsigned int);	// загрузка массива текстур
+
+	void ReleaseTexture();										// освобождение текстур
 
  protected:
 	ID3D11Buffer	    *m_vertexBuffer;
