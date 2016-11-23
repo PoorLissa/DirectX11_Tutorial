@@ -18,8 +18,9 @@ class TextureArrayClass {
     bool Initialize(ID3D11Device*, WCHAR**, const int &);
     void Shutdown();
 
-    // The GetTextureArray function returns a pointer to the texture Array resource so that it can be used for rendering by shaders
-    ID3D11ShaderResourceView **GetTextureArray();
+    // GetTexture is the function that is called by other objects that need access to the texture shader resource so that they can use the texture for rendering.
+    // GetTextureArray returns a pointer to the texture array so calling objects can have access to the textures in the texture array.
+    inline ID3D11ShaderResourceView **GetTextureArray() { return &m_textures; }
 
  private:
     //ID3D11ShaderResourceView *m_textures[2];

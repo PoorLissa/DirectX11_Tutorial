@@ -47,8 +47,7 @@ bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR **fileNames, cons
     // Создаем ресурс с текстурами
     for (int i = 0; i < m_texQty; i++) {
         result = D3DX11CreateTextureFromFile(device, fileNames[i], &loadInfo, 0, (ID3D11Resource**)&pTexture2Ds[i], 0);
-        if (FAILED(result))
-            return false;
+        CHECK_FAILED(result);
     }
 
     //---------------------------------------------------------------------------------------
@@ -135,23 +134,23 @@ bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR* filename1, WCHAR
 {
     HRESULT result;
 
-    // Больше не используется, используем инициализацию списком файлов
     return false;
 
+    // Больше не используется, используем инициализацию списком файлов
+#if 0
     ID3D11ShaderResourceView **m_textures = new ID3D11ShaderResourceView*[2];
     if( !m_textures )
         return false;
 
     // Load the textures in (we can use DDS, BMP, PNG and JPG).
     result = D3DX11CreateShaderResourceViewFromFile(device, filename1, NULL, NULL, &m_textures[0], NULL);
-    if (FAILED(result))
-        return false;
+    CHECK_FAILED(result);
 
     result = D3DX11CreateShaderResourceViewFromFile(device, filename2, NULL, NULL, &m_textures[1], NULL);
-    if (FAILED(result))
-        return false;
+    CHECK_FAILED(result);
 
     return true;
+#endif
 }
 
 // The Shutdown function releases the texture resource if it has been loaded and then sets the pointer to null.
@@ -165,11 +164,4 @@ void TextureArrayClass::Shutdown()
     }
 
     return;
-}
-
-// GetTexture is the function that is called by other objects that need access to the texture shader resource so that they can use the texture for rendering.
-// GetTextureArray returns a pointer to the texture array so calling objects can have access to the textures in the texture array.
-ID3D11ShaderResourceView** TextureArrayClass::GetTextureArray()
-{
-    return &m_textures;
 }

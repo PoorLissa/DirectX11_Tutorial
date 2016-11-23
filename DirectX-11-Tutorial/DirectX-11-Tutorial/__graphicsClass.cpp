@@ -1,7 +1,7 @@
 #include "__graphicsClass.h"
 
 BitmapClass* Sprite::Bitmap = 0;	// Инициализируем статический объект класса в глобальной области. Почему-то он не хочет инициализироваться в файле класса, а хочет только здесь.
-#define NUM 10000
+#define NUM 2
 
 std::vector<gameObjectBase*> monstersVector;
 
@@ -187,7 +187,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
             int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
 			float  speed = (rand() % 250 + 1) * 0.1f;
-			int interval = 50/speed;
+            int interval = 50/speed;
+                interval = 3;
             monstersVector.push_back(new Monster(x, y, speed, interval, 8));
         }
 

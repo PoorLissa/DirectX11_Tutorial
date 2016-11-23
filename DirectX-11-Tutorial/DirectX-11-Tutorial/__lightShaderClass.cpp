@@ -1,9 +1,5 @@
 #include "__lightShaderClass.h"
 
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
-
 LightShaderClass::LightShaderClass()
 {
 	m_vertexShader = 0;

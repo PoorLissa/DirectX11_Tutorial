@@ -1,9 +1,5 @@
 #include "__textureShaderClass.h"
 
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
-
 TextureShaderClass::TextureShaderClass()
 {
 	m_vertexShader = 0;

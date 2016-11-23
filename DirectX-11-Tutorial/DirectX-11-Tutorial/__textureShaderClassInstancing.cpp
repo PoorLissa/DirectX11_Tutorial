@@ -1,18 +1,12 @@
 #include "__textureShaderClassInstancing.h"
 
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
-
 TextureShaderClass_Instancing::TextureShaderClass_Instancing()
 {
 	m_vertexShader = 0;
 	m_pixelShader  = 0;
 	m_layout       = 0;
 	m_matrixBuffer = 0;
-
-	// The new sampler variable is set to null in the class constructor.
-	m_sampleState = 0;
+	m_sampleState  = 0;
 }
 
 TextureShaderClass_Instancing::TextureShaderClass_Instancing(const TextureShaderClass_Instancing& other)
@@ -143,32 +137,30 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Load in the new texture vertex and pixel shaders.
 	// Compile the vertex shader code.
-	//result = D3DX11CompileFromFile(vsFilename, NULL, NULL, "TextureVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &vertexShaderBuffer, &errorMessage, NULL);
 	result = D3DCompileFromFile(vsFilename, NULL, NULL, "TextureVertexShader", "vs_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &vertexShaderBuffer, &errorMessage);
 
 	if (FAILED(result)) {
 
-		// If the shader failed to compile it should have writen something to the error message.
 		if (errorMessage)
+            // If the shader failed to compile it should have writen something to the error message
 			OutputShaderErrorMessage(errorMessage, hwnd, vsFilename);
 		else
-			// If there was nothing in the error message then it simply could not find the shader file itself.
+			// If there was nothing in the error message then it simply could not find the shader file itself
 			MessageBox(hwnd, vsFilename, L"Missing Shader File", MB_OK);
 
 		return false;
 	}
 
 	// Compile the pixel shader code.
-	//result = D3DX11CompileFromFile(psFilename, NULL, NULL, "TexturePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, NULL, &pixelShaderBuffer, &errorMessage, NULL);
 	result = D3DCompileFromFile(psFilename, NULL, NULL, "TexturePixelShader", "ps_5_0", D3D10_SHADER_ENABLE_STRICTNESS, 0, &pixelShaderBuffer, &errorMessage);
 
 	if (FAILED(result)) {
 
-		// If the shader failed to compile it should have writen something to the error message.
 		if (errorMessage)
+            // If the shader failed to compile it should have writen something to the error message
 			OutputShaderErrorMessage(errorMessage, hwnd, psFilename);
 		else
-			// If there was  nothing in the error message then it simply could not find the file itself.
+			// If there was  nothing in the error message then it simply could not find the file itself
 			MessageBox(hwnd, psFilename, L"Missing Shader File", MB_OK);
 
 		return false;
@@ -176,13 +168,11 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Create the vertex shader from the buffer.
 	result = device->CreateVertexShader(vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), NULL, &m_vertexShader);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	// Create the pixel shader from the buffer.
 	result = device->CreatePixelShader(pixelShaderBuffer->GetBufferPointer(), pixelShaderBuffer->GetBufferSize(), NULL, &m_pixelShader);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 
 
@@ -208,7 +198,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	polygonLayout[1].InputSlotClass       = D3D11_INPUT_PER_VERTEX_DATA;
   	polygonLayout[1].InstanceDataStepRate = 0;
 
-	// new instancing
+	// new for instancing
 	{
 		// For instancing we are going to add a third element to the layout.
 		// As we plan to position the four instanced triangles in different positions in 3D space we need to send the shader an extra position vector
@@ -250,8 +240,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Create the vertex input layout.
 	result = device->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &m_layout);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	// Release the vertex shader buffer and pixel shader buffer since they are no longer needed.
 	vertexShaderBuffer->Release();
@@ -270,8 +259,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Create the constant buffer pointer so we can access the vertex shader constant buffer from within this class.
 	result = device->CreateBuffer(&matrixBufferDesc, NULL, &m_matrixBuffer);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 
 
@@ -286,6 +274,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	// All other settings for the sampler state description are defaults.
 
 	// Create a texture sampler state description.
+    // ??? !!! optimize - try using another filter in order to get more speed !!! ???
 	samplerDesc.Filter         = D3D11_FILTER_MIN_MAG_MIP_LINEAR;
  	samplerDesc.AddressU       = D3D11_TEXTURE_ADDRESS_WRAP;
  	samplerDesc.AddressV       = D3D11_TEXTURE_ADDRESS_WRAP;
@@ -302,8 +291,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 	// Create the texture sampler state.
 	result = device->CreateSamplerState(&samplerDesc, &m_sampleState);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	return true;
 }
@@ -400,8 +388,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 
 	// Lock the constant buffer so it can be written to
 	result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	// Get a pointer to the data in the constant buffer
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
@@ -455,8 +442,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 
 	// Lock the constant buffer so it can be written to
 	result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	// Get a pointer to the data in the constant buffer
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
@@ -502,8 +488,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 
 	// Lock the constant buffer so it can be written to.
 	result = deviceContext->Map(m_matrixBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
 	// Get a pointer to the data in the constant buffer.
 	dataPtr = (MatrixBufferType*)mappedResource.pData;

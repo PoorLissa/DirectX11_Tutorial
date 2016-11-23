@@ -140,15 +140,17 @@ class InstancedSprite : public BitmapClass_Instancing {
 
         // Координаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         std::vector<gameObjectBase*>::iterator iter, end;
-        int i;
-        for (i = 0, iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
+        int i = 0;
+        for (iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
             instances[i].position = D3DXVECTOR3(
                 float( ((*iter)->getX()) - 0.5f * scrWidth  ),
                 float(-((*iter)->getY()) + 0.5f * scrHeight ),
                 float( 10 * angle / (i + 1) )
             );
 
+            instances[i].position = D3DXVECTOR3( (50.0f) + 50.0f * i, (50.0f) + 50.0f * i, 50.0f );
             instances[i].material = (*iter)->getAnimPhase();
+            //instances[i].material = 1;
         }
 
         angle += m_instanceCount * 1e-6f;
@@ -177,8 +179,7 @@ class InstancedSprite : public BitmapClass_Instancing {
 
         // Create the instance buffer.
         HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
-        if (FAILED(result))
-            return false;
+        CHECK_FAILED(result);
 
         // Release the instance array now that the instance buffer has been created and loaded.
         SAFE_DELETE_ARRAY(instances);
@@ -286,8 +287,7 @@ class InstancedSprite_PersistBuf : public BitmapClass_Instancing {
 
         // Create the instance buffer.
         HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
-        if (FAILED(result))
-            return false;
+        CHECK_FAILED(result);
 
         return true;
     }

@@ -1,9 +1,5 @@
 #include "__fontShaderClass.h"
 
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
-
 FontShaderClass::FontShaderClass()
 {
 	m_vertexShader	 = 0;
