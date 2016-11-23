@@ -148,9 +148,7 @@ class InstancedSprite : public BitmapClass_Instancing {
                 float( 10 * angle / (i + 1) )
             );
 
-            instances[i].position = D3DXVECTOR3( (50.0f) + 50.0f * i, (50.0f) + 50.0f * i, 50.0f );
             instances[i].material = (*iter)->getAnimPhase();
-            //instances[i].material = 1;
         }
 
         angle += m_instanceCount * 1e-6f;

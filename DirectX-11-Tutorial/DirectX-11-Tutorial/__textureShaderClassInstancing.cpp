@@ -99,9 +99,9 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 
 // The Render 3 function now takes as input a vertex count and an instance count instead of the old index count.
 // The Render 3 function now takes as input a pointer to the texture array. This will give the shader access to the two textures for blending operations.
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
+bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount,
                                             D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
-                                            ID3D11ShaderResourceView** textureArray, int X, int Y)
+                                            ID3D11ShaderResourceView** textureArray, const int &X, const int &Y)
 {
     bool result;
     
@@ -301,35 +301,20 @@ void TextureShaderClass_Instancing::ShutdownShader()
 {
 	// The ShutdownShader function now releases the new sampler state that was created during initialization.
 
-	// Release the sampler state.
-	if (m_sampleState) {
-		m_sampleState->Release();
-		m_sampleState = 0;
-	}
+	// Release the sampler state
+    SAFE_RELEASE(m_sampleState);
 
-	// Release the matrix constant buffer.
-	if (m_matrixBuffer) {
-		m_matrixBuffer->Release();
-		m_matrixBuffer = 0;
-	}
+	// Release the matrix constant buffer
+    SAFE_RELEASE(m_matrixBuffer);
 
-	// Release the layout.
-	if (m_layout) {
-		m_layout->Release();
-		m_layout = 0;
-	}
+	// Release the layout
+    SAFE_RELEASE(m_layout);
 
-	// Release the pixel shader.
-	if (m_pixelShader) {
-		m_pixelShader->Release();
-		m_pixelShader = 0;
-	}
+	// Release the pixel shader
+    SAFE_RELEASE(m_pixelShader);
 
-	// Release the vertex shader.
-	if (m_vertexShader) {
-		m_vertexShader->Release();
-		m_vertexShader = 0;
-	}
+	// Release the vertex shader
+    SAFE_RELEASE(m_vertexShader);
 
 	return;
 }
@@ -371,9 +356,12 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
 // Теперь метод принимает в качестве параметра массив стекстур
+
+// ??? pass matrices as refs!!! 
+
 bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
-                                        ID3D11ShaderResourceView **textureArray, int X, int Y)
+                                        ID3D11ShaderResourceView **textureArray, const int &X, const int &Y)
 {
 	HRESULT					 result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -540,19 +528,19 @@ void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceCont
 // The RenderShader function is different in two ways.
 // First is that it takes as input the vertex and instance count instead of how it used to take in just an index count.
 // Secondly it uses the DrawInstanced function to draw the triangles instead of using the DrawIndexed function.
-void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount)
+void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount)
 {
-	// Set the vertex input layout.
+	// Set the vertex input layout
 	deviceContext->IASetInputLayout(m_layout);
 
-	// Set the vertex and pixel shaders that will be used to render this triangle.
+	// Set the vertex and pixel shaders that will be used to render this triangle
 	deviceContext->VSSetShader(m_vertexShader, NULL, 0);
 	deviceContext->PSSetShader(m_pixelShader,  NULL, 0);
 
-	// Set the sampler state in the pixel shader.
+	// Set the sampler state in the pixel shader
 	deviceContext->PSSetSamplers(0, 1, &m_sampleState);
 
-	// Render the triangle.
+	// Render the triangle
 	deviceContext->DrawInstanced(vertexCount, instanceCount, 0, 0);
 
 	return;
