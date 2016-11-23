@@ -13,7 +13,7 @@
 #include "__textureClass_Array.h"
 #include "Helpers.h"
 
-
+#define ciRef const int &
 
 class BitmapClass_Instancing {
  protected:
@@ -29,7 +29,7 @@ class BitmapClass_Instancing {
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
 	struct InstanceType {
-		D3DXVECTOR3  position;	// position содержит 2 координаты, по которым будет размешен спрайт, и угол поворота, на который этот спрайт нужно развернуть
+		D3DXVECTOR3  position;	// position содержит 2 координаты, по которым будет размещен спрайт, и угол поворота, на который этот спрайт нужно развернуть
         unsigned int material;
 	};
 
@@ -39,35 +39,35 @@ class BitmapClass_Instancing {
    ~BitmapClass_Instancing();
 
 	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);					// инициализация одной текстурой
-    //bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);			// инициализация двумя текстурами - для массива текстур
-	bool Initialize(ID3D11Device *, int, int, WCHAR**, unsigned int, int, int);		// инициализация масивом текстур
+    //bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);		// инициализация двумя текстурами - для массива текстур
+    bool Initialize(ID3D11Device *, ciRef, ciRef, WCHAR**, ciRef, ciRef, ciRef);    // инициализация масивом текстур
 
 	void Shutdown();
-	bool Render(ID3D11DeviceContext *, int, int);
+	bool Render(ID3D11DeviceContext *);
 
-	ID3D11ShaderResourceView*  GetTexture();
-    ID3D11ShaderResourceView** GetTextureArray();
+    // The GetTexture or GetTextureArray functions return a pointer to the texture resource for this 2D image
+    // The shader will call one of these functions so it has access to the image when drawing the buffers
+    inline ID3D11ShaderResourceView*  GetTexture()       { return m_Texture->GetTexture();           }
+    inline ID3D11ShaderResourceView** GetTextureArray()  { return m_TextureArray->GetTextureArray(); }
 
-	// We have two new functions for getting the vertex and instance counts.
-	// We also removed the helper function which previously returned the index count as the instance count has replaced that.
-	int GetVertexCount();
-	int GetInstanceCount();
+	// Получить количества вертексов и инстанций
+    inline int GetVertexCount()     { return m_vertexCount;   }
+    inline int GetInstanceCount()   { return m_instanceCount; }
 
     // Получить размеры битмапа, переданные в класс при инициализации
-    inline int getBitmapWidth()     { return m_bitmapWidth;  }
-    inline int getBitmapHeight()    { return m_bitmapHeight; }
+    inline int getBitmapWidth()     { return m_bitmapWidth;   }
+    inline int getBitmapHeight()    { return m_bitmapHeight;  }
 
 	bool initializeInstances(ID3D11Device *);
 
  protected:
-	bool InitializeBuffers(ID3D11Device *);
+    bool InitializeBuffers(ID3D11Device *, const int &, const int &);
 	void ShutdownBuffers();
-	bool UpdateBuffers(ID3D11DeviceContext *, int, int);
 	void RenderBuffers(ID3D11DeviceContext *);
 
 	bool LoadTexture(ID3D11Device *, WCHAR *);					// загрузка одной текстуры
     bool LoadTexture(ID3D11Device *, WCHAR *, WCHAR *);			// загрузка двух текстур
-	bool LoadTexture(ID3D11Device *, WCHAR**, unsigned int);	// загрузка массива текстур
+	bool LoadTexture(ID3D11Device *, WCHAR**, ciRef);           // загрузка массива текстур
 
 	void ReleaseTexture();										// освобождение текстур
 
@@ -82,11 +82,11 @@ class BitmapClass_Instancing {
 	// We have added extra private variables here to track that extra information.
 	int m_screenWidth,  m_screenHeight;
 	int m_bitmapWidth,  m_bitmapHeight;
-	int m_previousPosX, m_previousPosY;
 
 	// The BitmapClass now has an instance buffer instead of an index buffer.
 	// All buffers in DirectX 11 are generic so it uses the ID3D11Buffer type.
 	ID3D11Buffer	*m_instanceBuffer;
-	// The index count has been replaced with the instance count.
+
+	// The index count has been replaced with the instance count
 	int				 m_instanceCount;
 };

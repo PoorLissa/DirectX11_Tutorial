@@ -16,7 +16,7 @@ TextureArrayClass::~TextureArrayClass()
 
 // Инициализируем массив текстур файлами из списка
 // http://hghltd.yandex.net/yandbtm?fmode=inject&url=http%3A%2F%2Fwww.gamedev.net%2Ftopic%2F636900-how-to-create-a-texture2darray-from-files-in-dx11%2F&tld=ru&lang=en&la=1478087296&tm=1479712063&text=Texture2DArray%20ArraySize%20D3D11_TEXTURE2D_DESC&l10n=ru&mime=html&sign=a197c7315dc18e38bd2c486f93eccbc9&keyno=0
-bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR **fileNames, const UINT qty)
+bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR **fileNames, const int &qty)
 {
     if( qty <= 0 || !fileNames )
         return false;

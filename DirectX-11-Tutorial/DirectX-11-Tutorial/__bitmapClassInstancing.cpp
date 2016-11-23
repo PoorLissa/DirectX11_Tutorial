@@ -19,7 +19,9 @@ BitmapClass_Instancing::~BitmapClass_Instancing()
 {
 }
 
-bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename, int bitmapWidth, int bitmapHeight)
+// »нициализаци€ одной текстурой из файла
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight,
+                                            WCHAR* textureFilename, int bitmapWidth, int bitmapHeight)
 {
 	bool result;
 
@@ -41,15 +43,16 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	// If the image location hasn't changed since last frame then it won't modify the dynamic vertex buffer which will save us some cycles.
 
 	// Initialize the previous rendering position to negative one.
+/*
 	m_previousPosX = -1;
 	m_previousPosY = -1;
-
+*/
 
 
 	// The buffers are then created and the texture for this bitmap image is also loaded in.
 
 	// Initialize the vertex and index buffers.
-	result = InitializeBuffers(device);
+    result = InitializeBuffers(device, screenWidth / 2 - bitmapWidth / 2, screenHeight / 2 - bitmapHeight / 2);
 	if (!result)
 		return false;
 
@@ -61,7 +64,10 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	return true;
 }
 
-bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR** textureFilenames, unsigned int filesQty, int bitmapWidth, int bitmapHeight)
+// »нициализаци€ массивом текстур из списка файлов
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, const int &screenWidth, const int &screenHeight,
+                                            WCHAR** textureFilenames, const int &filesQty,
+                                            const int &bitmapWidth, const int &bitmapHeight)
 {
     bool result;
 
@@ -70,28 +76,18 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
     // Note that the pixels of the image do not need to be exactly the same as the texture that is used,
     // you can set this to any size and use any size texture you want also.
 
-    // Store the screen size.
+    // Store the screen size
     m_screenWidth  = screenWidth;
     m_screenHeight = screenHeight;
 
-    // Store the size in pixels that this bitmap should be rendered at.
+    // Store the size in pixels that this bitmap should be rendered at
     m_bitmapWidth  = bitmapWidth;
     m_bitmapHeight = bitmapHeight;
 
-    // The previous rendering location is first initialized to negative one.
-    // This will be an important variable that will locate where it last drew this image.
-    // If the image location hasn't changed since last frame then it won't modify the dynamic vertex buffer which will save us some cycles.
-
-    // Initialize the previous rendering position to negative one.
-    m_previousPosX = -1;
-    m_previousPosY = -1;
-
-
-
-    // The buffers are then created and the texture for this bitmap image is also loaded in.
+    // The buffers are created and the texture for this bitmap image is also loaded in
 
     // Initialize the vertex and index buffers.
-    result = InitializeBuffers(device);
+    result = InitializeBuffers(device, screenWidth / 2 - bitmapWidth / 2, screenHeight / 2 - bitmapHeight / 2);
     if (!result)
         return false;
 
@@ -117,166 +113,96 @@ void BitmapClass_Instancing::Shutdown()
 	return;
 }
 
-// Render puts the buffers of the 2D image on the video card.
-// As input it takes the position of where to render the image on the screen.
-// The UpdateBuffers function is called with the position parameters.
-// If the position has changed since the last frame it will then update the location of the vertices in the dynamic vertex buffer to the new location.
-// If not it will skip the UpdateBuffers function.
-// After that the RenderBuffers function will prepare the final vertices / indices for rendering.
-bool BitmapClass_Instancing::Render(ID3D11DeviceContext *deviceContext, int positionX, int positionY)
+// Render puts the buffers of the 2D image on the video card
+bool BitmapClass_Instancing::Render(ID3D11DeviceContext *deviceContext)
 {
-	bool result;
-
-	// Re-build the dynamic vertex buffer for rendering to possibly a different location on the screen.
-	result = UpdateBuffers(deviceContext, positionX, positionY);
-	if (!result)
-		return false;
-
-	// Put the vertex and index buffers on the graphics pipeline to prepare them for drawing.
+	// Put the vertex and index buffers on the graphics pipeline to prepare them for drawing
 	RenderBuffers(deviceContext);
 
 	return true;
 }
 
-// These are the two new helper functions which return the vertex and instance counts.
-int BitmapClass_Instancing::GetVertexCount()
+// InitializeBuffers is the function that is used to build the vertex and index buffer that will be used to draw the 2D image
+bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device, const int &positionX, const int &positionY)
 {
-	return m_vertexCount;
+    float		             left, right, top, bottom;
+    VertexType				*vertices;
+    D3D11_BUFFER_DESC		 vertexBufferDesc;
+    D3D11_SUBRESOURCE_DATA	 vertexData;
+    HRESULT					 result;
+
+    // Set the number of vertices in the vertex array:
+    // We set the vertices to 6 since we are making a square out of 2 triangles, so 6 points are needed
+    m_vertexCount = 6;
+
+    // Create the vertex array.
+    vertices = new VertexType[m_vertexCount];
+    if (!vertices)
+        return false;
+
+    // Initialize vertex array to zeros at first.
+    memset(vertices, 0, sizeof(VertexType) * m_vertexCount);
+
+    // -----------------------------------------------------------------------------------------------------------------------------------
+    // “еперь мы совсем отказываемс€ от использовани€ динамического буфера дл€ вершин и инициализируем буфер сразу при создании,
+    // т.к. хотим скорости и потому что вершины квада не мен€ютс€ со временем.
+    // Ќа вход мы получаем координаты центра экрана и переносим спрайт так, что он своим центром лежит в левом верхнем углу
+
+    // The four sides of the image need to be calculated.
+    // See the diagram at the top of the tutorial for a complete explaination:
+    // In DirectX's 2d scene the point (0, 0) lies at the center of the screen.
+
+    left   = (float)positionX - (float)((m_screenWidth / 2));       // Calculate the screen coordinates of the left side of the bitmap
+    right  = left + (float)m_bitmapWidth;                           // Calculate the screen coordinates of the right side of the bitmap
+    top    = (float)(m_screenHeight / 2) - (float)positionY;        // Calculate the screen coordinates of the top of the bitmap
+    bottom = top - (float)m_bitmapHeight;                           // Calculate the screen coordinates of the bottom of the bitmap
+
+    // Load the vertex array with data:
+    // First triangle
+    vertices[0].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
+    vertices[0].texture  = D3DXVECTOR2(0.0f, 0.0f);
+    vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
+    vertices[1].texture  = D3DXVECTOR2(1.0f, 1.0f);
+    vertices[2].position = D3DXVECTOR3(left, bottom, 0.0f);		// Bottom left
+    vertices[2].texture  = D3DXVECTOR2(0.0f, 1.0f);
+
+    // Second triangle
+    vertices[3].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
+    vertices[3].texture  = D3DXVECTOR2(0.0f, 0.0f);
+    vertices[4].position = D3DXVECTOR3(right, top, 0.0f);		// Top right
+    vertices[4].texture  = D3DXVECTOR2(1.0f, 0.0f);
+    vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
+    vertices[5].texture  = D3DXVECTOR2(1.0f, 1.0f);
+
+    // -----------------------------------------------------------------------------------------------------------------------------------
+
+    // Set up the description of the static vertex buffer.
+    vertexBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+    vertexBufferDesc.ByteWidth      = sizeof(VertexType) * m_vertexCount;
+    vertexBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+    vertexBufferDesc.CPUAccessFlags = 0;
+    vertexBufferDesc.MiscFlags      = 0;
+    vertexBufferDesc.StructureByteStride = 0;
+
+    // Give the subresource structure a pointer to the vertex data.
+    vertexData.pSysMem = vertices;
+    vertexData.SysMemPitch = 0;
+    vertexData.SysMemSlicePitch = 0;
+
+    // Now create the vertex buffer.
+    result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
+    if (FAILED(result))
+        return false;
+
+    // Release the array now that the vertex buffer have been created and loaded
+    SAFE_DELETE(vertices);
+
+    // instancing - ¬ынесено в отдельный метод initializeInstances
+
+    return true;
 }
 
-int BitmapClass_Instancing::GetInstanceCount()
-{
-	return m_instanceCount;
-}
-
-// The GetTexture function returns a pointer to the texture resource for this 2D image.
-// The shader will call this function so it has access to the image when drawing the buffers.
-ID3D11ShaderResourceView* BitmapClass_Instancing::GetTexture()
-{
-	return m_Texture->GetTexture();
-}
-
-ID3D11ShaderResourceView** BitmapClass_Instancing::GetTextureArray()
-{
-    return m_TextureArray->GetTextureArray();
-}
-
-// InitializeBuffers is the function that is used to build the vertex and index buffer that will be used to draw the 2D image.
-bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device)
-{
-	VertexType				*vertices;
-	unsigned long			*indices;
-	D3D11_BUFFER_DESC		 vertexBufferDesc;
-	D3D11_BUFFER_DESC		 indexBufferDesc;
-	D3D11_SUBRESOURCE_DATA	 vertexData;
-	D3D11_SUBRESOURCE_DATA	 indexData;
-	HRESULT					 result;
-
-	InstanceType			*instances;
-	D3D11_BUFFER_DESC		 instanceBufferDesc;
-	D3D11_SUBRESOURCE_DATA   instanceData;
-
-	// We set the vertices to six since we are making a square out of two triangles, so six points are needed. The indices will be the same.
-
-	// Set the number of vertices in the vertex array.
-	m_vertexCount = 6;
-
-	// Create the vertex array.
-	vertices = new VertexType[m_vertexCount];
-	if (!vertices)
-		return false;
-
-	// Initialize vertex array to zeros at first.
-	memset(vertices, 0, (sizeof(VertexType)* m_vertexCount));
-
-	// Here is the big change in comparison to the ModelClass.
-	// We are now creating a dynamic vertex buffer so we can modify the data inside the vertex buffer each frame if we need to.
-	// To make it dynamic we set Usage to D3D11_USAGE_DYNAMIC and CPUAccessFlags to D3D11_CPU_ACCESS_WRITE in the description.
-
-	// Set up the description of the static vertex buffer.
-	vertexBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;              // ??? how to get it to be default ???
-	vertexBufferDesc.ByteWidth		= sizeof(VertexType)* m_vertexCount;
-	vertexBufferDesc.BindFlags		= D3D11_BIND_VERTEX_BUFFER;
-	vertexBufferDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
-	vertexBufferDesc.MiscFlags		= 0;
-	vertexBufferDesc.StructureByteStride = 0;
-
-	// Give the subresource structure a pointer to the vertex data.
-	vertexData.pSysMem			= vertices;
-	vertexData.SysMemPitch		= 0;
-	vertexData.SysMemSlicePitch = 0;
-
-	// Now create the vertex buffer.
-	result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
-	if (FAILED(result))
-		return false;
-
-	// Release the arrays now that the vertex and index buffers have been created and loaded.
-	delete[] vertices;
-	vertices = 0;
-
-	// new part instancing
-#if 0
-	{
-		// We will now setup the new instance buffer.
-		// We start by first setting the number of instances of the triangle that will need to be rendered.
-		// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
-
-		// Set the number of instances in the array.
-		m_instanceCount = 10;
-		
-		// Next we create a temporary instance array using the instance count.
-		// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
-
-		// Create the instance array.
-		instances = new InstanceType[m_instanceCount];
-		if (!instances)
-			return false;
-
-		// Now here is where we setup the different positions for each instance of the triangle.
-		// I have set four different x, y, z positions for each triangle.
-		// Note that this is where you could set color, scaling, different texture coordinates, and so forth.
-		// An instance can be modified in any way you want it to be.
-		// For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
-
-		// Load the instance array with data.
-		for (int i = 0; i < m_instanceCount; i++)
-			instances[i].position = D3DXVECTOR3(-50.0f + 333*cos(100.0*i)*sin(float(.2*i)), -50.0f + 333*cos(100.0*i)*cos(float(.2*i)), 0.0f);
-
-		// The instance buffer description is setup exactly the same as a vertex buffer description.
-
-		// Set up the description of the instance buffer.
-		// ??? not really?
-		instanceBufferDesc.Usage			= D3D11_USAGE_DEFAULT;
-		instanceBufferDesc.ByteWidth		= sizeof(InstanceType) * m_instanceCount;
-		instanceBufferDesc.BindFlags		= D3D11_BIND_VERTEX_BUFFER;
-		instanceBufferDesc.CPUAccessFlags	= 0;
-		instanceBufferDesc.MiscFlags		= 0;
-		instanceBufferDesc.StructureByteStride = 0;
-
-		// Just like the vertex buffer we get the pointer to the instance array and then create the instance buffer.
-		// Once the instance buffer is created we can release the temporary instance array since the data from the array has been copied into the instance buffer.
-
-		// Give the subresource structure a pointer to the instance data.
-		instanceData.pSysMem		  = instances;
-		instanceData.SysMemPitch	  = 0;
-		instanceData.SysMemSlicePitch = 0;
-
-		// Create the instance buffer.
-		result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
-		if (FAILED(result))
-			return false;
-
-		// Release the instance array now that the instance buffer has been created and loaded.
-		delete[] instances;
-		instances = 0;
-	}
-#endif
-
-	return true;
-}
-
-// это был вариант дл€ отладки, сейчас не используетс€, т.к. дл€ этого существует класс-наследник,
+// это был вариант дл€ отладки, сейчас не используетс€, т.к. дл€ этого существует класс-наследник (InstancedSprite),
 // который умеет инициализировать данные из вход€щего массива
 bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 
@@ -312,17 +238,9 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 
 	//  оординаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
 	for (int i = 0; i < m_instanceCount; i++) {
-		//instances[i].position = D3DXVECTOR3(-50.0f + 333 * cos(100.0*i)*sin(float(.2*i)), -50.0f + 333 * cos(100.0*i)*cos(float(.2*i)), i);
-		//instances[i].position = D3DXVECTOR3(400.0f - 15.0*i, -300.0f - 15.0*i, 10*angle/i);
-#if 1
 		int X = 400 + 12 + ( 300 * sin(float(i))) * cos(float(100*i))*sin(float(0.2*i));
 		int Y = 300 - 12 + ( 300 * cos(float(i))) * cos(float(100*i))*sin(float(0.2*i));
-#else
-		int X = 400 + 400*sin((float)rand() / (RAND_MAX + 1) * Width);
-		int Y = 300 + 300*cos((float)rand() / (RAND_MAX + 1) * Height);
-#endif
 
-		//instances[i].position = D3DXVECTOR3(float(X - Width/2 - Size/2)*sin(angle), float(-Y + Height/2 - Size/2)*sin(angle), 10 * angle/(i+1));
 		instances[i].position = D3DXVECTOR3(float(X - Width / 2 - Size / 2), float(-Y + Height / 2 - Size / 2), 10 * angle / (i + 1));
 	}
 
@@ -372,88 +290,6 @@ void BitmapClass_Instancing::ShutdownBuffers()
 	return;
 }
 
-// The UpdateBuffers function is called each frame to update the contents of the dynamic vertex buffer
-// to re-position the 2D bitmap image on the screen if need be.
-bool BitmapClass_Instancing::UpdateBuffers(ID3D11DeviceContext *deviceContext, int positionX, int positionY)
-{
-	// We check if the position to render this image has changed.
-	// If it hasn't changed then we just exit since the vertex buffer doesn't need any changes for this frame.
-	// This check can save us a lot of processing.
-	if (positionX == m_previousPosX && positionY == m_previousPosY)
-		return true;
-
-	// If the position to render this image has changed then we record the new location for the next time we come through this function.
-	m_previousPosX = positionX;
-	m_previousPosY = positionY;
-
-
-	float		 left, right, top, bottom;
-	VertexType	*vertices;
-	VertexType	*verticesPtr;
-	HRESULT		 result;
-	D3D11_MAPPED_SUBRESOURCE mappedResource;
-
-	// The four sides of the image need to be calculated.
-	// See the diagram at the top of the tutorial for a complete explaination:
-	// In DirectX's 2d scene the point (0, 0) lies at the center of the screen.
-
-	// Calculate the screen coordinates of the left side of the bitmap.
-	left = (float)positionX - (float)((m_screenWidth / 2));
-	// Calculate the screen coordinates of the right side of the bitmap.
-	right = left + (float)m_bitmapWidth;
-	// Calculate the screen coordinates of the top of the bitmap.
-	top = (float)(m_screenHeight / 2) - (float)positionY;
-	// Calculate the screen coordinates of the bottom of the bitmap.
-	bottom = top - (float)m_bitmapHeight;
-
-
-	// Now that the coordinates are calculated create a temporary vertex array and fill it with the new six vertex points.
-
-	// Create the vertex array.
-	vertices = new VertexType[m_vertexCount];
-	if (!vertices)
-		return false;
-
-	// Load the vertex array with data.
-	// First triangle.
-	vertices[0].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
-	vertices[0].texture = D3DXVECTOR2(0.0f, 0.0f);
-	vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
-	vertices[1].texture = D3DXVECTOR2(1.0f, 1.0f);
-	vertices[2].position = D3DXVECTOR3(left, bottom, 0.0f);		// Bottom left
-	vertices[2].texture = D3DXVECTOR2(0.0f, 1.0f);
-
-	// Second triangle.
-	vertices[3].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
-	vertices[3].texture = D3DXVECTOR2(0.0f, 0.0f);
-	vertices[4].position = D3DXVECTOR3(right, top, 0.0f);		// Top right
-	vertices[4].texture = D3DXVECTOR2(1.0f, 0.0f);
-	vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
-	vertices[5].texture = D3DXVECTOR2(1.0f, 1.0f);
-
-
-	// Now copy the contents of the vertex array into the vertex buffer using the Map and memcpy functions.
-
-	// Lock the vertex buffer so it can be written to.
-	result = deviceContext->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (FAILED(result))
-		return false;
-
-	// Get a pointer to the data in the vertex buffer.
-	verticesPtr = (VertexType*)mappedResource.pData;
-
-	// Copy the data into the vertex buffer.
-	memcpy(verticesPtr, (void*)vertices, (sizeof(VertexType)* m_vertexCount));
-
-	// Unlock the vertex buffer.
-	deviceContext->Unmap(m_vertexBuffer, 0);
-
-	// Release the vertex array as it is no longer needed.
-	SAFE_DELETE_ARRAY(vertices);
-
-	return true;
-}
-
 // The RenderBuffers function sets up the vertex and index buffers on the GPU to be drawn by the shader
 void BitmapClass_Instancing::RenderBuffers(ID3D11DeviceContext *deviceContext)
 {
@@ -498,7 +334,7 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 	bool result;
 
 	// Create the texture object
-	SAFE_INIT(m_Texture, TextureClass);
+	SAFE_CREATE(m_Texture, TextureClass);
 
 	// Initialize the texture object.
 	result = m_Texture->Initialize(device, filename);
@@ -510,12 +346,12 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 
 // The following function loads the texture that will be used for drawing the 2D image
 // ¬ерси€ дл€ загрузки массива текстур
-bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR **fileNames, unsigned int fileQty)
+bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR **fileNames, const int &fileQty)
 {
     bool result;
 
     // Create the texture object
-	SAFE_INIT(m_TextureArray, TextureArrayClass);
+	SAFE_CREATE(m_TextureArray, TextureArrayClass);
 
     result = m_TextureArray->Initialize(device, fileNames, fileQty);
     if (!result)

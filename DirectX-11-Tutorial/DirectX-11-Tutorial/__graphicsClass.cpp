@@ -1,7 +1,7 @@
 #include "__graphicsClass.h"
 
 BitmapClass* Sprite::Bitmap = 0;	// Инициализируем статический объект класса в глобальной области. Почему-то он не хочет инициализироваться в файле класса, а хочет только здесь.
-#define NUM 5000					// Sprite Vector Size
+#define NUM 10000
 
 std::vector<gameObjectBase*> monstersVector;
 
@@ -52,117 +52,82 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	scrHeight = screenHeight;
 
 	// Create the Direct3D object
-    SAFE_INIT(m_d3d, d3dClass);
+    SAFE_CREATE(m_d3d, d3dClass);
 
 	// Initialize the Direct3D object
 	result = m_d3d->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
-	if( !result ) {
-		MessageBox(hwnd, L"Could not initialize Direct3D", L"Error", MB_OK);
-		return false;
-	}
+    CHECK_RESULT(result, L"Could not initialize Direct3D");
 
 	// Create the camera object.
-    SAFE_INIT(m_Camera, CameraClass);
+    SAFE_CREATE(m_Camera, CameraClass);
 
 	// Set the initial position of the camera.
 	m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
 
 #if 1
 	// Create the model object.
-    SAFE_INIT(m_Model, ModelClass);
+    SAFE_CREATE(m_Model, ModelClass);
 
 	// Initialize the model object
 	//result = m_Model->Initialize(m_d3d->GetDevice(), L"../DirectX-11-Tutorial/data/seafloor.dds");
 	//result = m_Model->Initialize(m_d3d->GetDevice(), L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
 
 	// The model initialization now takes in the filename of the model file it is loading.
-	// In this tutorial we will use the cube.txt file so this model loads in a 3D cube object for rendering.
 	result = m_Model->Initialize(m_d3d->GetDevice(), "../DirectX-11-Tutorial/data/_model_cube.txt", L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
 	//result = m_Model->Initialize(m_d3d->GetDevice(), "../DirectX-11-Tutorial/data/_model_sphere.txt", L"../DirectX-11-Tutorial/data/3da2d4e0.dds");
-	
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
-		return false;
-	}
+    CHECK_RESULT(result, L"Could not initialize the model object.");
 #endif
 
 #if 0
-	// Initialize the model object.
-	result = m_Model->Initialize(m_d3d->GetDevice());
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the model object.", L"Error", MB_OK);
-		return false;
-	}
-#endif
-
-#if 0
-	// Create the color shader object.
-    SAFE_INIT(m_ColorShader, ColorShaderClass);
-
-	// Initialize the color shader object.
+	// Create and initialize the color shader object
+    SAFE_CREATE(m_ColorShader, ColorShaderClass);
 	result = m_ColorShader->Initialize(m_d3d->GetDevice(), hwnd);
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the color shader object.", L"Error", MB_OK);
-		return false;
-	}
+    CHECK_RESULT(result, L"Could not initialize the color shader object.");
 #endif
 
 #if 0
-	// The new TextureShaderClass object is created and initialized.
-	// Create the texture shader object.
-    SAFE_INIT(m_TextureShader, TextureShaderClass);
-
-	// Initialize the texture shader object.
+	// Create and initialize the texture shader (TextureShaderClass) object
+    SAFE_CREATE(m_TextureShader, TextureShaderClass);
 	result = m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd);
-
-	if (!result) {
-		MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
-		return false;
-	}
+    CHECK_RESULT(result, L"Could not initialize the texture shader object.");
 #endif
 
 #if 1
 	// --- The new light shader object is created and initialized here ---
 	{
-		// Create the light shader object.
-        SAFE_INIT(m_LightShader, LightShaderClass);
-
-		// Initialize the light shader object.
+		// Create and initialize the light shader object
+        SAFE_CREATE(m_LightShader, LightShaderClass);
 		result = m_LightShader->Initialize(m_d3d->GetDevice(), hwnd);
-		if (!result) {
-			MessageBox(hwnd, L"Could not initialize the light shader object.", L"Error", MB_OK);
-			return false;
-		}
+        CHECK_RESULT(result, L"Could not initialize the light shader object.");
 	}
 
 
 	// --- The new light object is created here ---
 	{
 		// Create the light object.
-        SAFE_INIT(m_Light, LightClass);
+        SAFE_CREATE(m_Light, LightClass);
 	
 		// Initialize the light object:
 
-		// Set Ambient Color
+		// 1. Set Ambient Color
 		m_Light->SetAmbientColor(0.05f, 0.05f, 0.05f, 1.0f);
 		//m_Light->SetAmbientColor(0.1f, 0.0f, 0.0f, 1.0f);
 
-		// Set Diffuse Color
+		// 2. Set Diffuse Color
 		m_Light->SetDiffuseColor(1.0f, 1.0f, 1.0f, 1.0f);
 		m_Light->SetDirection(1.0f, 0.0f, 1.0f);
 
-		// Set Specular Color
+		// 3. Set Specular Color
 		m_Light->SetSpecularColor(1.0f, 1.0f, 1.0f, 1.0f);
 		m_Light->SetSpecularPower(32.0f);
 	}
 #endif
 
 #if 1
-	// --- Create the texture shader object ---
+	// --- Create the texture shader objects ---
 	{
-        SAFE_INIT(m_TextureShader, TextureShaderClass);
-
-        SAFE_INIT(m_TextureShaderIns, TextureShaderClass_Instancing);
+        SAFE_CREATE(m_TextureShader, TextureShaderClass);
+        SAFE_CREATE(m_TextureShaderIns, TextureShaderClass_Instancing);
 
 		// Initialize the texture shader objects:
         if( !m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd)      ||
@@ -174,50 +139,32 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	}
 
 
-	// --- Bitmap ---
+	// --- Bitmaps and Sprites ---
 	{
 		// Here is where we create and initialize the new BitmapClass object.
 		// It uses the seafloor.dds as the texture and I set the size to 256x256.
 		// You can change this size to whatever you like as it does not need to reflect the exact size of the texture.
 
-		// Create the bitmap object.
-        SAFE_INIT(m_Bitmap, BitmapClass);
-        SAFE_INIT(m_BitmapIns, BitmapClass_Instancing);
-
-		// Initialize the bitmap object.
+		// Create and initialize the bitmap objects:
+        SAFE_CREATE(m_Bitmap, BitmapClass);
+        SAFE_CREATE(m_BitmapIns, BitmapClass_Instancing);
 
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
         result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
-		if (!result) {
-			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
-			return false;
-		}
+        CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
-		// от размера изображения при работе с Instancing скорость работы не зависит. Для 15k битмапов (3x3) и (256x256) FPS - одинаковый 
+		// От размера изображения при работе с Instancing скорость работы не зависит. Для 15k битмапов (3x3) и (256x256) FPS - одинаковый
+        // Но нужно понимать, что фпс зависит от размеров выводимых на экран спрайтов. 3x3 выводится гораздо быстрее, чем 256x256
+
         //result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
         result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-		if (!result) {
-			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
-			return false;
-		}
+        CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
+        sprIns1 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns1) return false;
 
-
-
-        sprIns1 = new InstancedSprite(scrWidth, scrHeight);
-        if (!sprIns1)
-            return false;
-/*
-		WCHAR *names[] = {	L"../DirectX-11-Tutorial/data/001.png",
-							L"../DirectX-11-Tutorial/data/002.png",
-							L"../DirectX-11-Tutorial/data/003.png",
-							L"../DirectX-11-Tutorial/data/004.png",
-							L"../DirectX-11-Tutorial/data/005.png"
-		};
-*/
 		WCHAR *names[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
 							L"../DirectX-11-Tutorial/data/monster1/002.png",
 							L"../DirectX-11-Tutorial/data/monster1/003.png",
@@ -228,46 +175,27 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 							L"../DirectX-11-Tutorial/data/monster1/008.png"
 		};
 
+        unsigned int namesSize = sizeof(names) / sizeof(names[0]);
+
         //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic1.bmp", 48, 48);
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, names, sizeof(names) / sizeof(names[0]), 30, 30);
-        if (!result) {
-            MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
-            return false;
-        }
+        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, names, namesSize, 30, 30);
+        CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
         // ??? показыает меньше на один
-        int numPic = 3;
 		srand(time(0));
-        for (int i = 0; i < numPic; i++) {
-            int x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
-            int y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
-			float speed = (rand() % 250 + 1) * 0.1f;
+        for (int i = 0; i < NUM; i++) {
+            int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
+            int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+			float  speed = (rand() % 250 + 1) * 0.1f;
 			int interval = 50/speed;
             monstersVector.push_back(new Monster(x, y, speed, interval, 8));
         }
-/*
-        sprIns2 = new InstancedSprite(scrWidth, scrHeight);
-        if (!sprIns2)
-            return false;
 
-        result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-        if (!result) {
-            MessageBox(hwnd, L"Could not initialize the instanced sprite object.", L"Error", MB_OK);
-            return false;
-        }
-*/
-
-
-
-        SAFE_INIT(m_BitmapSprite, BitmapClass);
+        SAFE_CREATE(m_BitmapSprite, BitmapClass);
 
 		result = m_BitmapSprite->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-		if (!result) {
-			MessageBox(hwnd, L"Could not initialize the bitmap object.", L"Error", MB_OK);
-			return false;
-		}
+        CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
-		// lala
 		for (int i = 0; i < NUM; i++) {
 
 			int X = (float)rand() / (RAND_MAX + 1) * scrWidth;
@@ -282,13 +210,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	// --- Cursor ---
 	{
-        SAFE_INIT(m_Cursor, BitmapClass);
-
+        SAFE_CREATE(m_Cursor, BitmapClass);
 		result = m_Cursor->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/cursor.png", 24, 24);
-		if (!result) {
-			MessageBox(hwnd, L"Could not initialize the cursor object.", L"Error", MB_OK);
-			return false;
-		}
+        CHECK_RESULT(result, L"Could not initialize the cursor object.");
 	}
 
 #endif
@@ -307,15 +231,10 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 		// Here we create and initialize the new TextOutClass object.
 
-		// Create the text object.
-        SAFE_INIT(m_TextOut, TextOutClass);
-
-		// Initialize the text object.
+		// Create and init the text object.
+        SAFE_CREATE(m_TextOut, TextOutClass);
 		result = m_TextOut->Initialize(m_d3d->GetDevice(), m_d3d->GetDeviceContext(), hwnd, screenWidth, screenHeight, baseViewMatrix);
-		if(!result) {
-			MessageBox(hwnd, L"Could not initialize the text object.", L"Error", MB_OK);
-			return false;
-		}	
+        CHECK_RESULT(result, L"Could not initialize the text object.");
 	}
 
 
@@ -405,7 +324,7 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, bool onTimer)
 {
 	bool		 result;
-	D3DXMATRIX	 viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ, orthoMatrix;
+	D3DXMATRIX	 viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ, orthoMatrix, translationMatrix;
 
 	if (true) {
 		//m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 15 * sin(10 * zoom));
@@ -428,6 +347,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	m_d3d->GetWorldMatrix(worldMatrixZ);
 	m_d3d->GetProjectionMatrix(projectionMatrix);
 
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// --- 2d Rendering ---
 	// Если использовать только матричные преобразования, а сам битмап изначально рендерить всегда в одну и ту же позицию (в центр экрана),
 	// можно избавиться от необходимости пересоздавать вершинный и текстурный буфер в методе BitmapClass::Render() -> UpdateBuffers()
@@ -441,10 +361,12 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
     // If you're using orthographic projection, then you can specify any coordinates you want for the left/right/top/bottom value.  This means that if you're using 800x600 resolution, you can set the orthographic projections to left : 0, top; 0, right:800, bottom : 600 which will give you a 1 : 1 mapping of vertex coordinated to pixels, which makes doing UI really simple.For the textures, I assume you're rendering some type of  quad  using the texture?  If you want a centered  quad , you can draw it at ((screenWidth/2)-(textureWidth/2),((screenHeight/2)-(textureHeight-2)) of size (textureWidth x textureHeight).  This will give you a centered  quad  with 1:1 mapping of texels to pixels.  You can render this anywhere on the screen too, if you setup your orthographic projection matrix to the screen size, then you can render a  texture  sized  quad  anywhere you want, and it will map 1:1 on the screen.
     // For scrolling / zooming, you can then either update the quad coordinates by hand before drawing them, or use a view matrix to offset them in the vertex program.Zooming depends on how you're trying to zoom though, orthographic projection uses parallel lines, so things farther away will be the same size after projection, so you'd only be affecting the depth, but not actually "zooming" in on something(making it larger as you zoom in).To accomplish that, you'd need to  scale  things manually based on depth/zoom, or use perspective projection (which already automagically scales based on depth).
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	if( true )
 	{
 		// Если нужен вывод текстур с прозрачностью, включаем режим прозрачности
 		// Наверное, можно его включить один раз и до конца работы, чтобы не выполнять лишнюю работу
+        // ??? проверить, как это влияет на фпс
 		m_d3d->TurnOnAlphaBlending();
 
 		// We now also get the ortho matrix from the D3DClass for 2D rendering. We will pass this in instead of the projection matrix.
@@ -452,8 +374,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 		// Матрицы для поворота и переноса в нужную позицию
 		D3DXMATRIX matScale;
-		D3DXMATRIX matTrans;
-		m_d3d->GetWorldMatrix(matTrans);
+        m_d3d->GetWorldMatrix(translationMatrix);
 		m_d3d->GetWorldMatrix(matScale);
 
 		// The Z buffer is turned off before we do any 2D rendering.
@@ -470,8 +391,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 		// Осуществляем необходимые преобразования матриц
 		D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
-		D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
-		D3DXMatrixScaling(&matScale, 0.5f + 0.03*sin(rotation) + 0.0001*zoom, 0.5f + 0.03*sin(rotation) + 0.0001*zoom, 1.0f);
+        D3DXMatrixTranslation(&translationMatrix, 100.0f, 100.0f, 0.0f);
+		D3DXMatrixScaling(&matScale, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 1.0f);
 
 
 		// Once the vertex / index buffers are prepared we draw them using the texture shader.
@@ -482,7 +403,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		// Рендерим битмап при помощи текстурного шейдера
 		if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap->GetIndexCount(),
 										worldMatrixZ
-										* matTrans
+                                        * translationMatrix
 										* matScale
 										,
 										viewMatrix, orthoMatrix, m_Bitmap->GetTexture()) )
@@ -544,12 +465,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
         {
             // reset world matrices
             m_d3d->GetWorldMatrix(worldMatrixZ);
-            m_d3d->GetWorldMatrix(matTrans);
+            m_d3d->GetWorldMatrix(translationMatrix);
             m_d3d->GetWorldMatrix(matScale);
-
-            int xCenter = scrWidth  / 2;
-            int yCenter = scrHeight / 2;
-            int bmpSizeHalf = sprIns1->getBitmapWidth() / 2;
 
             // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
 
@@ -563,8 +480,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                     return false;
             }
 
-            // Рендерим модель точно в центр !!!
-            if (!sprIns1->Render(m_d3d->GetDeviceContext(), xCenter - bmpSizeHalf, yCenter - bmpSizeHalf))
+            // Активируем модель спрайта в GPU
+            if (!sprIns1->Render(m_d3d->GetDeviceContext()))
                 return false;
 
             //D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
@@ -576,7 +493,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             // Render the model using the texture shader.
             result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                 sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
-                    worldMatrixZ * matTrans * matScale,
+                    worldMatrixZ * translationMatrix * matScale,
                         viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), mouseX - xCenter, yCenter - mouseY);
 
             if (!result)
@@ -764,48 +681,44 @@ selector = -1;
 			return false;
 
 
+        // Заканчиваем работу с 2d-режимом:
 		m_d3d->TurnOffAlphaBlending();
-
 		// After all the 2D rendering is done we turn the Z buffer back on for the next round of 3D rendering.
 		// Turn the Z buffer back on now that all 2D rendering has completed.
 		m_d3d->TurnZBufferOn();
 	}
 
+
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// --- 3d Rendering ---
-	{
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 #if 1
-		// Here we rotate the world matrix by the rotation value so that when we render the triangle using this updated world matrix
-		// it will spin the triangle by the rotation amount.
+	{
+        // Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing
+        m_Model->Render(m_d3d->GetDeviceContext());
 
-		D3DXMatrixRotationX(&worldMatrixX, tan(zoom));
-		//D3DXMatrixRotationY(&worldMatrixY, atan(rotation));
-
-		// Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing.
-		m_Model->Render(m_d3d->GetDeviceContext());
-
-		D3DXMATRIX	 mat;
-		m_d3d->GetWorldMatrix(mat);
-		D3DXMatrixTranslation(&mat, 15.0f, 11.0f, 10.0f);
+		// Here we rotate the world matrix by the rotation value so that when we render the model using this updated world matrix
+		D3DXMatrixRotationX(&worldMatrixX, tan(0.1*rotation));
+		D3DXMatrixRotationY(&worldMatrixY, tan(0.1*rotation));
+        D3DXMatrixTranslation(&translationMatrix, 10.0f, 7.0f, 10.0f);
 
 		result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
 								// Если мы сначала умножаем на поворачивающие матрицы, а потом уже на сдвигающую, то повернутый объект правильно сдвигается в нужную точку
 								// Если сначала поставить сдвигающую, то объект начинает бегать по экрану
-								worldMatrixX
-								* worldMatrixY
-								* worldMatrixZ
-								* mat
-								,
+								worldMatrixX * worldMatrixY * worldMatrixZ * translationMatrix,
 								viewMatrix, projectionMatrix,
 								m_Model->GetTexture(),
 								m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
 								m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower()
 		);
-#endif
 	}
+#endif
 
 
 
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	// Present the rendered scene to the screen.
+    // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	m_d3d->EndScene();
 
 	return true;

@@ -186,11 +186,8 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 		return false;
 
 	// Release the arrays now that the vertex and index buffers have been created and loaded.
-	delete[] vertices;
-	vertices = 0;
-
-	delete[] indices;
-	indices = 0;
+    SAFE_DELETE_ARRAY(vertices);
+    SAFE_DELETE_ARRAY(indices);
 
 	return true;
 }
@@ -198,17 +195,11 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 // ShutdownBuffers releases the vertex and index buffers.
 void BitmapClass::ShutdownBuffers()
 {
-	// Release the index buffer.
-	if (m_indexBuffer) {
-		m_indexBuffer->Release();
-		m_indexBuffer = 0;
-	}
+	// Release the index buffer
+    SAFE_RELEASE(m_indexBuffer);
 
-	// Release the vertex buffer.
-	if (m_vertexBuffer) {
-		m_vertexBuffer->Release();
-		m_vertexBuffer = 0;
-	}
+	// Release the vertex buffer
+    SAFE_RELEASE(m_vertexBuffer);
 
 	return;
 }
@@ -290,8 +281,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int position
 	deviceContext->Unmap(m_vertexBuffer, 0);
 
 	// Release the vertex array as it is no longer needed.
-	delete[] vertices;
-	vertices = 0;
+    SAFE_DELETE_ARRAY(vertices);
 
 	return true;
 }
@@ -314,7 +304,6 @@ void BitmapClass::RenderBuffers(ID3D11DeviceContext *deviceContext)
 
 	// Set the type of primitive that should be rendered from this vertex buffer, in this case triangles.
 	deviceContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
-	//deviceContext->IASetPrimitiveTopology(D3D10_PRIMITIVE_TOPOLOGY_LINESTRIP);
 
 	// Следующий шаг - обратиться к шейдеру, чтобы он отрисовал указанный примитив на основе активных буферов: вершинного и индексного
 	return;
@@ -326,9 +315,7 @@ bool BitmapClass::LoadTexture(ID3D11Device *device, WCHAR *filename)
 	bool result;
 
 	// Create the texture object.
-	m_Texture = new TextureClass;
-	if (!m_Texture)
-		return false;
+    SAFE_CREATE(m_Texture, TextureClass);
 
 	// Initialize the texture object.
 	result = m_Texture->Initialize(device, filename);
@@ -342,11 +329,7 @@ bool BitmapClass::LoadTexture(ID3D11Device *device, WCHAR *filename)
 void BitmapClass::ReleaseTexture()
 {
 	// Release the texture object.
-	if (m_Texture) {
-		m_Texture->Shutdown();
-		delete m_Texture;
-		m_Texture = 0;
-	}
+    SAFE_SHUTDOWN(m_Texture);
 
 	return;
 }

@@ -30,16 +30,16 @@
 // Базовый класс для игрового объекта
 class gameObjectBase {
  public:
-    gameObjectBase(int x, int y, float speed) : _X(float(x)), _Y(float(y)), _Speed(speed) {}
+    gameObjectBase(float x, float y, float speed) : _X(x), _Y(y), _Speed(speed) {}
     virtual ~gameObjectBase() {}
 
-    inline int  getX() const       { return (int)_X; } 
-    inline int  getY() const       { return (int)_Y; }
-    inline void setX(const int &x) {  _X = (float)x; }
-    inline void setY(const int &y) {  _Y = (float)y; }
+    inline float getX() const         { return _X; } 
+    inline float getY() const         { return _Y; }
+    inline void  setX(const float &x) {    _X = x; }
+    inline void  setY(const float &y) {    _Y = y; }
 
     // метод для перемещения объекта, вызывается в общем цикле
-    virtual void Move(const int &, const int &, void* = 0) = 0;
+    virtual void Move(const float &, const float &, void* = 0) = 0;
 	// метод для получения текущей фазы анимации
 	virtual int  getAnimPhase() = 0;
 
@@ -53,10 +53,10 @@ class gameObjectBase {
 // Класс игрового объекта - Игрок
 class Player : public gameObjectBase {
 public:
-    Player(int x, int y, float speed = 1.0f) : gameObjectBase(x, y, speed) {}
+    Player(float x, float y, float speed = 1.0f) : gameObjectBase(x, y, speed) {}
    ~Player() {}
 
-    virtual void Move(const int &x, const int &y, void *Param) {
+    virtual void Move(const float &x, const float &y, void *Param) {
     }
 
  private:
@@ -66,13 +66,13 @@ public:
 // Класс игрового объекта - Монстр
 class Monster : public gameObjectBase {
  public:
-    Monster(int x, int y, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, speed), animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {}
+    Monster(float x, float y, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, speed), animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {}
    ~Monster() {}
 
-    virtual void Move(const int &x, const int &y, void *Param) {
+    virtual void Move(const float &x, const float &y, void *Param) {
 
-        float dX = float(x) - _X;
-        float dY = float(y) - _Y;
+        float dX = x - _X;
+        float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
         dX = /*float(rand()%20) * */div_Speed_by_Dist * dX * 0.1f;
@@ -100,7 +100,6 @@ class Monster : public gameObjectBase {
  private:
 	 int animInterval0, animInterval1;
 	 int animQty, animPhase;
-
 };
 
 
@@ -127,10 +126,8 @@ class InstancedSprite : public BitmapClass_Instancing {
         // Next we create a temporary instance array using the instance count.
         // Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
 
-        // Create the instance array.
-        instances = new InstanceType[m_instanceCount];
-        if (!instances)
-            return false;
+        // Create the instance array
+        SAFE_CREATE_ARRAY(instances, InstanceType, m_instanceCount);
 
         // Now here is where we setup the different positions for each instance of the triangle.
         // I have set four different x, y, z positions for each triangle.
@@ -146,8 +143,8 @@ class InstancedSprite : public BitmapClass_Instancing {
         int i;
         for (i = 0, iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
             instances[i].position = D3DXVECTOR3(
-                float( (*iter)->getX() - 0.5f * scrWidth  - 0.5f * Size ),
-                float(-(*iter)->getY() + 0.5f * scrHeight - 0.5f * Size ),
+                float( ((*iter)->getX()) - 0.5f * scrWidth  ),
+                float(-((*iter)->getY()) + 0.5f * scrHeight ),
                 float( 10 * angle / (i + 1) )
             );
 

@@ -11,6 +11,7 @@
 #include <d3dx10math.h>
 
 #include "__textureClass.h"
+#include "Helpers.h"
 
 
 
