@@ -100,7 +100,7 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 // The Render 3 function now takes as input a vertex count and an instance count instead of the old index count.
 // The Render 3 function now takes as input a pointer to the texture array. This will give the shader access to the two textures for blending operations.
 bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount,
-                                            D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
+                                            const D3DXMATRIX &worldMatrix, const D3DXMATRIX &viewMatrix, const D3DXMATRIX &projectionMatrix,
                                             ID3D11ShaderResourceView** textureArray, const int &X, const int &Y)
 {
     bool result;
@@ -356,9 +356,6 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
 // Теперь метод принимает в качестве параметра массив стекстур
-
-// ??? pass matrices as refs!!! 
-
 bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
                                         ID3D11ShaderResourceView **textureArray, const int &X, const int &Y)
