@@ -14,33 +14,40 @@
 #include "Helpers.h"
 
 #define ciRef const int &
+#define cfRef const float &
 
 class BitmapClass_Instancing {
+
  protected:
 	// Each bitmap image is still a polygon object that gets rendered similar to 3D objects.
 	// For 2D images we just need a position vector and texture coordinates.
-	struct VertexType {
-		D3DXVECTOR3 position;
-		D3DXVECTOR2 texture;
-	};
+
+	    struct VertexType {
+		    D3DXVECTOR3 position;
+		    D3DXVECTOR2 texture;
+	    };
 
 	// We add a new structure that will hold the instance information.
 	// In this tutorial we are modifying the position of each instance of the triangle so we use a position vector.
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
-	struct InstanceType {
-		D3DXVECTOR3  position;	// position содержит 2 координаты, по которым будет размещен спрайт, и угол поворота, на который этот спрайт нужно развернуть
-        unsigned int material;
-	};
+
+        // float3 position содержит 2 координаты, по которым будет размещен спрайт, и угол поворота, на который этот спрайт нужно развернуть
+        // float3 содержит: а) ширину одного спрайта, б) высоту одного спрайта, в) номер анимации, который нужно использовать
+	    struct InstanceType {
+		    D3DXVECTOR3  position;	    
+            D3DXVECTOR3  animationInfo; 
+	    };
+
 
  public:
 	BitmapClass_Instancing();
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
    ~BitmapClass_Instancing();
 
-	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);					// инициализация одной текстурой
-    //bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);		// инициализация двумя текстурами - для массива текстур
-    bool Initialize(ID3D11Device *, ciRef, ciRef, WCHAR**, ciRef, ciRef, ciRef);    // инициализация масивом текстур
+	bool Initialize(ID3D11Device *, int, int, WCHAR *, int, int);					                            // инициализация одной текстурой
+    //bool Initialize(ID3D11Device *, int, int, WCHAR *, WCHAR *, int, int);		                            // инициализация двумя текстурами - для массива текстур
+    bool Initialize(ID3D11Device *, ciRef, ciRef, WCHAR**, ciRef, ciRef, ciRef, cfRef = 0.0f, cfRef = 0.0f);    // инициализация масивом текстур
 
 	void Shutdown();
 	bool Render(ID3D11DeviceContext *);
@@ -60,6 +67,7 @@ class BitmapClass_Instancing {
 
 	bool initializeInstances(ID3D11Device *);
 
+
  protected:
     bool InitializeBuffers(ID3D11Device *, const int &, const int &);
 	void ShutdownBuffers();
@@ -70,6 +78,7 @@ class BitmapClass_Instancing {
 	bool LoadTexture(ID3D11Device *, WCHAR**, ciRef);           // загрузка массива текстур
 
 	void ReleaseTexture();										// освобождение текстур
+
 
  protected:
 	ID3D11Buffer	    *m_vertexBuffer;
@@ -89,4 +98,7 @@ class BitmapClass_Instancing {
 
 	// The index count has been replaced with the instance count
 	int				 m_instanceCount;
+
+    // Размеры одного кадра анимации из текстурного атласа
+    float            m_spriteSliceX, m_spriteSliceY;
 };

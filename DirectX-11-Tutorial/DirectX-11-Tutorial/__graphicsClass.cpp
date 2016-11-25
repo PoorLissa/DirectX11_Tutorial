@@ -1,7 +1,7 @@
 #include "__graphicsClass.h"
 
 BitmapClass* Sprite::Bitmap = 0;	// Инициализируем статический объект класса в глобальной области. Почему-то он не хочет инициализироваться в файле класса, а хочет только здесь.
-#define NUM 500
+#define NUM 3
 
 std::vector<gameObjectBase*> monstersVector;
 
@@ -131,7 +131,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 		// Initialize the texture shader objects:
         if( !m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd)      ||
-            !m_TextureShaderIns->Initialize(m_d3d->GetDevice(), hwnd, true) )
+            !m_TextureShaderIns->Initialize(m_d3d->GetDevice(), hwnd) )
         {
             MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
 			return false;
@@ -160,12 +160,20 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         // Но нужно понимать, что фпс зависит от размеров выводимых на экран спрайтов. 3x3 выводится гораздо быстрее, чем 256x256
 
         //result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
+        WCHAR *frames0[] = { L"../DirectX-11-Tutorial/data/walkingdead.png" };
         result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
         CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
+
+
+        // Инстанцированный спрайт с поддержкой анимации
+        // Можем использовать его как с массивом отдельных файлов, так и с текстурным атласом
+        // В любом случае, в связанный шейдер передается массив текстур
         sprIns1 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns1) return false;
 
-		WCHAR *names[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
+#if 0
+        // Массив текстур, 8 штук
+		WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
 							L"../DirectX-11-Tutorial/data/monster1/002.png",
 							L"../DirectX-11-Tutorial/data/monster1/003.png",
 							L"../DirectX-11-Tutorial/data/monster1/004.png",
@@ -175,21 +183,44 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 							L"../DirectX-11-Tutorial/data/monster1/008.png"
 		};
 
-        unsigned int namesSize = sizeof(names) / sizeof(names[0]);
+        unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
 
-        //result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic1.bmp", 48, 48);
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, names, namesSize, 30, 30);
+        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
-        // ??? показыает меньше на один
-		srand(time(0));
+        srand(time(0));
         for (int i = 0; i < NUM; i++) {
             int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
             int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
-			float  speed = (rand() % 250 + 1) * 0.1f;
-            int interval = 50/speed;
-            monstersVector.push_back(new Monster(x, y, speed, interval, 8));
+            float  speed = (rand() % 250 + 10) * 0.1f;
+            int interval = 50 / speed;
+            interval = 10;
+
+            // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
+            monstersVector.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
         }
+
+#else
+        // Текстурный атлас, 10 кадров 200x310
+        WCHAR *frames[] = { L"../DirectX-11-Tutorial/data/walkingdead.png" };
+
+        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, 1, 45, 45, 200, 310);
+        CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
+
+        srand(time(0));
+        for (int i = 0; i < NUM; i++) {
+            int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
+            int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+            float  speed = (rand() % 250 + 10) * 0.1f;
+            int interval = 50 / speed;
+
+            // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
+            monstersVector.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+        }
+
+#endif
+
+        
 
         SAFE_CREATE(m_BitmapSprite, BitmapClass);
 
@@ -425,7 +456,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		{
 			// reset world matrices
 			m_d3d->GetWorldMatrix(worldMatrixZ);
-			m_d3d->GetWorldMatrix(matTrans);
+            m_d3d->GetWorldMatrix(translationMatrix);
 			m_d3d->GetWorldMatrix(matScale);
 
 			// не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
@@ -437,7 +468,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 			int xCenter = scrWidth  / 2;
 			int yCenter = scrHeight / 2;
 			int bmpSize = 24;
-			if (!m_BitmapIns->Render(m_d3d->GetDeviceContext(), xCenter - bmpSize/2, yCenter - bmpSize/2))
+			if ( !m_BitmapIns->Render(m_d3d->GetDeviceContext()) )
 				return false;
 #if 0
 			D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
@@ -449,7 +480,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 			// Render the model using the texture shader.
 			result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
 						m_BitmapIns->GetVertexCount(), m_BitmapIns->GetInstanceCount(),
-							worldMatrixZ * matTrans * matScale,
+							worldMatrixZ * translationMatrix * matScale,
 								viewMatrix, orthoMatrix, m_BitmapIns->GetTexture(), mouseX - xCenter, yCenter - mouseY);
 
 			if (!result)

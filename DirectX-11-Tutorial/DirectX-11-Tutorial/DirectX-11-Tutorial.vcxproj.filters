@@ -189,11 +189,5 @@
     <None Include="_shaderTextureInstancing.ps">
       <Filter>Shader Files</Filter>
     </None>
-    <None Include="_shaderTextureInstancing_Arr.ps">
-      <Filter>Shader Files</Filter>
-    </None>
-    <None Include="_shaderTextureInstancing_Arr.vs">
-      <Filter>Shader Files</Filter>
-    </None>
   </ItemGroup>
 </Project>

@@ -30,9 +30,9 @@ bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR **fileNames, cons
         return false;
 
     ZeroMemory(&loadInfo, sizeof(D3DX11_IMAGE_LOAD_INFO));
-    loadInfo.Width          = 256;  // ??? - test this
-    loadInfo.Height         = 256;  // ??? - test this
-    loadInfo.Depth          = 0;
+    loadInfo.Width          = D3DX11_FROM_FILE;
+    loadInfo.Height         = D3DX11_FROM_FILE;
+    loadInfo.Depth          = D3DX11_FROM_FILE;
     loadInfo.FirstMipLevel  = 0;
     loadInfo.MipLevels      = 0;
     loadInfo.Usage          = D3D11_USAGE_STAGING;

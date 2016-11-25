@@ -17,16 +17,13 @@ TextureShaderClass_Instancing::~TextureShaderClass_Instancing()
 {
 }
 
-bool TextureShaderClass_Instancing::Initialize(ID3D11Device* device, HWND hwnd, bool useArray)
+bool TextureShaderClass_Instancing::Initialize(ID3D11Device* device, HWND hwnd)
 {
 	bool result;
 
 	// The new texture.vs and texture.ps HLSL files are loaded for this shader.
 	// Initialize the vertex and pixel shaders.
-    if(useArray)
-        result = InitializeShader(device, hwnd, L"../DirectX-11-Tutorial/_shaderTextureInstancing_Arr.vs", L"../DirectX-11-Tutorial/_shaderTextureInstancing_Arr.ps", useArray);
-    else
-        result = InitializeShader(device, hwnd, L"../DirectX-11-Tutorial/_shaderTextureInstancing.vs", L"../DirectX-11-Tutorial/_shaderTextureInstancing.ps", useArray);
+    result = InitializeShader(device, hwnd, L"../DirectX-11-Tutorial/_shaderTextureInstancing.vs", L"../DirectX-11-Tutorial/_shaderTextureInstancing.ps");
 
 	if (!result)
 		return false;
@@ -117,7 +114,7 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, c
 }
 
 // InitializeShader sets up the texture shader.
-bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename, bool useArray)
+bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
 {
  	HRESULT                   result;
  	ID3D10Blob               *errorMessage;
@@ -221,22 +218,17 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 		polygonLayout[2].InputSlotClass		  = D3D11_INPUT_PER_INSTANCE_DATA;
   		polygonLayout[2].InstanceDataStepRate = 1;
 
-        if (useArray) {
-            polygonLayout[3].SemanticName         = "BLENDINDICES";
-            polygonLayout[3].SemanticIndex        = 0;
-            polygonLayout[3].Format               = DXGI_FORMAT_R32G32B32A32_UINT;
-            polygonLayout[3].InputSlot            = 1;
-            polygonLayout[3].AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
-            polygonLayout[3].InputSlotClass       = D3D11_INPUT_PER_INSTANCE_DATA;
-            polygonLayout[3].InstanceDataStepRate = 1;
-        }
+        polygonLayout[3].SemanticName         = "TEXCOORD";
+        polygonLayout[3].SemanticIndex        = 2;
+        polygonLayout[3].Format               = DXGI_FORMAT_R32G32B32_FLOAT;
+        polygonLayout[3].InputSlot            = 1;
+        polygonLayout[3].AlignedByteOffset    = D3D11_APPEND_ALIGNED_ELEMENT;
+        polygonLayout[3].InputSlotClass       = D3D11_INPUT_PER_INSTANCE_DATA;
+        polygonLayout[3].InstanceDataStepRate = 1;
 	}
 
 	// Get a count of the elements in the layout.
-	numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
-
-    if (!useArray)
-        numElements--;
+    numElements = sizeof(polygonLayout) / sizeof(polygonLayout[0]);
 
 	// Create the vertex input layout.
 	result = device->CreateInputLayout(polygonLayout, numElements, vertexShaderBuffer->GetBufferPointer(), vertexShaderBuffer->GetBufferSize(), &m_layout);

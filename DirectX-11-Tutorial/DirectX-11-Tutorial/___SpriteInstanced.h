@@ -30,13 +30,15 @@
 // Базовый класс для игрового объекта
 class gameObjectBase {
  public:
-    gameObjectBase(float x, float y, float speed) : _X(x), _Y(y), _Speed(speed) {}
+    gameObjectBase(float x, float y, float angle, float speed) : _X(x), _Y(y), _Angle(angle), _Speed(speed) {}
     virtual ~gameObjectBase() {}
 
-    inline float getX() const         { return _X; } 
-    inline float getY() const         { return _Y; }
-    inline void  setX(const float &x) {    _X = x; }
-    inline void  setY(const float &y) {    _Y = y; }
+    inline float getX()     const            { return _X;     } 
+    inline float getY()     const            { return _Y;     }
+    inline float getAngle() const            { return _Angle; }
+    inline void  setPosX( const float &x)    {        _X = x; }
+    inline void  setPosY( const float &y)    {        _Y = y; }
+    inline void  setAngle(const float &a)    {    _Angle = a; }
 
     // метод для перемещения объекта, вызывается в общем цикле
     virtual void Move(const float &, const float &, void* = 0) = 0;
@@ -48,12 +50,13 @@ class gameObjectBase {
     float   _X;
     float   _Y;
     float   _Speed;
+    float   _Angle;
 };
 
 // Класс игрового объекта - Игрок
 class Player : public gameObjectBase {
 public:
-    Player(float x, float y, float speed = 1.0f) : gameObjectBase(x, y, speed) {}
+    Player(float x, float y, float angle = 0.0f, float speed = 1.0f) : gameObjectBase(x, y, angle, speed) {}
    ~Player() {}
 
     virtual void Move(const float &x, const float &y, void *Param) {
@@ -66,7 +69,9 @@ public:
 // Класс игрового объекта - Монстр
 class Monster : public gameObjectBase {
  public:
-    Monster(float x, float y, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, speed), animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {}
+    Monster(float x, float y, float angle, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, angle, speed),
+        animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {
+    }
    ~Monster() {}
 
     virtual void Move(const float &x, const float &y, void *Param) {
@@ -75,8 +80,13 @@ class Monster : public gameObjectBase {
         float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-        dX = /*float(rand()%20) * */div_Speed_by_Dist * dX * 0.1f;
-        dY = /*float(rand()%20) * */div_Speed_by_Dist * dY * 0.1f;
+#if 0
+        dX = div_Speed_by_Dist * dX * 0.1f;
+        dY = div_Speed_by_Dist * dY * 0.1f;
+#else
+        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) / 100;
+        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) / 100;
+#endif
 
         _X += dX;
         _Y += dY;
@@ -105,12 +115,22 @@ class Monster : public gameObjectBase {
 
 
 // Класс инстанцированного спрайта
+
+// 
 class InstancedSprite : public BitmapClass_Instancing {
  public:
     InstancedSprite(int width, int height) : scrWidth(width), scrHeight(height) {}
    ~InstancedSprite() {}
 
+    // Инициализация инстанций: 
+    // Получаем на вход вектор с данными и из этого вектора заполняем массив инстанцированных данных
     bool initializeInstances(ID3D11Device *device, std::vector<gameObjectBase*> *vec) {
+
+        // Set the number of instances in the array
+        if (vec->size() <= 0)
+            return false;
+        m_instanceCount = vec->size();
+
 
         InstanceType			*instances;
         D3D11_BUFFER_DESC		 instanceBufferDesc;
@@ -119,9 +139,6 @@ class InstancedSprite : public BitmapClass_Instancing {
         // We will now setup the new instance buffer.
         // We start by first setting the number of instances of the triangle that will need to be rendered.
         // For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
-
-        // Set the number of instances in the array.
-        m_instanceCount = vec->size();
 
         // Next we create a temporary instance array using the instance count.
         // Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -135,23 +152,24 @@ class InstancedSprite : public BitmapClass_Instancing {
         // An instance can be modified in any way you want it to be.
         // For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
 
-        static float angle   = 0.0f;
-        static int   Size    = 0;
-
-        // Координаты в формате (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         std::vector<gameObjectBase*>::iterator iter, end;
         int i = 0;
         for (iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
+            // Позиция спрайта на экране и поворот спрайта на заданный угол
+            // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
             instances[i].position = D3DXVECTOR3(
-                float( ((*iter)->getX()) - 0.5f * scrWidth  ),
-                float(-((*iter)->getY()) + 0.5f * scrHeight ),
-                float( 10 * angle / (i + 1) )
+                float( (*iter)->getX() - 0.5f * scrWidth  ),
+                float(-(*iter)->getY() + 0.5f * scrHeight ),
+                float(-90.0f )
             );
 
-            instances[i].material = (*iter)->getAnimPhase();
+            // Размеры кадра анимации (для текстурного атласа only) и номер анимации
+            instances[i].animationInfo = D3DXVECTOR3(
+                m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
+                m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
+                (*iter)->getAnimPhase()                 // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
+            );
         }
-
-        angle += m_instanceCount * 1e-6f;
 
 
 

@@ -97,7 +97,7 @@ class GraphicsClass {
 	BitmapClass_Instancing	*m_BitmapIns;
     BitmapClass_Instancing	*m_BitmapInsArray;
 
-    // test
+    // Инстанцированный спрайт с анимацией
     InstancedSprite *sprIns1;
     InstancedSprite *sprIns2;
 };

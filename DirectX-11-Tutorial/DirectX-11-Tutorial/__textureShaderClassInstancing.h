@@ -34,7 +34,7 @@ class TextureShaderClass_Instancing {
 	TextureShaderClass_Instancing(const TextureShaderClass_Instancing &);
    ~TextureShaderClass_Instancing();
 
-	bool Initialize(ID3D11Device*, HWND, bool = false);
+	bool Initialize(ID3D11Device*, HWND);
 	void Shutdown();
 	bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*);
     bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, bool);										 // new
@@ -42,7 +42,7 @@ class TextureShaderClass_Instancing {
     bool Render(ID3D11DeviceContext*, ciRef, ciRef, const D3DXMATRIX&, const D3DXMATRIX&, const D3DXMATRIX&, ID3D11ShaderResourceView**, ciRef, ciRef);  // new new for Texture Arrays
 
  private:
-	bool InitializeShader(ID3D11Device*, HWND, WCHAR*, WCHAR*, bool = false);
+	bool InitializeShader(ID3D11Device*, HWND, WCHAR*, WCHAR*);
 	void ShutdownShader();
 	void OutputShaderErrorMessage(ID3D10Blob*, HWND, WCHAR*);
 
@@ -58,9 +58,7 @@ class TextureShaderClass_Instancing {
 	ID3D11PixelShader	*m_pixelShader;
 	ID3D11InputLayout	*m_layout;
 	ID3D11Buffer		*m_matrixBuffer;
-
-	// There is a new private variable for the sampler state pointer. This pointer will be used to interface with the texture shader.
-	ID3D11SamplerState	*m_sampleState;
+	ID3D11SamplerState	*m_sampleState;     // Sampler state pointer. This pointer will be used to interface with the texture shader
 };
 
 #endif

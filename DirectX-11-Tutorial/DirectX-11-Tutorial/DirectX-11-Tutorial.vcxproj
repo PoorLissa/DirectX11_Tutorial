@@ -143,8 +143,6 @@
     <None Include="_shaderTexture.vs" />
     <None Include="_shaderTextureInstancing.ps" />
     <None Include="_shaderTextureInstancing.vs" />
-    <None Include="_shaderTextureInstancing_Arr.ps" />
-    <None Include="_shaderTextureInstancing_Arr.vs" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

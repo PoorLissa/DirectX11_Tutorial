@@ -1,22 +1,50 @@
-// The pixel shader has not changed for this tutorial.
-Texture2D shaderTexture;
-SamplerState SampleType;
+// Шейдер теперь принимает на вход массив текстур
+// Доступ к разным текстурам осуществляется посредством третьего параметра, передаваемого в семплер
+//  Пример:
+// float4 textureColor1 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 0));
+// float4 textureColor2 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 1));
+
+Texture2DArray myTextureArray;
+SamplerState   SampleType;
 
 struct PixelInputType
 {
-	float4 position : SV_POSITION;
-	float2 tex		: TEXCOORD0;
+    float4 position      : SV_POSITION;
+    float2 tex           : TEXCOORD0;
+    float3 animationInfo : TEXCOORD2;
 };
+
+
 
 // Pixel Shader
 float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 {
-	float4 textureColor;
+    float4 textureColor;
 
-    //discard;
+    // Если animationInfo.x > 0, то полагаем, что работаем с текстурным атласом (массив текстур содержит ровно 1 текстуру).
+    // Иначе считаем, что на входе у нас масив из нескольких текстур
+    if (input.animationInfo.x > 0) {
 
-	// Sample the pixel color from the texture using the sampler at this texture coordinate location.
-	textureColor = shaderTexture.Sample(SampleType, input.tex);
+        // Вычислим нужный кадр внутри текстурного атласа по его порядковому номеру
+        // http://dallinwellington.com/rendering/sprite-atlas-rendering-with-dx-hlsl/
+
+        // эти три параметра нам известны, мы их получим снаружи
+        int index = input.animationInfo.z;         // номер кусочка, который хотим отрисовать
+        //float sliceSizeX = input.animationInfo.x;       // ширина одного кусочка
+        //float sliceSizeY = input.animationInfo.y;       // высота одного кусочка
+
+        // Получим размеры текстуры, которые были заданы в TextureArrayClass::Initialize => loadInfo.Width, loadInfo.Height
+        float texWidth, texHeight, texDepth;
+        myTextureArray.GetDimensions(texWidth, texHeight, texDepth);
+
+        int slicesCntX = texWidth  / input.animationInfo.x;
+        int slicesCntY = texHeight / input.animationInfo.y;
+
+        //input.tex = float2(input.tex.x / slicesCntX + float(index % slicesCntX) / slicesCntX, input.tex.y / slicesCntY + float(index / slicesCntX) / slicesCntY);
+        input.tex = float2((input.tex.x + float(index % slicesCntX)) / slicesCntX, (input.tex.y + float(index / slicesCntX)) / slicesCntY);
+    }
+
+    textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.animationInfo.z));
 
     return textureColor;
 }

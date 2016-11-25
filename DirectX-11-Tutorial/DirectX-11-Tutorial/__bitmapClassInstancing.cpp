@@ -52,7 +52,7 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	// The buffers are then created and the texture for this bitmap image is also loaded in.
 
 	// Initialize the vertex and index buffers.
-    result = InitializeBuffers(device, screenWidth / 2 - bitmapWidth / 2, screenHeight / 2 - bitmapHeight / 2);
+    result = InitializeBuffers(device, (screenWidth - bitmapWidth)*0.5f, (screenHeight - bitmapHeight)*0.5f);
 	if (!result)
 		return false;
 
@@ -67,7 +67,8 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 // Инициализация массивом текстур из списка файлов
 bool BitmapClass_Instancing::Initialize(ID3D11Device *device, const int &screenWidth, const int &screenHeight,
                                             WCHAR** textureFilenames, const int &filesQty,
-                                            const int &bitmapWidth, const int &bitmapHeight)
+                                            const int &bitmapWidth, const int &bitmapHeight,
+                                            const float &spriteSliceX, const float &spriteSliceY)
 {
     bool result;
 
@@ -84,10 +85,14 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, const int &screenW
     m_bitmapWidth  = bitmapWidth;
     m_bitmapHeight = bitmapHeight;
 
+    // Запомним размеры одного кадра из текстурного атласа
+    m_spriteSliceX = spriteSliceX;
+    m_spriteSliceY = spriteSliceY;
+
     // The buffers are created and the texture for this bitmap image is also loaded in
 
     // Initialize the vertex and index buffers.
-    result = InitializeBuffers(device, screenWidth / 2 - bitmapWidth / 2, screenHeight / 2 - bitmapHeight / 2);
+    result = InitializeBuffers(device, (screenWidth - bitmapWidth)*0.5f, (screenHeight - bitmapHeight)*0.5f);
     if (!result)
         return false;
 
@@ -215,7 +220,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 	// For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
 	// Set the number of instances in the array.
-	m_instanceCount = 3000;
+	m_instanceCount = 30;
 
 	// Next we create a temporary instance array using the instance count.
 	// Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
