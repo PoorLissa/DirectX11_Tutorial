@@ -1,9 +1,12 @@
 #include "__graphicsClass.h"
 
-BitmapClass* Sprite::Bitmap = 0;	// »нициализируем статический объект класса в глобальной области. ѕочему-то он не хочет инициализироватьс€ в файле класса, а хочет только здесь.
 #define NUM 3
 
-std::vector<gameObjectBase*> monstersVector;
+// »нициализируем статический объект класса в глобальной области. ѕочему-то он не хочет инициализироватьс€ в файле класса, а хочет только здесь
+BitmapClass* Sprite::Bitmap = 0;
+
+std::vector<gameObjectBase*> monstersVector1;
+std::vector<gameObjectBase*> monstersVector2;
 
 GraphicsClass::GraphicsClass()
 {
@@ -170,55 +173,60 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         // ћожем использовать его как с массивом отдельных файлов, так и с текстурным атласом
         // ¬ любом случае, в св€занный шейдер передаетс€ массив текстур
         sprIns1 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns1) return false;
-
-#if 0
-        // ћассив текстур, 8 штук
-		WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
-							L"../DirectX-11-Tutorial/data/monster1/002.png",
-							L"../DirectX-11-Tutorial/data/monster1/003.png",
-							L"../DirectX-11-Tutorial/data/monster1/004.png",
-							L"../DirectX-11-Tutorial/data/monster1/005.png",
-							L"../DirectX-11-Tutorial/data/monster1/006.png",
-							L"../DirectX-11-Tutorial/data/monster1/007.png",
-							L"../DirectX-11-Tutorial/data/monster1/008.png"
-		};
-
-        unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
-
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
-        CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
+        sprIns2 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns2) return false;
 
         srand(time(0));
-        for (int i = 0; i < NUM; i++) {
-            int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
-            int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
-            float  speed = (rand() % 250 + 10) * 0.1f;
-            int interval = 50 / speed;
-            interval = 10;
 
-            // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-            monstersVector.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+//#if 0
+        {
+            // ћассив текстур, 8 штук
+		    WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/monster1/001.png",
+							    L"../DirectX-11-Tutorial/data/monster1/002.png",
+							    L"../DirectX-11-Tutorial/data/monster1/003.png",
+							    L"../DirectX-11-Tutorial/data/monster1/004.png",
+							    L"../DirectX-11-Tutorial/data/monster1/005.png",
+							    L"../DirectX-11-Tutorial/data/monster1/006.png",
+							    L"../DirectX-11-Tutorial/data/monster1/007.png",
+							    L"../DirectX-11-Tutorial/data/monster1/008.png"
+		    };
+
+            unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
+
+            result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
+            CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
+
+            for (int i = 0; i < NUM; i++) {
+                int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
+                int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+                float  speed = (rand() % 250 + 10) * 0.1f;
+                int interval = 50 / speed;
+                interval = 10;
+
+                // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
+                monstersVector2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+            }
         }
 
-#else
-        // “екстурный атлас, 10 кадров 200x310
-        WCHAR *frames[] = { L"../DirectX-11-Tutorial/data/walkingdead.png" };
+//#else
+        {
+            // “екстурный атлас, 10 кадров 200x310
+            WCHAR *frames[] = { L"../DirectX-11-Tutorial/data/walkingdead.png" };
 
-        result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, 1, 45, 45, 200, 310);
-        CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
+            result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, 1, 45, 45, 200, 310);
+            CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
-        srand(time(0));
-        for (int i = 0; i < NUM; i++) {
-            int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
-            int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
-            float  speed = (rand() % 250 + 10) * 0.1f;
-            int interval = 50 / speed;
+            for (int i = 0; i < NUM; i++) {
+                int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
+                int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+                float  speed = (rand() % 250 + 10) * 0.1f;
+                int interval = 50 / speed;
 
-            // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-            monstersVector.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+                // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
+                monstersVector1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+            }
         }
 
-#endif
+//#endif
 
         
 
@@ -294,9 +302,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraphicsClass::Shutdown()
 {
-    if (monstersVector.size() > 0)
-        for (int i = 0; i < monstersVector.size(); i++)
-            SAFE_DELETE(monstersVector[i]);
+    if (monstersVector1.size() > 0)
+        for (int i = 0; i < monstersVector1.size(); i++)
+            SAFE_DELETE(monstersVector1[i]);
+
+    if (monstersVector2.size() > 0)
+        for (int i = 0; i < monstersVector2.size(); i++)
+            SAFE_DELETE(monstersVector2[i]);
 
     if (m_spriteVec.size() > 0)
         for (int i = 0; i < m_spriteVec.size(); i++)
@@ -504,10 +516,16 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 #if 1
             if (onTimer) {
 
-                for (int i = 0; i < monstersVector.size(); i++)
-                    monstersVector[i]->Move(mouseX, mouseY);
+                for (int i = 0; i < monstersVector1.size(); i++)
+                    monstersVector1[i]->Move(mouseX, mouseY);
 
-                if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector))
+                for (int i = 0; i < monstersVector2.size(); i++)
+                    monstersVector2[i]->Move(mouseX, mouseY);
+
+                if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector1))
+                    return false;
+
+                if (!sprIns2->initializeInstances(m_d3d->GetDevice(), &monstersVector2))
                     return false;
             }
 
@@ -529,6 +547,18 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
             if (!result)
                 return false;
+
+            if (!sprIns2->Render(m_d3d->GetDeviceContext()))
+                return false;
+
+            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                sprIns2->GetVertexCount(), sprIns2->GetInstanceCount(),
+                worldMatrixZ * translationMatrix * matScale,
+                viewMatrix, orthoMatrix, sprIns2->GetTextureArray(), mouseX - xCenter, yCenter - mouseY);
+
+            if (!result)
+                return false;
+
 #endif
         }
 

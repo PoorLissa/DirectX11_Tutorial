@@ -160,7 +160,7 @@ class InstancedSprite : public BitmapClass_Instancing {
             instances[i].position = D3DXVECTOR3(
                 float( (*iter)->getX() - 0.5f * scrWidth  ),
                 float(-(*iter)->getY() + 0.5f * scrHeight ),
-                float(-90.0f )
+                float( (*iter)->getAngle() )
             );
 
             // Размеры кадра анимации (для текстурного атласа only) и номер анимации

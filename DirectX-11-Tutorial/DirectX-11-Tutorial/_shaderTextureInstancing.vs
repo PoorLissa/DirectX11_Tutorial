@@ -56,7 +56,6 @@ PixelInputType TextureVertexShader(VertexInputType input)
     }
 
     // Angle to Radians:
-    //Angle -= 90.0f;
     Angle = (Angle + input.instancePosition.z) * divPIby180;
 
 
