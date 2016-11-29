@@ -241,6 +241,11 @@ bool DirectInputClass::IsEscapePressed()
 	return false;
 }
 
+bool DirectInputClass::IsKeyPressed(const int &Key)
+{
+    return m_keyboardState[Key] & 0x80;
+}
+
 // GetMouseLocation is a helper function I wrote which returns the location of the mouse.
 // GraphicsClass can get this info and then use TextClass to render the mouse X and Y position to the screen.
 void DirectInputClass::GetMouseLocation(int &mouseX, int &mouseY, int &mouseZ)
@@ -250,4 +255,9 @@ void DirectInputClass::GetMouseLocation(int &mouseX, int &mouseY, int &mouseZ)
 	mouseZ = m_mouseZ;
 
 	return;
+}
+
+bool DirectInputClass::IsLeftMouseButtonDown()
+{
+    return m_mouseState.rgbButtons[0] & 0x80;
 }

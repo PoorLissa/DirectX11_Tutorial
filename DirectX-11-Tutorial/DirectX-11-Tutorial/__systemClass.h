@@ -13,8 +13,6 @@
 #include "__cpuClass.h"
 #include "__highPrecTimer.h"
 
-
-
 class SystemClass {
  public:
 	SystemClass();

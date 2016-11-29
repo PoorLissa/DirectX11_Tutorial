@@ -33,7 +33,9 @@ class DirectInputClass {
 	bool Frame();
 
 	bool IsEscapePressed();
+    bool IsKeyPressed(const int &);
 	void GetMouseLocation(int&, int&, int&);
+    bool IsLeftMouseButtonDown();
 
  private:
 	bool ReadKeyboard();

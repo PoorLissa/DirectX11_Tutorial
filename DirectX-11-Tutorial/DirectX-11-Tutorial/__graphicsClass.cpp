@@ -1,12 +1,18 @@
 #include "__graphicsClass.h"
 
-#define NUM 3
+#define NUM 1
 
 // Инициализируем статический объект класса в глобальной области. Почему-то он не хочет инициализироваться в файле класса, а хочет только здесь
 BitmapClass* Sprite::Bitmap = 0;
 
 std::vector<gameObjectBase*> monstersVector1;
 std::vector<gameObjectBase*> monstersVector2;
+std::vector<gameObjectBase*> bulletVector;
+
+InstancedSprite* m_PlayerBitmapIns;
+gameObjectBase*  m_Player;
+
+InstancedSprite* m_BulletBitmapIns;
 
 GraphicsClass::GraphicsClass()
 {
@@ -24,6 +30,9 @@ GraphicsClass::GraphicsClass()
 
     sprIns1 = 0;
     sprIns2 = 0;
+
+    m_PlayerBitmapIns = 0;
+    m_BulletBitmapIns - 0;
 }
 
 GraphicsClass::GraphicsClass(const GraphicsClass &other)
@@ -149,8 +158,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		// You can change this size to whatever you like as it does not need to reflect the exact size of the texture.
 
 		// Create and initialize the bitmap objects:
-        SAFE_CREATE(m_Bitmap, BitmapClass);
-        SAFE_CREATE(m_BitmapIns, BitmapClass_Instancing);
+        SAFE_CREATE(m_Bitmap,       BitmapClass);
+        SAFE_CREATE(m_BitmapIns,    BitmapClass_Instancing);
 
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
@@ -163,7 +172,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         // Но нужно понимать, что фпс зависит от размеров выводимых на экран спрайтов. 3x3 выводится гораздо быстрее, чем 256x256
 
         //result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-        WCHAR *frames0[] = { L"../DirectX-11-Tutorial/data/walkingdead.png" };
         result = m_BitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
         CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
@@ -174,6 +182,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         // В любом случае, в связанный шейдер передается массив текстур
         sprIns1 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns1) return false;
         sprIns2 = new InstancedSprite(scrWidth, scrHeight); if (!sprIns2) return false;
+        m_PlayerBitmapIns = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns) return false;
+        m_BulletBitmapIns = new InstancedSprite(scrWidth, scrHeight); if (!m_BulletBitmapIns) return false;
 
         srand(time(0));
 
@@ -200,7 +210,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
                 int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
                 float  speed = (rand() % 250 + 10) * 0.1f;
                 int interval = 50 / speed;
-                interval = 10;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 monstersVector2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
@@ -228,7 +237,20 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 //#endif
 
-        
+
+        // Игрок
+        WCHAR *frames1[] = { L"../DirectX-11-Tutorial/data/tank830x800.png" };
+        result = m_PlayerBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1, 1, 40, 40);
+        CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the Player.");
+        m_Player = new Player(screenWidth / 2, screenHeight / 2, 0.0f, 3.0f, 1000, 1);
+
+
+        // Пули
+        WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet.png" };
+        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
+        CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the bullet.");
+        bulletVector.push_back(new Bullet(0, 0, 100, 100, 1.0));    // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
+
 
         SAFE_CREATE(m_BitmapSprite, BitmapClass);
 
@@ -302,6 +324,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 void GraphicsClass::Shutdown()
 {
+    if (m_Player)
+        SAFE_DELETE(m_Player);
+
+    if (bulletVector.size() > 0)
+        for (int i = 0; i < bulletVector.size(); i++)
+            SAFE_DELETE(bulletVector[i]);
+
     if (monstersVector1.size() > 0)
         for (int i = 0; i < monstersVector1.size(); i++)
             SAFE_DELETE(monstersVector1[i]);
@@ -314,6 +343,8 @@ void GraphicsClass::Shutdown()
         for (int i = 0; i < m_spriteVec.size(); i++)
             SAFE_DELETE(m_spriteVec[i]);
 
+    SAFE_SHUTDOWN(m_PlayerBitmapIns);
+    SAFE_SHUTDOWN(m_BulletBitmapIns);
     SAFE_SHUTDOWN(sprIns1);
     SAFE_SHUTDOWN(sprIns2);
 
@@ -364,7 +395,7 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 	return true;
 }
 
-bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, bool onTimer)
+bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, bool onTimer)
 {
 	bool		 result;
 	D3DXMATRIX	 viewMatrix, projectionMatrix, worldMatrixX, worldMatrixY, worldMatrixZ, orthoMatrix, translationMatrix;
@@ -445,11 +476,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 		// Рендерим битмап при помощи текстурного шейдера
 		if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap->GetIndexCount(),
-										worldMatrixZ
-                                        * translationMatrix
-										* matScale
-										,
-										viewMatrix, orthoMatrix, m_Bitmap->GetTexture()) )
+                worldMatrixZ * translationMatrix * matScale ,
+				    viewMatrix, orthoMatrix, m_Bitmap->GetTexture()) )
 			return false;
 
 		// Рендерим курсор
@@ -457,9 +485,9 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 			return false;
 
 		m_d3d->GetWorldMatrix(worldMatrixX);
-		result = m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Cursor->GetIndexCount(), worldMatrixX, viewMatrix, orthoMatrix, m_Cursor->GetTexture());
-		if (!result)
-			return false;
+        if( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Cursor->GetIndexCount(),
+                worldMatrixX, viewMatrix, orthoMatrix, m_Cursor->GetTexture()) )
+            return false;
 
 
 
@@ -503,7 +531,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 
 
-        // render sprites using Instancing from vector
+        // render sprites from vector using Instancing
 #if 1
         {
             // reset world matrices
@@ -511,25 +539,67 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             m_d3d->GetWorldMatrix(translationMatrix);
             m_d3d->GetWorldMatrix(matScale);
 
-            // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
-
 #if 1
+            int playerPosX = m_Player->getPosX();
+            int playerPosY = m_Player->getPosY();
+
+            // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
             if (onTimer) {
 
+                // --- Player ---
+                Player *player = (Player*)m_Player;
+
+                player->setLeft(Keys->left);
+                player->setRight(Keys->right);
+                player->setUp(Keys->up);
+                player->setDown(Keys->down);
+
+                player->Move(-1, -1, NULL);
+
+                if (!m_PlayerBitmapIns->initializeInstances(m_d3d->GetDevice(), m_Player))
+                    return false;
+
+                // --- Monsters ---
                 for (int i = 0; i < monstersVector1.size(); i++)
-                    monstersVector1[i]->Move(mouseX, mouseY);
+                    monstersVector1[i]->Move(playerPosX, playerPosY);
 
                 for (int i = 0; i < monstersVector2.size(); i++)
-                    monstersVector2[i]->Move(mouseX, mouseY);
+                    monstersVector2[i]->Move(playerPosX, playerPosY);
 
                 if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector1))
                     return false;
 
                 if (!sprIns2->initializeInstances(m_d3d->GetDevice(), &monstersVector2))
                     return false;
+
+                // --- Bullets ---
+                if (Keys->lmbDown)
+                    bulletVector.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 10.0));
+
+                std::vector<gameObjectBase*>::iterator iter = bulletVector.begin(), end = bulletVector.end();
+                for (int i = 0; i < bulletVector.size(); i++) {
+
+                    int Hit = bulletVector[i]->Move();
+
+                    if (Hit && Hit == 1) {
+
+                        gameObjectBase* ptrBullet = bulletVector[i];
+
+                        if (i != bulletVector.size() - 1)
+                            bulletVector[i] = std::move(bulletVector.back());
+                        bulletVector.pop_back();
+
+                        delete ptrBullet;
+                    }
+                }
+
+                if(bulletVector.size())
+                    if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletVector))
+                        return false;
             }
 
             // Активируем модель спрайта в GPU
+            // Monsters 1
             if (!sprIns1->Render(m_d3d->GetDeviceContext()))
                 return false;
 
@@ -540,24 +610,49 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
             // The Render function for the shader now requires the vertex and instance count from the model object.
             // Render the model using the texture shader.
+
             result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                 sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
                     worldMatrixZ * translationMatrix * matScale,
-                        viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), mouseX - xCenter, yCenter - mouseY);
+                        viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY);
 
             if (!result)
                 return false;
 
+            // Monsters 2
             if (!sprIns2->Render(m_d3d->GetDeviceContext()))
                 return false;
 
             result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                 sprIns2->GetVertexCount(), sprIns2->GetInstanceCount(),
-                worldMatrixZ * translationMatrix * matScale,
-                viewMatrix, orthoMatrix, sprIns2->GetTextureArray(), mouseX - xCenter, yCenter - mouseY);
+                    worldMatrixZ * translationMatrix * matScale,
+                        viewMatrix, orthoMatrix, sprIns2->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY);
 
             if (!result)
                 return false;
+
+            // Player
+            if (!m_PlayerBitmapIns->Render(m_d3d->GetDeviceContext()))
+                return false;
+
+            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                m_PlayerBitmapIns->GetVertexCount(), m_PlayerBitmapIns->GetInstanceCount(),
+                    worldMatrixZ * translationMatrix * matScale,
+                        viewMatrix, orthoMatrix, m_PlayerBitmapIns->GetTextureArray(), 1, mouseX - xCenter, yCenter - mouseY);
+
+            if (!result)
+                return false;
+
+            // Bullets
+            if (bulletVector.size()) {
+
+                if( !m_BulletBitmapIns->Render(m_d3d->GetDeviceContext()) ||
+                    !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                        m_BulletBitmapIns->GetVertexCount(), m_BulletBitmapIns->GetInstanceCount(),
+                            worldMatrixZ * translationMatrix * matScale,
+                                viewMatrix, orthoMatrix, m_BulletBitmapIns->GetTextureArray(), 0, 0, 0)
+                ) return false;
+            }
 
 #endif
         }

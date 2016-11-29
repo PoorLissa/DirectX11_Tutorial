@@ -19,14 +19,16 @@ using namespace std;
 #define ciRef const int &
 
 class TextureShaderClass_Instancing {
+
  private:
 	struct MatrixBufferType {
 		D3DXMATRIX world;
 		D3DXMATRIX view;
 		D3DXMATRIX projection;
-		float	   testX;
-		float	   testY;
-		float	   z1, z2;
+		float	   rotationMode;
+		float	   rotateToX;
+        float	   rotateToY;
+        float      dummy;
 	};
 
  public:
@@ -37,9 +39,10 @@ class TextureShaderClass_Instancing {
 	bool Initialize(ID3D11Device*, HWND);
 	void Shutdown();
 	bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*);
-    bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, bool);										 // new
-	bool Render(ID3D11DeviceContext*, int, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, int, int);								 // new instancing
-    bool Render(ID3D11DeviceContext*, ciRef, ciRef, const D3DXMATRIX&, const D3DXMATRIX&, const D3DXMATRIX&, ID3D11ShaderResourceView**, ciRef, ciRef);  // new new for Texture Arrays
+    bool Render(ID3D11DeviceContext*, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, bool);			// new
+	bool Render(ID3D11DeviceContext*, int, int, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView*, int, int);   // new instancing
+    // new new for Texture Arrays
+    bool Render(ID3D11DeviceContext*, ciRef, ciRef, const D3DXMATRIX&, const D3DXMATRIX&, const D3DXMATRIX&, ID3D11ShaderResourceView**, ciRef, ciRef, ciRef);
 
  private:
 	bool InitializeShader(ID3D11Device*, HWND, WCHAR*, WCHAR*);
@@ -47,11 +50,12 @@ class TextureShaderClass_Instancing {
 	void OutputShaderErrorMessage(ID3D10Blob*, HWND, WCHAR*);
 
 	bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView* , int, int);
-    bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView* , bool);    			// new
-    bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView**, ciRef, ciRef);		// new new for Texture Arrays
+    bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView* , bool);       // new
+    // new new for Texture Arrays
+    bool SetShaderParameters(ID3D11DeviceContext*, D3DXMATRIX, D3DXMATRIX, D3DXMATRIX, ID3D11ShaderResourceView**, ciRef, ciRef, ciRef);
 
     void RenderShader(ID3D11DeviceContext*, int);
-    void RenderShader(ID3D11DeviceContext*, const int &, const int &);																	// new instancing
+    void RenderShader(ID3D11DeviceContext*, const int &, const int &);      // new for instancing
 
  private:
 	ID3D11VertexShader	*m_vertexShader;

@@ -65,10 +65,10 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 }
 
 // Инициализация массивом текстур из списка файлов
-bool BitmapClass_Instancing::Initialize(ID3D11Device *device, const int &screenWidth, const int &screenHeight,
-                                            WCHAR** textureFilenames, const int &filesQty,
-                                            const int &bitmapWidth, const int &bitmapHeight,
-                                            const float &spriteSliceX, const float &spriteSliceY)
+bool BitmapClass_Instancing::Initialize(ID3D11Device *device, ciRef screenWidth, ciRef screenHeight,
+                                            WCHAR** textureFilenames, ciRef filesQty,
+                                            ciRef bitmapWidth,  ciRef bitmapHeight,
+                                            cfRef spriteSliceX, cfRef spriteSliceY)
 {
     bool result;
 

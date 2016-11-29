@@ -52,8 +52,18 @@ const float SCREEN_DEPTH  = 1000.0f;
 const float SCREEN_NEAR   = 0.1f;
 // ---------------------------------------------------------------------------------------
 
+struct keysPressed {
+    bool up;
+    bool down;
+    bool left;
+    bool right;
+    bool lmbDown;
+};
+
+
 
 class GraphicsClass {
+
  public:
 	GraphicsClass();
 	GraphicsClass(const GraphicsClass &);
@@ -65,7 +75,7 @@ class GraphicsClass {
 
 	void logMsg(char *);
 
-	bool Render(const float &, const float &, const int &, const int &, bool = false);
+    bool Render(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
 
  private:
     int scrWidth;

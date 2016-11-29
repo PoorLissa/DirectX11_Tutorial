@@ -206,6 +206,8 @@ bool SystemClass::Frame()
 		static float rotation = 0.0f;
 		static float zoom     = 0.0f;
 
+        keysPressed Keys;
+
 		// Update the rotation variable each time onTimer event happens
 		if (onTimer) {
 
@@ -214,10 +216,17 @@ bool SystemClass::Frame()
 
 			if (rotation > 360.0f)
 				rotation -= 360.0f;
+
+            // Проверяем состояние клавиатуры и соответствующим образом изменяем объект игрока
+            Keys.down    = m_Input->IsKeyPressed(DIK_S);
+            Keys.up      = m_Input->IsKeyPressed(DIK_W);
+            Keys.left    = m_Input->IsKeyPressed(DIK_A);
+            Keys.right   = m_Input->IsKeyPressed(DIK_D);
+            Keys.lmbDown = m_Input->IsLeftMouseButtonDown();
 		}
 
 		// Finally render the graphics to the screen anyway
-		result = m_Graphics->Render(rotation, mouseZ, mouseX, mouseY, onTimer);
+        result = m_Graphics->Render(rotation, mouseZ, mouseX, mouseY, &Keys, onTimer);
 		if (!result)
 			return false;
 	}

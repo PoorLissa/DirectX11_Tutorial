@@ -29,9 +29,9 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         // http://dallinwellington.com/rendering/sprite-atlas-rendering-with-dx-hlsl/
 
         // эти три параметра нам известны, мы их получим снаружи
-        int index = input.animationInfo.z;         // номер кусочка, который хотим отрисовать
-        //float sliceSizeX = input.animationInfo.x;       // ширина одного кусочка
-        //float sliceSizeY = input.animationInfo.y;       // высота одного кусочка
+        int index = input.animationInfo.z;                  // номер кусочка, который хотим отрисовать
+        //float sliceSizeX = input.animationInfo.x;         // ширина одного кусочка
+        //float sliceSizeY = input.animationInfo.y;         // высота одного кусочка
 
         // Получим размеры текстуры, которые были заданы в TextureArrayClass::Initialize => loadInfo.Width, loadInfo.Height
         float texWidth, texHeight, texDepth;

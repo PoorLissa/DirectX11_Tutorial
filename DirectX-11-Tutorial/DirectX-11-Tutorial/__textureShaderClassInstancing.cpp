@@ -96,14 +96,14 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 
 // The Render 3 function now takes as input a vertex count and an instance count instead of the old index count.
 // The Render 3 function now takes as input a pointer to the texture array. This will give the shader access to the two textures for blending operations.
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount,
+bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, ciRef vertexCount, ciRef instanceCount,
                                             const D3DXMATRIX &worldMatrix, const D3DXMATRIX &viewMatrix, const D3DXMATRIX &projectionMatrix,
-                                            ID3D11ShaderResourceView** textureArray, const int &X, const int &Y)
+                                            ID3D11ShaderResourceView** textureArray, ciRef rotationMode, ciRef rotateToX, ciRef rotateToY)
 {
     bool result;
     
     // Set the shader parameters that it will use for rendering.
-    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, textureArray, X, Y);
+    result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, textureArray, rotationMode, rotateToX, rotateToY);
     if (!result)
         return false;
     
@@ -347,10 +347,11 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
-// Теперь метод принимает в качестве параметра массив стекстур
+// Теперь метод принимает в качестве параметра массив текстур
 bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
-                                        ID3D11ShaderResourceView **textureArray, const int &X, const int &Y)
+                                        ID3D11ShaderResourceView **textureArray,
+                                        ciRef rotationMode, ciRef rotateToX, ciRef rotateToY)
 {
 	HRESULT					 result;
 	D3D11_MAPPED_SUBRESOURCE mappedResource;
@@ -371,13 +372,13 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 
 	// Copy the matrices into the constant buffer
-	dataPtr->world		= worldMatrix;
-	dataPtr->view		= viewMatrix;
-	dataPtr->projection = projectionMatrix;
-	dataPtr->testX		= X;
-	dataPtr->testY		= Y;
-	dataPtr->z1         = 0.0;
-	dataPtr->z2         = 0.0;
+	dataPtr->world		  = worldMatrix;
+	dataPtr->view		  = viewMatrix;
+	dataPtr->projection   = projectionMatrix;
+	dataPtr->rotationMode = rotationMode;
+    dataPtr->rotateToX    = rotateToX;
+    dataPtr->rotateToY    = rotateToY;
+	dataPtr->dummy        = 0.0f;               // <-- dummy
 
 	// Unlock the constant buffer.
 	deviceContext->Unmap(m_matrixBuffer, 0);
@@ -425,13 +426,13 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 
 	// Copy the matrices into the constant buffer
-	dataPtr->world		= worldMatrix;
-	dataPtr->view		= viewMatrix;
-	dataPtr->projection = projectionMatrix;
-	dataPtr->testX		= X;
-	dataPtr->testY		= Y;
-	dataPtr->z1 = 0.0;
-	dataPtr->z2 = 0.0;
+	dataPtr->world		  = worldMatrix;
+	dataPtr->view		  = viewMatrix;
+	dataPtr->projection   = projectionMatrix;
+	dataPtr->rotationMode = 1.0f;
+	dataPtr->rotateToX	  = X;
+	dataPtr->rotateToY    = Y;
+	dataPtr->dummy        = 0.0f;
 
 	// Unlock the constant buffer.
 	deviceContext->Unmap(m_matrixBuffer, 0);
@@ -471,11 +472,13 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 	dataPtr = (MatrixBufferType*)mappedResource.pData;
 
 	// Copy the matrices into the constant buffer.
-	dataPtr->world = worldMatrix;
-	dataPtr->view = viewMatrix;
-	dataPtr->projection = projectionMatrix;
-	dataPtr->testX = 0.0f;
-	dataPtr->testY = 0.0f;
+	dataPtr->world		  = worldMatrix;
+	dataPtr->view		  = viewMatrix;
+	dataPtr->projection   = projectionMatrix;
+	dataPtr->rotationMode = 0.0f;
+	dataPtr->rotateToX	  = 0.0f;
+	dataPtr->rotateToY    = 0.0f;
+	dataPtr->dummy        = 0.0f;
 
 	// Unlock the constant buffer.
 	deviceContext->Unmap(m_matrixBuffer, 0);

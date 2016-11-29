@@ -5,10 +5,10 @@ cbuffer MatrixBuffer
     matrix worldMatrix;
     matrix viewMatrix;
     matrix projectionMatrix;
-    float  rotateToX;
-    float  rotateToY;
-    float  z1;      //  <-- dummy
-    float  z2;      //  <-- dummy
+    float  rotationMode;        // Нужно ли поворачивать все спрайты на одну точку
+    float  rotateToX;           // X-координата точки, на которую нужно повернуть все спрайты
+    float  rotateToY;           // Y-координата точки, на которую нужно повернуть все спрайты
+    float  dummy;               //  <-- dummy
 };
 
 // The VertexInputType structure now has the third element which will hold the instanced input position data.
@@ -16,7 +16,7 @@ struct VertexInputType
 {
     float4 position         : POSITION;
     float2 tex              : TEXCOORD0;
-    float3 instancePosition : TEXCOORD1;
+    float3 instancePosition : TEXCOORD1;    // x = позиция x, y = позиция y, z = повторот на заданный угол
     float3 animationInfo    : TEXCOORD2;
 };
 
@@ -34,29 +34,38 @@ PixelInputType TextureVertexShader(VertexInputType input)
 {
     PixelInputType output;
 
-    // Change the position vector to be 4 units for proper matrix calculations.
+    // Change the position vector to be 4 units for proper matrix calculations
     //input.position.w = 1.0f;
 
-    // Here is where we use the instanced position information to modify the position of each triangle we are drawing.
-
-    static const float PI = 3.14159265f;
-    static const float divPIby180 = PI / 180.0f;
-    static const float div180byPI = 180.0f / PI;
-
-    float dX = input.instancePosition.x - rotateToX;
-    float dY = input.instancePosition.y - rotateToY;
+    // --- Here is where we use the instanced position information to modify the position of each triangle we are drawing ---
     float Angle, Sin, Cos;
 
-    if (dX == 0.0f) {
-        Angle = dY > 0.0f ? 180.0f : 0.0f;
-    }
-    else {
-        Angle = atan(dY / dX) * div180byPI;
-        Angle = dX > 0.0f ? Angle + 90.0f : Angle + 270.0f;
-    }
+    if( rotationMode == 0.0f ) {
 
-    // Angle to Radians:
-    Angle = (Angle + input.instancePosition.z) * divPIby180;
+        // Учитываем только вращение на угол, который задается для каждой инстанции
+        Angle = input.instancePosition.z;
+
+    } else {
+
+        // Поворачиваем спрайты так, что они все смотрят на одну и ту же точку в пространстве
+        static const float PI = 3.14159265f;
+        static const float divPIby180 = PI / 180.0f;
+        static const float div180byPI = 180.0f / PI;
+
+        float dX = input.instancePosition.x - rotateToX;
+        float dY = input.instancePosition.y - rotateToY;
+
+        if (dX == 0.0f) {
+            Angle = dY > 0.0f ? 180.0f : 0.0f;
+        }
+        else {
+            Angle = atan(dY / dX) * div180byPI;
+            Angle = dX > 0.0f ? Angle + 90.0f : Angle + 270.0f;
+        }
+
+        // Angle to Radians:
+        Angle = (Angle + input.instancePosition.z) * divPIby180;
+    }
 
 
 
@@ -71,8 +80,8 @@ PixelInputType TextureVertexShader(VertexInputType input)
     output.position.x = input.position.x * Cos - input.position.y * Sin;
     output.position.y = input.position.x * Sin + input.position.y * Cos;
 
-    output.position.z = 1.0f;
     output.position.w = 1.0f;
+    output.position.z = 1.0f;
 
     output.position.x += input.instancePosition.x;
     output.position.y += input.instancePosition.y;
