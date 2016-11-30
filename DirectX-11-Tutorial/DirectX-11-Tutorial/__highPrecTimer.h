@@ -11,6 +11,7 @@
 #include <windows.h>
 
 class HighPrecisionTimer {
+
  public:
 	HighPrecisionTimer();
 	HighPrecisionTimer(const HighPrecisionTimer &);

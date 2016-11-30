@@ -1,38 +1,49 @@
 #include "__graphicsClass.h"
+#include "__highPrecTimer.h"
 
-#define NUM 1
+#define NUM 100
 
-// »нициализируем статический объект класса в глобальной области. ѕочему-то он не хочет инициализироватьс€ в файле класса, а хочет только здесь
+// »нициализируем статические объекты класса в глобальной области. ѕочему-то они не хот€т инициализироватьс€ в файле собственного класса, а хот€т только здесь
 BitmapClass* Sprite::Bitmap = 0;
+int Bullet::_scrWidth;
+int Bullet::_scrHeight;
 
-std::vector<gameObjectBase*> monstersVector1;
-std::vector<gameObjectBase*> monstersVector2;
-std::vector<gameObjectBase*> bulletVector;
 
-InstancedSprite* m_PlayerBitmapIns;
-gameObjectBase*  m_Player;
 
-InstancedSprite* m_BulletBitmapIns;
+std::list<gameObjectBase*> monsterList1;
+std::list<gameObjectBase*> monsterList2;
+std::list<gameObjectBase*> bulletList;
+
+unsigned int monsterList1Size = 0;
+unsigned int monsterList2Size = 0;
+unsigned int bulletListSize   = 0;
+
+InstancedSprite *m_PlayerBitmapIns;
+InstancedSprite *m_BulletBitmapIns;
+gameObjectBase  *m_Player;
+
+std::vector< std::list<gameObjectBase*>* > VEC;         // ¬ектор, в котором содержатс€ списки монстров. ѕередаем его в обработчик перемещени€ пули дл€ просчета стрельбы
+
+HighPrecisionTimer gameTimer;
+
 
 GraphicsClass::GraphicsClass()
 {
-	m_d3d			= 0;
-	m_Camera		= 0;
-	m_Model			= 0;
-	//m_ColorShader	= 0;
-	m_TextureShader = 0;
+	m_d3d			   = 0;
+	m_Camera		   = 0;
+	m_Model			   = 0;
+//	m_ColorShader	   = 0;
+	m_TextureShader    = 0;
 	m_TextureShaderIns = 0;
-	m_LightShader	= 0;
-	m_Light			= 0;
-	m_Bitmap		= 0;
-	m_BitmapIns		= 0;
-	m_TextOut		= 0;
-
-    sprIns1 = 0;
-    sprIns2 = 0;
-
-    m_PlayerBitmapIns = 0;
-    m_BulletBitmapIns - 0;
+	m_LightShader	   = 0;
+	m_Light			   = 0;
+	m_Bitmap		   = 0;
+	m_BitmapIns		   = 0;
+	m_TextOut		   = 0;
+    sprIns1            = 0;
+    sprIns2            = 0;
+    m_PlayerBitmapIns  = 0;
+    m_BulletBitmapIns  = 0;
 }
 
 GraphicsClass::GraphicsClass(const GraphicsClass &other)
@@ -58,6 +69,8 @@ void GraphicsClass::logMsg(char *str) {
 bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	bool result;
+
+    gameTimer.Initialize(1);
 
 	// «апомним размеры текущего экрана
 	scrWidth  = screenWidth;
@@ -206,13 +219,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
             for (int i = 0; i < NUM; i++) {
-                int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
-                int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+                int        x = 50 + rand() % (scrWidth  - 100);
+                int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
                 int interval = 50 / speed;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-                monstersVector2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+                monsterList2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+                monsterList2Size++;
             }
         }
 
@@ -225,31 +239,42 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
             for (int i = 0; i < NUM; i++) {
-                int        x = 50 + (float)rand() / (RAND_MAX + 1) * 700;
-                int        y = 50 + (float)rand() / (RAND_MAX + 1) * 500;
+                int        x = 50 + rand() % (scrWidth  - 100);
+                int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
                 int interval = 50 / speed;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-                monstersVector1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+                monsterList1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+                monsterList1Size++;
             }
         }
 
 //#endif
 
 
+        // ¬ектор списков с монстрами
+        VEC.push_back(&monsterList1);
+        VEC.push_back(&monsterList2);
+
+
         // »грок
         WCHAR *frames1[] = { L"../DirectX-11-Tutorial/data/tank830x800.png" };
         result = m_PlayerBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1, 1, 40, 40);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the Player.");
-        m_Player = new Player(screenWidth / 2, screenHeight / 2, 0.0f, 3.0f, 1000, 1);
+        m_Player = new Player(screenWidth / 2, screenHeight / 2, 0.0f, 5.0f, 1000, 1);
 
 
         // ѕули
+        Bullet::setScrSize(screenWidth, screenHeight);
         WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet.png" };
-        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
+        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 5, 5);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the bullet.");
-        bulletVector.push_back(new Bullet(0, 0, 100, 100, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
+        bulletList.push_back(new Bullet(-100, -100, -101, -101, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
+        bulletListSize++;
+
+        
+
 
 
         SAFE_CREATE(m_BitmapSprite, BitmapClass);
@@ -327,17 +352,29 @@ void GraphicsClass::Shutdown()
     if (m_Player)
         SAFE_DELETE(m_Player);
 
-    if (bulletVector.size() > 0)
-        for (int i = 0; i < bulletVector.size(); i++)
-            SAFE_DELETE(bulletVector[i]);
+    if( bulletList.size() > 0 ) {
+        std::list<gameObjectBase*>::iterator iter = bulletList.begin(), end = bulletList.end();
+        while (iter != end) {
+            SAFE_DELETE(*iter);
+            ++iter;
+        }
+    }
 
-    if (monstersVector1.size() > 0)
-        for (int i = 0; i < monstersVector1.size(); i++)
-            SAFE_DELETE(monstersVector1[i]);
+    if( monsterList1.size() > 0 ) {
+        std::list<gameObjectBase*>::iterator iter = monsterList1.begin(), end = monsterList1.end();
+        while (iter != end) {
+            SAFE_DELETE(*iter);
+            ++iter;
+        }
+    }
 
-    if (monstersVector2.size() > 0)
-        for (int i = 0; i < monstersVector2.size(); i++)
-            SAFE_DELETE(monstersVector2[i]);
+    if( monsterList2.size() > 0 ) {
+        std::list<gameObjectBase*>::iterator iter = monsterList2.begin(), end = monsterList2.end();
+        while (iter != end) {
+            SAFE_DELETE(*iter);
+            ++iter;
+        }
+    }
 
     if (m_spriteVec.size() > 0)
         for (int i = 0; i < m_spriteVec.size(); i++)
@@ -540,118 +577,255 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             m_d3d->GetWorldMatrix(matScale);
 
 #if 1
-            int playerPosX = m_Player->getPosX();
-            int playerPosY = m_Player->getPosY();
+            static int playerPosX = 0, playerPosY = 0;
 
             // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываютс€ в синхронизации с таймером, это добавит нам FPS
-            if (onTimer) {
+            if( onTimer ) {
+
+                {
+                    gameTimer.Frame();
+
+                    char str[100] = "time passed:  ";
+                    char num_string[32];
+
+                    sprintf_s(num_string, "%f", gameTimer.GetTime());
+                    strcat_s(str, 100, num_string);
+
+                    logMsg(str);
+                }
+
+                // ѕолучим текущие координаты игрока
+                playerPosX = m_Player->getPosX();
+                playerPosY = m_Player->getPosY();
+
+                std::list<gameObjectBase*>::iterator iter, end;
 
                 // --- Player ---
-                Player *player = (Player*)m_Player;
+                {
+                    Player *player = (Player*)m_Player;
 
-                player->setLeft(Keys->left);
-                player->setRight(Keys->right);
-                player->setUp(Keys->up);
-                player->setDown(Keys->down);
+                    player->setDirectionL(Keys->left );
+                    player->setDirectionR(Keys->right);
+                    player->setDirectionU(Keys->up   );
+                    player->setDirectionD(Keys->down );
 
-                player->Move(-1, -1, NULL);
+                    player->Move();
 
-                if (!m_PlayerBitmapIns->initializeInstances(m_d3d->GetDevice(), m_Player))
-                    return false;
-
-                // --- Monsters ---
-                for (int i = 0; i < monstersVector1.size(); i++)
-                    monstersVector1[i]->Move(playerPosX, playerPosY);
-
-                for (int i = 0; i < monstersVector2.size(); i++)
-                    monstersVector2[i]->Move(playerPosX, playerPosY);
-
-                if (!sprIns1->initializeInstances(m_d3d->GetDevice(), &monstersVector1))
-                    return false;
-
-                if (!sprIns2->initializeInstances(m_d3d->GetDevice(), &monstersVector2))
-                    return false;
+                    if (!m_PlayerBitmapIns->initializeInstances(m_d3d->GetDevice(), m_Player))
+                        return false;
+                }
 
                 // --- Bullets ---
-                if (Keys->lmbDown)
-                    bulletVector.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 10.0));
+                {
+                    static char shoot = -1;
+                    shoot++;
 
-                std::vector<gameObjectBase*>::iterator iter = bulletVector.begin(), end = bulletVector.end();
-                for (int i = 0; i < bulletVector.size(); i++) {
+                    // ≈сли нажата лева€ кнопка мыши, добавл€ем в очередь новые пули
+                    if ( Keys->lmbDown ) {
 
-                    int Hit = bulletVector[i]->Move();
+                        #if 0
+                            if( !(shoot % 2) ) {
+                                bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 50.0));
+                                bulletListSize++;
+                            }
+                        #else
+                            if( !(shoot % 20) ) {
+                                int size = 20;
+                                int num = 3;
+                                for (int i = -num; i < num; i++) {
+                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + size*i, mouseY + size*i, 50.0));
+                                    bulletListSize++;
+                                }
+                            }
+                        #endif
+                    }
 
-                    if (Hit && Hit == 1) {
+                    // ѕросчитываем все пули
+                    iter = bulletList.begin();
+                    end  = bulletList.end();
 
-                        gameObjectBase* ptrBullet = bulletVector[i];
+                    while (iter != end) {
 
-                        if (i != bulletVector.size() - 1)
-                            bulletVector[i] = std::move(bulletVector.back());
-                        bulletVector.pop_back();
+                        if ((*iter)->isAlive()) {
+                            //(*iter)->Move(0, 0, &monsterList1);       // 1 список 
+                            (*iter)->Move(0, 0, &VEC);                  // вектор списков
+                        }
+                        else {
+                            delete *iter;
+                            iter = bulletList.erase(iter);
+                            bulletListSize--;
+                            continue;
+                        }
 
-                        delete ptrBullet;
+                        ++iter;
+                    }
+
+                    if( bulletListSize > 0 )
+                        if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList))
+                            return false;
+
+                    {
+                        gameTimer.Frame();
+
+                        char str[100] = "bullets time: ";
+                        char num_string[32];
+
+                        sprintf_s(num_string, "%f", gameTimer.GetTime());
+                        strcat_s(str, 100, num_string);
+                        strcat_s(str, 100, "; bullets num: ");
+                        sprintf_s(num_string, "%d", bulletListSize);
+                        strcat_s(str, 100, num_string);
+                        strcat_s(str, 100, "\n");
+
+                        logMsg(str);
                     }
                 }
 
-                if(bulletVector.size())
-                    if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletVector))
-                        return false;
+                // --- Monsters List 1 ---
+                {
+                    iter = monsterList1.begin();
+                    end  = monsterList1.end();
+
+                    while (iter != end) {
+
+                        if ((*iter)->isAlive()) {
+                            (*iter)->Move(playerPosX, playerPosY);
+                        }
+                        else {
+                            delete *iter;
+                            iter = monsterList1.erase(iter);
+                            monsterList1Size--;
+
+                            // add new monsters
+#if 1
+                            {
+                                int x = rand() % scrWidth;
+                                int y = rand() % scrHeight;
+
+                                x += x % 2 ? scrWidth  : -scrWidth;
+                                y += y % 2 ? scrHeight : -scrHeight;
+
+                                float  speed = (rand() % 250 + 10) * 0.1f;
+                                int interval = 50 / speed;
+
+                                monsterList1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+                                monsterList1Size++;
+                            }
+#endif
+                            continue;
+                        }
+
+                        ++iter;
+                    }
+
+                    if( monsterList1Size > 0 )
+                        if( !sprIns1->initializeInstances(m_d3d->GetDevice(), &monsterList1) )
+                            return false;
+                }
+
+                // --- Monsters List 2 ---
+                {
+                    iter = monsterList2.begin();
+                    end  = monsterList2.end();
+
+                    while (iter != end) {
+
+                        if ((*iter)->isAlive()) {
+                            (*iter)->Move(playerPosX, playerPosY);
+                        }
+                        else {
+                            delete *iter;
+                            iter = monsterList2.erase(iter);
+                            monsterList2Size--;
+
+                            // add new monsters
+#if 1
+                            {
+                                int x = rand() % scrWidth;
+                                int y = rand() % scrHeight;
+
+                                x += x % 2 ? scrWidth  : -scrWidth;
+                                y += y % 2 ? scrHeight : -scrHeight;
+
+                                float  speed = (rand() % 250 + 10) * 0.1f;
+                                int interval = 50 / speed;
+
+                                monsterList2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+                                monsterList2Size++;
+                            }
+#endif
+                            continue;
+                        }
+
+                        ++iter;
+                    }
+
+                    if( monsterList2Size > 0 )
+                        if( !sprIns2->initializeInstances(m_d3d->GetDevice(), &monsterList2) )
+                            return false;
+                }
             }
 
-            // јктивируем модель спрайта в GPU
+            // --- јктивируем модели спрайтов в GPU и затем отрисовываем все инстанции ---
+            // ---------------------------------------------------------------------------
+
             // Monsters 1
-            if (!sprIns1->Render(m_d3d->GetDeviceContext()))
+            if( monsterList1Size > 0 )
+            {
+                if( !sprIns1->Render(m_d3d->GetDeviceContext()) )
+                    return false;
+
+                //D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
+                //D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
+                //D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
+                //D3DXMatrixScaling(&matScale, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f);
+
+                // The Render function for the shader now requires the vertex and instance count from the model object.
+                // Render the model using the texture shader.
+
+                if ( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                        sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
+                            worldMatrixZ * translationMatrix * matScale,
+                                viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY) )
                 return false;
-
-            //D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
-            //D3DXMatrixTranslation(&matTrans, 100.0f, 100.0f, 0.0f);
-            //D3DXMatrixScaling(&matScale, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 0.5f + 0.3*sin(rotation/5) + 0.0001*zoom, 1.0f);
-            //D3DXMatrixScaling(&matScale, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f);
-
-            // The Render function for the shader now requires the vertex and instance count from the model object.
-            // Render the model using the texture shader.
-
-            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
-                sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
-                    worldMatrixZ * translationMatrix * matScale,
-                        viewMatrix, orthoMatrix, sprIns1->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY);
-
-            if (!result)
-                return false;
+            }
 
             // Monsters 2
-            if (!sprIns2->Render(m_d3d->GetDeviceContext()))
-                return false;
+            if( monsterList2Size > 0 )
+            {
+                if( !sprIns2->Render(m_d3d->GetDeviceContext()) )
+                    return false;
 
-            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
-                sprIns2->GetVertexCount(), sprIns2->GetInstanceCount(),
-                    worldMatrixZ * translationMatrix * matScale,
-                        viewMatrix, orthoMatrix, sprIns2->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY);
-
-            if (!result)
+                if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                        sprIns2->GetVertexCount(), sprIns2->GetInstanceCount(),
+                            worldMatrixZ * translationMatrix * matScale,
+                                viewMatrix, orthoMatrix, sprIns2->GetTextureArray(), 1, playerPosX - xCenter, yCenter - playerPosY) )
                 return false;
+            }
 
             // Player
-            if (!m_PlayerBitmapIns->Render(m_d3d->GetDeviceContext()))
-                return false;
+            {
+                if( !m_PlayerBitmapIns->Render(m_d3d->GetDeviceContext()) )
+                    return false;
 
-            result = m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
-                m_PlayerBitmapIns->GetVertexCount(), m_PlayerBitmapIns->GetInstanceCount(),
-                    worldMatrixZ * translationMatrix * matScale,
-                        viewMatrix, orthoMatrix, m_PlayerBitmapIns->GetTextureArray(), 1, mouseX - xCenter, yCenter - mouseY);
-
-            if (!result)
+                if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                        m_PlayerBitmapIns->GetVertexCount(), m_PlayerBitmapIns->GetInstanceCount(),
+                            worldMatrixZ * translationMatrix * matScale,
+                                viewMatrix, orthoMatrix, m_PlayerBitmapIns->GetTextureArray(), 1, mouseX - xCenter, yCenter - mouseY) )
                 return false;
+            }
 
             // Bullets
-            if (bulletVector.size()) {
+            if( bulletListSize > 0 )
+            {
+                if( !m_BulletBitmapIns->Render(m_d3d->GetDeviceContext()) )
+                    return false;
 
-                if( !m_BulletBitmapIns->Render(m_d3d->GetDeviceContext()) ||
-                    !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                         m_BulletBitmapIns->GetVertexCount(), m_BulletBitmapIns->GetInstanceCount(),
                             worldMatrixZ * translationMatrix * matScale,
-                                viewMatrix, orthoMatrix, m_BulletBitmapIns->GetTextureArray(), 0, 0, 0)
-                ) return false;
+                                viewMatrix, orthoMatrix, m_BulletBitmapIns->GetTextureArray(), 0, 0, 0) )
+                return false;
             }
 
 #endif

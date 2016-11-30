@@ -16,8 +16,8 @@
 class SystemClass {
  public:
 	SystemClass();
-	SystemClass(const SystemClass&);
-	~SystemClass();
+    SystemClass(const SystemClass &);
+   ~SystemClass();
 
 	bool Initialize();
 	void Shutdown();

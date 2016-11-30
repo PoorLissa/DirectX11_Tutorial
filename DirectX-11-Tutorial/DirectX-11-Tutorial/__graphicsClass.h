@@ -14,6 +14,7 @@
 
 #include <stdio.h>
 #include <vector>
+#include <list>
 #include <ctime>
 
 #include "__d3dClass.h"

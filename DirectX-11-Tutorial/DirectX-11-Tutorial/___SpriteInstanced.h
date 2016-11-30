@@ -34,57 +34,60 @@ class gameObjectBase {
     gameObjectBase(float x, float y, float angle, float speed) : _X(x), _Y(y), _Angle(angle), _Speed(speed) {}
     virtual ~gameObjectBase() {}
 
-    // --- Базовые методы, которые не переопределяются ---
-    inline float getPosX()  const            { return _X;     } 
-    inline float getPosY()  const            { return _Y;     }
-    inline float getAngle() const            { return _Angle; }
-    inline void  setPosX (const float &x)    {        _X = x; }
-    inline void  setPosY (const float &y)    {        _Y = y; }
-    inline void  setAngle(const float &a)    {    _Angle = a; }
+    // --- Базовые методы, которые не переопределяются в классах-наследниках ---
+    inline float getPosX  () const           { return _X;     } 
+    inline float getPosY  () const           { return _Y;     }
+    inline float getAngle () const           { return _Angle; }
+    inline bool  isAlive  () const           { return _Alive; }
+    inline void  setPosX  (const float &x)   {        _X = x; }
+    inline void  setPosY  (const float &y)   {        _Y = y; }
+    inline void  setAngle (const float &a)   {    _Angle = a; }
+    inline void  setAlive (const  bool &b)   {    _Alive = b; }
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
     virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
-	inline virtual int getAnimPhase() const = 0;                                // метод для получения текущей фазы анимации
+    inline virtual int getAnimPhase() const = 0;                                // метод для получения текущей фазы анимации
 
  protected:
     bool    _Alive;
-    float   _X;
-    float   _Y;
+    float   _X, _Y;
     float   _Speed;
     float   _Angle;
 };
 
 // Класс игрового объекта - Игрок
 class Player : public gameObjectBase {
-public:
+
+ public:
     Player(float x, float y, float angle, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, angle, speed) {}
    ~Player() {}
 
-    virtual int Move(const float &x, const float &y, void *Param) {
+    // Пока что не используем возвращаемое значение, вместо него пользуемся методом isAlive
+    virtual int Move(const float &x = 0, const float &y = 0, void *Param = nullptr) {
 
         _Step = _Speed;
 
         // в случае нажатия двух клавиш уменьшаем шаг в sqrt(2) раз, чтобы компенсировать сложение двух векторов движения
-        if( (_UP_ && _LEFT_) || (_UP_ && _RIGHT_) || (_DOWN_ && _LEFT_) || (_DOWN_ && _RIGHT_) )
+        if( ( _Up && _Left ) || ( _Up && _Right ) || ( _Down && _Left ) || ( _Down && _Right ) )
             _Step *= 0.7071068f;
 
-        if (  _DOWN_ ) _Y += _Step;
-        if (  _LEFT_ ) _X -= _Step;
-        if (    _UP_ ) _Y -= _Step;
-        if ( _RIGHT_ ) _X += _Step;
+        if (  _Down ) _Y += _Step;
+        if (  _Left ) _X -= _Step;
+        if (    _Up ) _Y -= _Step;
+        if ( _Right ) _X += _Step;
 
         return 0;
     }
 
-    inline virtual int getAnimPhase() const { return 0; }
+    inline virtual int getAnimPhase() const  {    return 0; }
 
-    void inline setLeft (const bool &param) { _LEFT_  = param; }
-    void inline setRight(const bool &param) { _RIGHT_ = param; }
-    void inline setUp   (const bool &param) { _UP_    = param; }
-    void inline setDown (const bool &param) { _DOWN_  = param; }
+    void inline setDirectionL(const bool &b) { _Left  = b; }
+    void inline setDirectionR(const bool &b) { _Right = b; }
+    void inline setDirectionU(const bool &b) { _Up    = b; }
+    void inline setDirectionD(const bool &b) { _Down  = b; }
 
- private:
-    bool    _LEFT_, _RIGHT_, _UP_, _DOWN_;
+  private:
+    bool    _Left, _Right, _Up, _Down;
     float   _Step;
 };
 
@@ -95,6 +98,7 @@ class Monster : public gameObjectBase {
     Monster(float x, float y, float angle, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, angle, speed),
         animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {
     }
+
    ~Monster() {}
 
     virtual int Move(const float &x, const float &y, void *Param) {
@@ -143,7 +147,7 @@ class Bullet : public gameObjectBase {
         _X_To(x_to), _Y_To(y_to), explosionCounter(0), MonsterIsHit(false) {
 
         // Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
-        // Будем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
+        // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
         static const float PI = 3.14159265f;
         static const float divPIby180 = PI / 180.0f;
         static const float div180byPI = 180.0f / PI;
@@ -170,6 +174,14 @@ class Bullet : public gameObjectBase {
         Collision = (_X_To < _X);       // как только поменяется знак этого выражения, цель достигнута. ??? - учесть и по игреку, а то улетает вертикально вверх
     }
 
+    // Метод для установки значений _scrWidth и _scrHeight
+    static void setScrSize(unsigned int width, unsigned int height) {
+
+        unsigned int addedSize = 50;
+        _scrWidth  = width  + addedSize;
+        _scrHeight = height + addedSize;
+    }
+
    ~Bullet() {}
 
     inline virtual int getAnimPhase() const { return 0; }
@@ -177,77 +189,96 @@ class Bullet : public gameObjectBase {
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
     virtual int Move(const float &x, const float &y, void *Param) {
-/*
-        if (!explosionCounter) {
 
-            for (unsigned int i = 0; i < vecMon.size(); i++) {
+        std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
 
-                if (commonSectionCircle(_x, _y, _x + dX, _y + dY, vecMon[i]->getX() + 24, vecMon[i]->getY() + 24, 24)) {
-                    MonsterIsHit = true;
-                    vecMon[i]->_Alive = false;
-                    _X = vecMon[i]->getX() + 12;
-                    _Y = vecMon[i]->getY() + 12;
-                    return ++explosionCounter;
-                }
-            }
+        int roughX0, roughY0, roughX1, roughY1, monsterX, monsterY, roughSize = 100;
+
+        if (dX > 0) {
+            roughX0 = _X;
+            roughX1 = _X + dX;
         }
-*/
-        _X += dX;
-        _Y += dY;
-
-        // ??? нужно проверять еще и по игреку, а то по вертикали пули уходят в вечность
-        // проверяем, достигли ли цели
-        if ((_X_To < _X) != Collision || explosionCounter) {
-            _X = _X_To;
-            _Y = _Y_To;
-            dX = dY = 0.0;
-            return ++explosionCounter;
+        else {
+            roughX1 = _X;
+            roughX0 = _X + dX;
         }
 
-        return 0;
-    }
-/*
-    int Move(list<DDR_Monster *> &vecList) {
+        if (dY > 0) {
+            roughY0 = _Y;
+            roughY1 = _Y + dY;
+        }
+        else {
+            roughY1 = _Y;
+            roughY0 = _Y + dY;
+        }
 
-        if (!explosionCounter) {
+        roughX0 += roughSize;
+        roughX1 -= roughSize;
+        roughY0 += roughSize;
+        roughY1 -= roughSize;
 
-            list<DDR_Monster *>::iterator
-                iter = vecList.begin(), end = vecList.end();
+        for (int lst = 0; lst < VEC->size(); lst++) {
+        
+            std::list<gameObjectBase*> *list = VEC->at(lst);
 
+            // выбираем вектор с монстрами из вектора векторов
+            std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
             while (iter != end) {
 
-                if (commonSectionCircle(_x, _y, _x + dX, _y + dY, (*iter)->getX() + 24, (*iter)->getY() + 24, 24)) {
-                    MonsterIsHit = true;
-                    (*iter)->_Alive = false;
-                    _X = (*iter)->getX() + 12;
-                    _Y = (*iter)->getY() + 12;
-                    return ++explosionCounter;
+                monsterX = (*iter)->getPosX();
+                monsterY = (*iter)->getPosY();
+
+                // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
+                if( roughX0 > monsterX && roughX1 < monsterX && roughY0 > monsterY && roughY1 < monsterY )
+                {
+
+                    if( commonSectionCircle(_X, _Y, _X + dX, _Y + dY, monsterX, monsterY, 20) ) {
+
+                        (*iter)->setAlive(false);       // монстр убит
+#if 0
+                        this->_Alive = false;           // пуля истрачена
+
+                        dX = dY = 0.0;                  // Останавливаем пулю
+                        _X = monsterX;                  // Переносим пулю в 
+                        _Y = monsterY;                  // центр монстра
+
+                        return 1;
+#endif
+                    }
                 }
 
                 ++iter;
             }
         }
 
-        _x += dX;
-        _y += dY;
+        _X += dX;
+        _Y += dY;
 
         // ??? нужно проверять еще и по игреку, а то по вертикали пули уходят в вечность
         // проверяем, достигли ли цели
-        if ((_X < _x) != Collision || explosionCounter) {
-            _x = _X;
-            _y = _Y;
+/*
+        if ((_X_To < _X) != Collision ) {
+            _X = _X_To;
+            _Y = _Y_To;
             dX = dY = 0.0;
-            return ++explosionCounter;
+            this->_Alive = false;   // пуля ушла в молоко
+            return 1;
+        }
+*/
+
+        if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
+            dX = dY = 0.0;
+            this->_Alive = false;   // пуля ушла в молоко
+            return 1;
         }
 
         return 0;
     }
-*/
 
-private:
+ private:
 
     // пересечение отрезка с окружностью ( http://www.cyberforum.ru/cpp-beginners/thread853799.html )
-    bool __fastcall commonSectionCircle(double x1, double y1, double x2, double y2, double xC, double yC, double R) {
+    bool commonSectionCircle(double x1, double y1, double x2, double y2, double xC, double yC, double R) {
 
         x1 -= xC;
         y1 -= yC;
@@ -272,7 +303,7 @@ private:
         return (a + b + c) < 0;
     }
 
-private:
+ private:
     float   _X_To, _Y_To;           // конечная точка, в которую пуля летит
     float   dX, dY;                 // смещения по x и по y для нахождения новой позиции пули
     int     explosionCounter;
@@ -280,9 +311,13 @@ private:
     bool    MonsterIsHit;
 
     float   dx, dy, a, b, c;        // переменные для вычисления пересечения пули с монстром, чтобы не объявлять их каждый раз в теле функции
+
+    static int _scrWidth;           // Значения координат, за пределами которых пуля считается ушедшей в молоко
+    static int _scrHeight;          // 
 };
 
-
+//int Bullet::_scrWidth  = 0;
+//int Bullet::_scrHeight = 0;
 
 
 // Класс инстанцированного спрайта
@@ -374,6 +409,89 @@ class InstancedSprite : public BitmapClass_Instancing {
     }
 
     // Инициализация инстанций: 
+    // Получаем на вход список с данными и из этого списка заполняем массив инстанцированных данных
+    bool initializeInstances(ID3D11Device *device, std::list<gameObjectBase*> *list) {
+
+        // ??? - list->size() is SLOOOOW !!!
+
+        // Set the number of instances in the array
+        if (list->size() <= 0)
+            return false;
+        m_instanceCount = list->size();
+
+
+        InstanceType			*instances;
+        D3D11_BUFFER_DESC		 instanceBufferDesc;
+        D3D11_SUBRESOURCE_DATA   instanceData;
+
+        // We will now setup the new instance buffer.
+        // We start by first setting the number of instances of the triangle that will need to be rendered.
+        // For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
+
+        // Next we create a temporary instance array using the instance count.
+        // Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
+
+        // Create the instance array
+        SAFE_CREATE_ARRAY(instances, InstanceType, m_instanceCount);
+
+        // Now here is where we setup the different positions for each instance of the triangle.
+        // I have set four different x, y, z positions for each triangle.
+        // Note that this is where you could set color, scaling, different texture coordinates, and so forth.
+        // An instance can be modified in any way you want it to be.
+        // For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
+
+        int i = 0;
+        std::list<gameObjectBase*>::iterator iter, end;
+        for (iter = list->begin(), end = list->end(); iter != end; ++iter, ++i) {
+            // Позиция спрайта на экране и поворот спрайта на заданный угол
+            // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
+            instances[i].position = D3DXVECTOR3(
+                float( (*iter)->getPosX() - 0.5f * scrWidth),
+                float(-(*iter)->getPosY() + 0.5f * scrHeight),
+                float( (*iter)->getAngle() )
+            );
+
+            // Размеры кадра анимации (для текстурного атласа only) и номер анимации
+            instances[i].animationInfo = D3DXVECTOR3(
+                m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
+                m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
+                (*iter)->getAnimPhase()                 // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
+            );
+        }
+
+
+
+        // The instance buffer description is setup exactly the same as a vertex buffer description.
+        // Set up the description of the instance buffer.
+        instanceBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+        instanceBufferDesc.ByteWidth      = sizeof(InstanceType)* m_instanceCount;
+        instanceBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+        instanceBufferDesc.CPUAccessFlags = 0;
+        instanceBufferDesc.MiscFlags      = 0;
+        instanceBufferDesc.StructureByteStride = 0;
+
+        // Just like the vertex buffer we get the pointer to the instance array and then create the instance buffer.
+        // Once the instance buffer is created we can release the temporary instance array since the data from the array has been copied into the instance buffer.
+
+        // Give the subresource structure a pointer to the instance data.
+        instanceData.pSysMem          = instances;
+        instanceData.SysMemPitch      = 0;
+        instanceData.SysMemSlicePitch = 0;
+
+        // очищаем m_instanceBuffer, иначе при каждой новой отрисовке теряем память
+        SAFE_RELEASE(m_instanceBuffer);
+
+        // Create the instance buffer.
+        HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
+        CHECK_FAILED(result);
+
+        // Release the instance array now that the instance buffer has been created and loaded.
+        SAFE_DELETE_ARRAY(instances);
+
+        return true;
+    }
+
+    // Инициализация инстанций: 
     // Получаем на вход всего один объект, инициализируемся из него
     bool initializeInstances(ID3D11Device *device, gameObjectBase* obj) {
 
@@ -408,7 +526,7 @@ class InstancedSprite : public BitmapClass_Instancing {
         instances[0].position = D3DXVECTOR3(
             float( obj->getPosX() - 0.5f * scrWidth),
             float(-obj->getPosY() + 0.5f * scrHeight),
-            float( obj->getAngle())
+            float( obj->getAngle() )
         );
 
         // Размеры кадра анимации (для текстурного атласа only) и номер анимации

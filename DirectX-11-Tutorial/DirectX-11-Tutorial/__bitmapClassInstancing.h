@@ -8,6 +8,7 @@
 #include <d3d11.h>
 #include <d3dx10math.h>
 #include <vector>
+#include <list>
 
 #include "__textureClass.h"
 #include "__textureClass_Array.h"
