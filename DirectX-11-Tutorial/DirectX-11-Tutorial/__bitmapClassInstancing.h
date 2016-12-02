@@ -14,8 +14,10 @@
 #include "__textureClass_Array.h"
 #include "Helpers.h"
 
-#define ciRef const int &
+#define ciRef const int   &
 #define cfRef const float &
+
+
 
 class BitmapClass_Instancing {
 
@@ -40,7 +42,6 @@ class BitmapClass_Instancing {
             D3DXVECTOR3  animationInfo; 
 	    };
 
-
  public:
 	BitmapClass_Instancing();
 	BitmapClass_Instancing(const BitmapClass_Instancing &);
@@ -55,16 +56,16 @@ class BitmapClass_Instancing {
 
     // The GetTexture or GetTextureArray functions return a pointer to the texture resource for this 2D image
     // The shader will call one of these functions so it has access to the image when drawing the buffers
-    inline ID3D11ShaderResourceView*  GetTexture()       { return m_Texture->GetTexture();           }
-    inline ID3D11ShaderResourceView** GetTextureArray()  { return m_TextureArray->GetTextureArray(); }
+    inline ID3D11ShaderResourceView*  GetTexture()      const { return m_Texture->GetTexture();           }
+    inline ID3D11ShaderResourceView** GetTextureArray() const { return m_TextureArray->GetTextureArray(); }
 
 	// ѕолучить количества вертексов и инстанций
-    inline int GetVertexCount()     { return m_vertexCount;   }
-    inline int GetInstanceCount()   { return m_instanceCount; }
+    inline int GetVertexCount()   const { return m_vertexCount;   }
+    inline int GetInstanceCount() const { return m_instanceCount; }
 
     // ѕолучить размеры битмапа, переданные в класс при инициализации
-    inline int getBitmapWidth()     { return m_bitmapWidth;   }
-    inline int getBitmapHeight()    { return m_bitmapHeight;  }
+    inline int getBitmapWidth()  const  { return m_bitmapWidth;   }
+    inline int getBitmapHeight() const  { return m_bitmapHeight;  }
 
 	bool initializeInstances(ID3D11Device *);
 

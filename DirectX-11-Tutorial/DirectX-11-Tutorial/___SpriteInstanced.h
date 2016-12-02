@@ -31,7 +31,7 @@
 class gameObjectBase {
 
  public:
-    gameObjectBase(float x, float y, float angle, float speed) : _X(x), _Y(y), _Angle(angle), _Speed(speed) {}
+    gameObjectBase(const float &x, const float &y, const float &angle, const float &speed) : _X(x), _Y(y), _Angle(angle), _Speed(speed) {}
     virtual ~gameObjectBase() {}
 
     // --- Базовые методы, которые не переопределяются в классах-наследниках ---
@@ -59,7 +59,7 @@ class gameObjectBase {
 class Player : public gameObjectBase {
 
  public:
-    Player(float x, float y, float angle, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, angle, speed) {}
+    Player(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty) : gameObjectBase(x, y, angle, speed) {}
    ~Player() {}
 
     // Пока что не используем возвращаемое значение, вместо него пользуемся методом isAlive
@@ -95,7 +95,7 @@ class Player : public gameObjectBase {
 class Monster : public gameObjectBase {
 
  public:
-    Monster(float x, float y, float angle, float speed, int interval, int anim_Qty) : gameObjectBase(x, y, angle, speed),
+    Monster(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty) : gameObjectBase(x, y, angle, speed),
         animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {
     }
 
@@ -143,8 +143,8 @@ class Monster : public gameObjectBase {
 class Bullet : public gameObjectBase {
 
  public:
-    Bullet(int x, int y, int x_to, int y_to, float speed = 1.0) : gameObjectBase(x, y, 0.0f, speed),
-        _X_To(x_to), _Y_To(y_to), explosionCounter(0), MonsterIsHit(false) {
+    Bullet(const int &x, const int &y, const int &x_to, const int &y_to, const float &speed = 1.0) : gameObjectBase(x, y, 0.0f, speed),
+        _X0(x), _Y0(y), explosionCounter(0), MonsterIsHit(false) {
 
         // Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
         // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
@@ -152,8 +152,8 @@ class Bullet : public gameObjectBase {
         static const float divPIby180 = PI / 180.0f;
         static const float div180byPI = 180.0f / PI;
 
-        dX = _X_To - _X;
-        dY = _Y_To - _Y;
+        dX = x_to - x;
+        dY = y_to - y;
 
         if (dX == 0.0f) {
             _Angle = dY > 0.0f ? 180.0f : 0.0f;
@@ -170,9 +170,9 @@ class Bullet : public gameObjectBase {
         float Speed_Divided_By_Dist = _Speed / sqrt(dX*dX + dY*dY);
         dX = Speed_Divided_By_Dist * dX;
         dY = Speed_Divided_By_Dist * dY;
-
-        Collision = (_X_To < _X);       // как только поменяется знак этого выражения, цель достигнута. ??? - учесть и по игреку, а то улетает вертикально вверх
     }
+
+   ~Bullet() {}
 
     // Метод для установки значений _scrWidth и _scrHeight
     static void setScrSize(unsigned int width, unsigned int height) {
@@ -182,9 +182,9 @@ class Bullet : public gameObjectBase {
         _scrHeight = height + addedSize;
     }
 
-   ~Bullet() {}
-
-    inline virtual int getAnimPhase() const { return 0; }
+    inline virtual int   getAnimPhase() const { return 0;   }
+    inline         float getX0()        const { return _X0; }
+    inline         float getY0()        const { return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
@@ -254,18 +254,6 @@ class Bullet : public gameObjectBase {
         _X += dX;
         _Y += dY;
 
-        // ??? нужно проверять еще и по игреку, а то по вертикали пули уходят в вечность
-        // проверяем, достигли ли цели
-/*
-        if ((_X_To < _X) != Collision ) {
-            _X = _X_To;
-            _Y = _Y_To;
-            dX = dY = 0.0;
-            this->_Alive = false;   // пуля ушла в молоко
-            return 1;
-        }
-*/
-
         if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
             dX = dY = 0.0;
             this->_Alive = false;   // пуля ушла в молоко
@@ -304,10 +292,9 @@ class Bullet : public gameObjectBase {
     }
 
  private:
-    float   _X_To, _Y_To;           // конечная точка, в которую пуля летит
+    float   _X0, _Y0;               // изначальная точка, из которой пуля летит
     float   dX, dY;                 // смещения по x и по y для нахождения новой позиции пули
     int     explosionCounter;
-    bool    Collision;              // определяем знак (X < X0) и потом, как только знак этого выражения меняется, понимаем, что достигли цели
     bool    MonsterIsHit;
 
     float   dx, dy, a, b, c;        // переменные для вычисления пересечения пули с монстром, чтобы не объявлять их каждый раз в теле функции
@@ -316,8 +303,6 @@ class Bullet : public gameObjectBase {
     static int _scrHeight;          // 
 };
 
-//int Bullet::_scrWidth  = 0;
-//int Bullet::_scrHeight = 0;
 
 
 // Класс инстанцированного спрайта
@@ -410,14 +395,12 @@ class InstancedSprite : public BitmapClass_Instancing {
 
     // Инициализация инстанций: 
     // Получаем на вход список с данными и из этого списка заполняем массив инстанцированных данных
-    bool initializeInstances(ID3D11Device *device, std::list<gameObjectBase*> *list) {
+    bool initializeInstances(ID3D11Device *device, std::list<gameObjectBase*> *list, const unsigned int *listSize) {
 
-        // ??? - list->size() is SLOOOOW !!!
-
-        // Set the number of instances in the array
-        if (list->size() <= 0)
-            return false;
-        m_instanceCount = list->size();
+        // Set the number of instances in the array. If the list is empty just return true
+        if (*listSize <= 0)
+            return true;
+        m_instanceCount = *listSize;
 
 
         InstanceType			*instances;
@@ -457,6 +440,92 @@ class InstancedSprite : public BitmapClass_Instancing {
                 m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
                 (*iter)->getAnimPhase()                 // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
             );
+        }
+
+
+
+        // The instance buffer description is setup exactly the same as a vertex buffer description.
+        // Set up the description of the instance buffer.
+        instanceBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
+        instanceBufferDesc.ByteWidth      = sizeof(InstanceType)* m_instanceCount;
+        instanceBufferDesc.BindFlags      = D3D11_BIND_VERTEX_BUFFER;
+        instanceBufferDesc.CPUAccessFlags = 0;
+        instanceBufferDesc.MiscFlags      = 0;
+        instanceBufferDesc.StructureByteStride = 0;
+
+        // Just like the vertex buffer we get the pointer to the instance array and then create the instance buffer.
+        // Once the instance buffer is created we can release the temporary instance array since the data from the array has been copied into the instance buffer.
+
+        // Give the subresource structure a pointer to the instance data.
+        instanceData.pSysMem          = instances;
+        instanceData.SysMemPitch      = 0;
+        instanceData.SysMemSlicePitch = 0;
+
+        // очищаем m_instanceBuffer, иначе при каждой новой отрисовке теряем память
+        SAFE_RELEASE(m_instanceBuffer);
+
+        // Create the instance buffer.
+        HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
+        CHECK_FAILED(result);
+
+        // Release the instance array now that the instance buffer has been created and loaded.
+        SAFE_DELETE_ARRAY(instances);
+
+        return true;
+    }
+
+    bool initializeInstances(ID3D11Device *device, std::list<gameObjectBase*> *list, const unsigned int *listSize, bool bullet) {
+
+        // Set the number of instances in the array. If the list is empty just return true
+        if (*listSize <= 0)
+            return true;
+        m_instanceCount = (*listSize)*2;
+
+
+        InstanceType			*instances;
+        D3D11_BUFFER_DESC		 instanceBufferDesc;
+        D3D11_SUBRESOURCE_DATA   instanceData;
+
+        // We will now setup the new instance buffer.
+        // We start by first setting the number of instances of the triangle that will need to be rendered.
+        // For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
+
+        // Next we create a temporary instance array using the instance count.
+        // Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
+
+        // Create the instance array
+        SAFE_CREATE_ARRAY(instances, InstanceType, m_instanceCount);
+
+        // Now here is where we setup the different positions for each instance of the triangle.
+        // I have set four different x, y, z positions for each triangle.
+        // Note that this is where you could set color, scaling, different texture coordinates, and so forth.
+        // An instance can be modified in any way you want it to be.
+        // For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
+
+        int i = 0;
+        std::list<gameObjectBase*>::iterator iter, end;
+        for (iter = list->begin(), end = list->end(); iter != end; ++iter, i+=2) {
+
+            Bullet *ptr = (Bullet*)(*iter);
+
+            float halfWidth  = 0.5f * scrWidth;
+            float halfHeight = 0.5f * scrHeight;
+
+            float X =  (*iter)->getPosX() - halfWidth;
+            float Y = -(*iter)->getPosY() + halfHeight;
+            float A =  (*iter)->getAngle();
+
+            float X0 =  ptr->getX0() - halfWidth;
+            float Y0 = -ptr->getY0() + halfHeight;
+
+            // Позиция спрайта на экране и поворот спрайта на заданный угол
+            // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
+            instances[i].position      = D3DXVECTOR3(X, Y, A);
+            instances[i].animationInfo = D3DXVECTOR3(0, 0, 0);
+
+            // для каждой второй инстанции передаем координаты, откуда летит пуля, чтобы отрисовать шлейф
+            instances[i+1].position      = D3DXVECTOR3(X, Y, A);
+            instances[i+1].animationInfo = D3DXVECTOR3(X0, Y0, 1);
         }
 
 

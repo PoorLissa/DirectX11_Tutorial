@@ -9,9 +9,12 @@
 
 // См. __graphicsClass.cpp -> "test-fast-render"
 
+// Класс устарел, вместо него следует использовать класс InstancedSprite
+
 #include "__bitmapClass.h"
 
 class Sprite {
+
  public:
 
 	Sprite(int x, int y) : posX(x), posY(y) {}

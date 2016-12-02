@@ -1,7 +1,7 @@
 #include "__graphicsClass.h"
 #include "__highPrecTimer.h"
 
-#define NUM 100
+#define NUM 500
 
 // »нициализируем статические объекты класса в глобальной области. ѕочему-то они не хот€т инициализироватьс€ в файле собственного класса, а хот€т только здесь
 BitmapClass* Sprite::Bitmap = 0;
@@ -25,7 +25,7 @@ gameObjectBase  *m_Player;
 std::vector< std::list<gameObjectBase*>* > VEC;         // ¬ектор, в котором содержатс€ списки монстров. ѕередаем его в обработчик перемещени€ пули дл€ просчета стрельбы
 
 HighPrecisionTimer gameTimer;
-
+char buf[100];
 
 GraphicsClass::GraphicsClass()
 {
@@ -35,6 +35,7 @@ GraphicsClass::GraphicsClass()
 //	m_ColorShader	   = 0;
 	m_TextureShader    = 0;
 	m_TextureShaderIns = 0;
+    m_BulletShader     = 0;
 	m_LightShader	   = 0;
 	m_Light			   = 0;
 	m_Bitmap		   = 0;
@@ -44,6 +45,8 @@ GraphicsClass::GraphicsClass()
     sprIns2            = 0;
     m_PlayerBitmapIns  = 0;
     m_BulletBitmapIns  = 0;
+
+    msg = "...";
 }
 
 GraphicsClass::GraphicsClass(const GraphicsClass &other)
@@ -151,12 +154,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 #if 1
 	// --- Create the texture shader objects ---
 	{
-        SAFE_CREATE(m_TextureShader, TextureShaderClass);
+        SAFE_CREATE(m_TextureShader,    TextureShaderClass);
         SAFE_CREATE(m_TextureShaderIns, TextureShaderClass_Instancing);
+        SAFE_CREATE(m_BulletShader,     bulletShader_Instancing);
 
 		// Initialize the texture shader objects:
-        if( !m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd)      ||
-            !m_TextureShaderIns->Initialize(m_d3d->GetDevice(), hwnd) )
+        if( !m_TextureShader    -> Initialize(m_d3d->GetDevice(), hwnd) ||
+            !m_TextureShaderIns -> Initialize(m_d3d->GetDevice(), hwnd) ||
+            !m_BulletShader     -> Initialize(m_d3d->GetDevice(), hwnd)   ) 
         {
             MessageBox(hwnd, L"Could not initialize the texture shader object.", L"Error", MB_OK);
 			return false;
@@ -244,7 +249,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
                 float  speed = (rand() % 250 + 10) * 0.1f;
                 int interval = 50 / speed;
 
-                // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
+                // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 monsterList1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
                 monsterList1Size++;
             }
@@ -267,10 +272,10 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
         // ѕули
         Bullet::setScrSize(screenWidth, screenHeight);
-        WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet.png" };
-        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 5, 5);
+        WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
+        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the bullet.");
-        bulletList.push_back(new Bullet(-100, -100, -101, -101, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
+        bulletList.push_back(new Bullet(-100, -100, -105, -105, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
         bulletListSize++;
 
         
@@ -402,6 +407,7 @@ void GraphicsClass::Shutdown()
     SAFE_SHUTDOWN(m_TextureShader);
     SAFE_SHUTDOWN(m_TextureShaderIns);
     SAFE_SHUTDOWN(m_LightShader);
+    SAFE_SHUTDOWN(m_BulletShader);
 
 	// Release the model object:
     SAFE_SHUTDOWN(m_Model);
@@ -419,15 +425,11 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 {
 	bool result;
 
-	// Set the frames per second
-	result = m_TextOut->SetFps(fps, m_d3d->GetDeviceContext());
-	if (!result)
-		return false;
-
-	// Set the cpu usage
-	result = m_TextOut->SetCpu(cpu, m_d3d->GetDeviceContext());
-	if (!result)
-		return false;
+    // Set FPS, CPU usage and a text message:
+	if( !m_TextOut->SetFps( fps, m_d3d->GetDeviceContext()) ||
+        !m_TextOut->SetCpu( cpu, m_d3d->GetDeviceContext()) ||
+        !m_TextOut->SetText(msg, m_d3d->GetDeviceContext())   )
+        return false;
 
 	return true;
 }
@@ -444,14 +446,14 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		m_Camera->SetPosition(0.0f, 0.0f, -10.0f + 0.005*zoom);
 	}
 
-	// Clear the buffers to begin the scene.
+	// Clear the buffers to begin the scene
 	m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
     //m_d3d->BeginScene(0.9f, 0.9f, 0.9f, 1.0f);
 
-	// Generate the view matrix based on the camera's position.
+	// Generate the view matrix based on the camera's position
 	m_Camera->Render();
 
-	// Get the world, view, and projection matrices from the camera and d3d objects.
+	// Get the world, view, and projection matrices from the camera and d3d objects
 	m_Camera->GetViewMatrix(viewMatrix);
 	m_d3d->GetWorldMatrix(worldMatrixX);
 	m_d3d->GetWorldMatrix(worldMatrixY);
@@ -594,10 +596,6 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                     logMsg(str);
                 }
 
-                // ѕолучим текущие координаты игрока
-                playerPosX = m_Player->getPosX();
-                playerPosY = m_Player->getPosY();
-
                 std::list<gameObjectBase*>::iterator iter, end;
 
                 // --- Player ---
@@ -611,36 +609,47 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
                     player->Move();
 
+                    // ѕолучим текущие координаты игрока
+                    playerPosX = m_Player->getPosX();
+                    playerPosY = m_Player->getPosY();
+
                     if (!m_PlayerBitmapIns->initializeInstances(m_d3d->GetDevice(), m_Player))
                         return false;
                 }
 
                 // --- Bullets ---
                 {
-                    static char shoot = -1;
-                    shoot++;
+                    static char canShoot = -1;
+                    canShoot++;
 
                     // ≈сли нажата лева€ кнопка мыши, добавл€ем в очередь новые пули
                     if ( Keys->lmbDown ) {
 
-                        #if 0
-                            if( !(shoot % 2) ) {
-                                bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 50.0));
+                        #if 1
+                            if( !(canShoot % 2) ) {
+                                int size1 = 20;
+                                int size2 = size1/2;
+
+                                //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
+                                bulletList.push_back( new Bullet(playerPosX, playerPosY,
+                                                        mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
+                                                            30.0 + rand()%5 * 0.1f ) );
                                 bulletListSize++;
                             }
                         #else
-                            if( !(shoot % 20) ) {
-                                int size = 20;
-                                int num = 3;
-                                for (int i = -num; i < num; i++) {
-                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + size*i, mouseY + size*i, 50.0));
+                            if( !(canShoot % 10) ) {
+                                int size1 = 100;
+                                int size2 = size1/2;
+                                int num = 5;
+                                for (int i = 0; i < num; i++) {
+                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 30.0));
                                     bulletListSize++;
                                 }
                             }
                         #endif
                     }
 
-                    // ѕросчитываем все пули
+                    // ѕросчитываем движение всех пуль
                     iter = bulletList.begin();
                     end  = bulletList.end();
 
@@ -660,9 +669,9 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                         ++iter;
                     }
 
-                    if( bulletListSize > 0 )
-                        if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList))
-                            return false;
+                    //if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList, &bulletListSize))
+                    if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList, &bulletListSize, true))
+                        return false;
 
                     {
                         gameTimer.Frame();
@@ -718,9 +727,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                         ++iter;
                     }
 
-                    if( monsterList1Size > 0 )
-                        if( !sprIns1->initializeInstances(m_d3d->GetDevice(), &monsterList1) )
-                            return false;
+                    if( !sprIns1->initializeInstances(m_d3d->GetDevice(), &monsterList1, &monsterList1Size) )
+                        return false;
                 }
 
                 // --- Monsters List 2 ---
@@ -760,9 +768,8 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                         ++iter;
                     }
 
-                    if( monsterList2Size > 0 )
-                        if( !sprIns2->initializeInstances(m_d3d->GetDevice(), &monsterList2) )
-                            return false;
+                    if( !sprIns2->initializeInstances(m_d3d->GetDevice(), &monsterList2, &monsterList2Size) )
+                        return false;
                 }
             }
 
@@ -821,12 +828,15 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                 if( !m_BulletBitmapIns->Render(m_d3d->GetDeviceContext()) )
                     return false;
 
-                if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                //if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                if( !m_BulletShader->Render(m_d3d->GetDeviceContext(),
                         m_BulletBitmapIns->GetVertexCount(), m_BulletBitmapIns->GetInstanceCount(),
                             worldMatrixZ * translationMatrix * matScale,
                                 viewMatrix, orthoMatrix, m_BulletBitmapIns->GetTextureArray(), 0, 0, 0) )
                 return false;
             }
+            _itoa_s(bulletListSize, buf, 100, 10);
+            msg = buf;
 
 #endif
         }

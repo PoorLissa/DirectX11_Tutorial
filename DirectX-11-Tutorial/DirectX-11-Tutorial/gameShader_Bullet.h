@@ -1,8 +1,10 @@
-// The TextureShaderClass is just an updated version of the ColorShaderClass from the previous tutorial.
-// This class will be used to draw the 3D models using vertex and pixel shaders.
+// Модифицированная версия класса TextureShaderClass_Instancing
+// Используется для отрисовки пуль
+// Это файл не движка, а присущий конкретному проекту, поэтому он именуется как "gameShader_Bullet.h" без подчеркиваний
 
-#ifndef _TEXTURESHADERCLASSINSTANCING_H_
-#define _TEXTURESHADERCLASSINSTANCING_H_
+#pragma once
+#ifndef _GAME_SHADER_BULLET_H_
+#define _GAME_SHADER_BULLET_H_
 
 #include <d3d11.h>
 #include <d3dx10math.h>
@@ -18,7 +20,7 @@ using namespace std;
 
 #define ciRef const int &
 
-class TextureShaderClass_Instancing {
+class bulletShader_Instancing {
 
     // Структура, которая используется для передачи параметров в cbuffer шейдера. Размер структуры должен быть кратен 16. Недостающие поля добиваются пустышками.
 	struct MatrixBufferType {
@@ -32,9 +34,9 @@ class TextureShaderClass_Instancing {
 	};
 
  public:
-	TextureShaderClass_Instancing();
-	TextureShaderClass_Instancing(const TextureShaderClass_Instancing &);
-   ~TextureShaderClass_Instancing();
+	bulletShader_Instancing();
+	bulletShader_Instancing(const bulletShader_Instancing &);
+   ~bulletShader_Instancing();
 
 	bool Initialize(ID3D11Device*, HWND);
 	void Shutdown();

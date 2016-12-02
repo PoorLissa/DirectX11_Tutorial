@@ -17,7 +17,8 @@ using namespace std;
 
 
 class LightShaderClass {
- private:
+
+    // —труктура, котора€ используетс€ дл€ передачи параметров в cbuffer шейдера. –азмер структуры должен быть кратен 16. Ќедостающие пол€ добиваютс€ пустышками.
 	struct MatrixBufferType {
 		D3DXMATRIX world;
 		D3DXMATRIX view;

@@ -31,6 +31,7 @@
 
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
+#include "gameShader_Bullet.h"
 
 #include "Helpers.h"
 
@@ -82,35 +83,35 @@ class GraphicsClass {
     int scrWidth;
     int scrHeight;
 
+    char                    *msg;       // текстовое сообщение, которое можно вывести на экран
+
     d3dClass				*m_d3d;
     CameraClass			    *m_Camera;
     ModelClass				*m_Model;
 
     //ColorShaderClass		        *m_ColorShader;
 
-    TextureShaderClass		        *m_TextureShader;
+    TextureShaderClass		        *m_TextureShader;       // Классы для шейдеров
     TextureShaderClass_Instancing   *m_TextureShaderIns;
     TextureShaderClass_Instancing   *m_TextureShaderInsArr;
+    bulletShader_Instancing         *m_BulletShader;
 
     LightShaderClass		*m_LightShader;
     LightClass				*m_Light;
 
-    // We create a new private BitmapClass object here.
-    BitmapClass			*m_Bitmap;
-    BitmapClass			*m_Cursor;
+    BitmapClass			    *m_Bitmap;          // We create a new private BitmapClass object here
+    BitmapClass			    *m_Cursor;
 
-    vector<Sprite*>		 m_spriteVec;
-    BitmapClass			*m_BitmapSprite;
+    vector<Sprite*>		     m_spriteVec;
+    BitmapClass			    *m_BitmapSprite;
 
-    // There is a new private variable for the TextClass object.
-	TextOutClass			*m_TextOut;
+	TextOutClass			*m_TextOut;         // There is a new private variable for the TextClass object
 
 	BitmapClass_Instancing	*m_BitmapIns;
     BitmapClass_Instancing	*m_BitmapInsArray;
 
-    // Инстанцированный спрайт с анимацией
-    InstancedSprite *sprIns1;
-    InstancedSprite *sprIns2;
+    InstancedSprite         *sprIns1;           // Инстанцированные спрайты с анимацией
+    InstancedSprite         *sprIns2;
 };
 
 #endif

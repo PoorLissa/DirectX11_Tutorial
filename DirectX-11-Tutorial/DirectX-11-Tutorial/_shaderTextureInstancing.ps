@@ -42,18 +42,22 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 
         //input.tex = float2(input.tex.x / slicesCntX + float(index % slicesCntX) / slicesCntX, input.tex.y / slicesCntY + float(index / slicesCntX) / slicesCntY);
         input.tex = float2((input.tex.x + float(index % slicesCntX)) / slicesCntX, (input.tex.y + float(index / slicesCntX)) / slicesCntY);
+
     }
 
     textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.animationInfo.z));
 
     // new temp /////////////////////////////////////////////////////
-
+#if 0
     if(input.animationInfo.x == 0)
         return float4(0.0, 0.5, 0.5, 0.33);
     else
         return float4(0.75, 0.25, 0.0, 0.33);
-
+#endif
     /////////////////////////////////////////////////////////////////
 
-    return textureColor + float4(0.0, 0.5, 0.5, 0.33);
+    return textureColor;
 }
+
+
+

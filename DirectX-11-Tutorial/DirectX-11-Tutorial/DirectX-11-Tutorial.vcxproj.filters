@@ -12,6 +12,9 @@
     <Filter Include="Shader Files">
       <UniqueIdentifier>{09ddff11-2f4c-49a4-9709-17f29719f931}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Shader Files\gameShaders">
+      <UniqueIdentifier>{6e1c3a93-c1a6-43b8-8c2b-bcf68d9b285a}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
@@ -78,6 +81,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="__textureClass_Array.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="gameShader_Bullet.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -151,10 +157,10 @@
     <ClInclude Include="__textureClass_Array.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="___SpriteInstanced_withArray.h">
+    <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Helpers.h">
+    <ClInclude Include="gameShader_Bullet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -188,6 +194,12 @@
     </None>
     <None Include="_shaderTextureInstancing.ps">
       <Filter>Shader Files</Filter>
+    </None>
+    <None Include="_gameShader_Bullet.ps">
+      <Filter>Shader Files\gameShaders</Filter>
+    </None>
+    <None Include="_gameShader_Bullet.vs">
+      <Filter>Shader Files\gameShaders</Filter>
     </None>
   </ItemGroup>
 </Project>

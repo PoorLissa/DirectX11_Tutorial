@@ -1,6 +1,6 @@
-#include "__textureShaderClassInstancing.h"
+#include "gameShader_Bullet.h"
 
-TextureShaderClass_Instancing::TextureShaderClass_Instancing()
+bulletShader_Instancing::bulletShader_Instancing()
 {
 	m_vertexShader = 0;
 	m_pixelShader  = 0;
@@ -9,21 +9,21 @@ TextureShaderClass_Instancing::TextureShaderClass_Instancing()
 	m_sampleState  = 0;
 }
 
-TextureShaderClass_Instancing::TextureShaderClass_Instancing(const TextureShaderClass_Instancing& other)
+bulletShader_Instancing::bulletShader_Instancing(const bulletShader_Instancing &other)
 {
 }
 
-TextureShaderClass_Instancing::~TextureShaderClass_Instancing()
+bulletShader_Instancing::~bulletShader_Instancing()
 {
 }
 
-bool TextureShaderClass_Instancing::Initialize(ID3D11Device* device, HWND hwnd)
+bool bulletShader_Instancing::Initialize(ID3D11Device* device, HWND hwnd)
 {
 	bool result;
 
 	// The new texture.vs and texture.ps HLSL files are loaded for this shader.
 	// Initialize the vertex and pixel shaders.
-    result = InitializeShader(device, hwnd, L"../DirectX-11-Tutorial/_shaderTextureInstancing.vs", L"../DirectX-11-Tutorial/_shaderTextureInstancing.ps");
+    result = InitializeShader(device, hwnd, L"../DirectX-11-Tutorial/_gameShader_Bullet.vs", L"../DirectX-11-Tutorial/_gameShader_Bullet.ps");
 
 	if (!result)
 		return false;
@@ -32,7 +32,7 @@ bool TextureShaderClass_Instancing::Initialize(ID3D11Device* device, HWND hwnd)
 }
 
 // The Shutdown function calls the release of the shader variables.
-void TextureShaderClass_Instancing::Shutdown()
+void bulletShader_Instancing::Shutdown()
 {
 	// Shutdown the vertex and pixel shaders as well as the related objects.
 	ShutdownShader();
@@ -41,54 +41,54 @@ void TextureShaderClass_Instancing::Shutdown()
 
 // The Render 1 function now takes a new parameter called texture which is the pointer to the texture resource.
 // This is then sent into the SetShaderParameters function so that the texture can be set in the shader and then used for rendering.
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
+bool bulletShader_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
                                             D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
                                             ID3D11ShaderResourceView* texture)
 {
 	bool result;
 
-	// Set the shader parameters that it will use for rendering.
+	// Set the shader parameters that it will use for rendering
 	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, -1, -1);
 	if (!result)
 		return false;
 
-	// Now render the prepared buffers with the shader.
+	// Now render the prepared buffers with the shader
 	RenderShader(deviceContext, indexCount);
 
 	return true;
 }
 
 // The Render 2 function now takes as input a vertex count and an instance count instead of the old index count
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
+bool bulletShader_Instancing::Render(ID3D11DeviceContext* deviceContext, int vertexCount, int instanceCount,
 											D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
                                             ID3D11ShaderResourceView* texture, int X, int Y)
 {
 	bool result;
 
-	// Set the shader parameters that it will use for rendering.
+	// Set the shader parameters that it will use for rendering
 	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, X, Y);
 	if (!result)
 		return false;
 
-	// Now render the prepared buffers with the shader.
+	// Now render the prepared buffers with the shader
 	RenderShader(deviceContext, vertexCount, instanceCount);
 
 	return true;
 }
 
 // 
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
+bool bulletShader_Instancing::Render(ID3D11DeviceContext* deviceContext, int indexCount,
                                             D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
                                             ID3D11ShaderResourceView* texture, bool sendTexture)
 {
 	bool result;
 
-	// Set the shader parameters that it will use for rendering.
+	// Set the shader parameters that it will use for rendering
 	result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, texture, sendTexture);
 	if (!result)
 		return false;
 
-	// Now render the prepared buffers with the shader.
+	// Now render the prepared buffers with the shader
 	RenderShader(deviceContext, indexCount);
 
 	return true;
@@ -96,25 +96,25 @@ bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, i
 
 // The Render 3 function now takes as input a vertex count and an instance count instead of the old index count.
 // The Render 3 function now takes as input a pointer to the texture array. This will give the shader access to the two textures for blending operations.
-bool TextureShaderClass_Instancing::Render(ID3D11DeviceContext* deviceContext, ciRef vertexCount, ciRef instanceCount,
+bool bulletShader_Instancing::Render(ID3D11DeviceContext* deviceContext, ciRef vertexCount, ciRef instanceCount,
                                             const D3DXMATRIX &worldMatrix, const D3DXMATRIX &viewMatrix, const D3DXMATRIX &projectionMatrix,
                                             ID3D11ShaderResourceView** textureArray, ciRef rotationMode, ciRef rotateToX, ciRef rotateToY)
 {
     bool result;
     
-    // Set the shader parameters that it will use for rendering.
+    // Set the shader parameters that it will use for rendering
     result = SetShaderParameters(deviceContext, worldMatrix, viewMatrix, projectionMatrix, textureArray, rotationMode, rotateToX, rotateToY);
     if (!result)
         return false;
     
-    // Now render the prepared buffers with the shader.
+    // Now render the prepared buffers with the shader
     RenderShader(deviceContext, vertexCount, instanceCount);
 
     return true;
 }
 
 // InitializeShader sets up the texture shader.
-bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
+bool bulletShader_Instancing::InitializeShader(ID3D11Device* device, HWND hwnd, WCHAR* vsFilename, WCHAR* psFilename)
 {
  	HRESULT                   result;
  	ID3D10Blob               *errorMessage;
@@ -123,14 +123,14 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
     // polygonLayout[...] содержит описание полей, которые передаются в шейдер для каждого полигона.
     // Должен совпадать со структурой VertexInputType в шейдере и со структурами VertexType/InstanceType в классе модели/спрайта
-    D3D11_INPUT_ELEMENT_DESC  polygonLayout[4];
+    D3D11_INPUT_ELEMENT_DESC  polygonLayout[4];     
  	unsigned int              numElements;
  	D3D11_BUFFER_DESC         matrixBufferDesc;
     D3D11_SAMPLER_DESC        samplerDesc;          // We have a new variable to hold the description of the texture sampler that will be setup in this function.
   
 
 
-	// Initialize the pointers this function will use to null.
+	// Initialize the pointers this function will use to null
 	errorMessage       = 0;
 	vertexShaderBuffer = 0;
 	pixelShaderBuffer  = 0;
@@ -291,8 +291,8 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 	return true;
 }
 
-// The ShutdownShader function releases all the variables used in the TextureShaderClass_Instancing.
-void TextureShaderClass_Instancing::ShutdownShader()
+// The ShutdownShader function releases all the variables used in the bulletShader_Instancing.
+void bulletShader_Instancing::ShutdownShader()
 {
 	// The ShutdownShader function now releases the new sampler state that was created during initialization.
 
@@ -315,7 +315,7 @@ void TextureShaderClass_Instancing::ShutdownShader()
 }
 
 // OutputShaderErrorMessage writes out errors to a text file if the HLSL shader could not be loaded.
-void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
+void bulletShader_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMessage, HWND hwnd, WCHAR* shaderFilename)
 {
 	char* compileErrors;
 	unsigned long bufferSize, i;
@@ -351,7 +351,7 @@ void TextureShaderClass_Instancing::OutputShaderErrorMessage(ID3D10Blob* errorMe
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
 // Теперь метод принимает в качестве параметра массив текстур
-bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool bulletShader_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix,
                                         ID3D11ShaderResourceView **textureArray,
                                         ciRef rotationMode, ciRef rotateToX, ciRef rotateToY)
@@ -407,7 +407,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 
 // SetShaderParameters function now takes in a pointer to a texture resource and then assigns it to the shader using the new texture resource pointer.
 // Note that the texture has to be set before rendering of the buffer occurs.
-bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool bulletShader_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, int X, int Y)
 {
 	HRESULT					 result;
@@ -453,7 +453,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 	return true;
 }
 
-bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
+bool bulletShader_Instancing::SetShaderParameters(ID3D11DeviceContext* deviceContext,
 										D3DXMATRIX worldMatrix, D3DXMATRIX viewMatrix, D3DXMATRIX projectionMatrix, ID3D11ShaderResourceView* texture, bool sendTexture)
 {
 	HRESULT result;
@@ -501,7 +501,7 @@ bool TextureShaderClass_Instancing::SetShaderParameters(ID3D11DeviceContext* dev
 }
 
 // RenderShader calls the shader technique to render the polygons.
-void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
+void bulletShader_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, int indexCount)
 {
 	// Set the vertex input layout.
 	deviceContext->IASetInputLayout(m_layout);
@@ -523,7 +523,7 @@ void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceCont
 // The RenderShader function is different in two ways.
 // First is that it takes as input the vertex and instance count instead of how it used to take in just an index count.
 // Secondly it uses the DrawInstanced function to draw the triangles instead of using the DrawIndexed function.
-void TextureShaderClass_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount)
+void bulletShader_Instancing::RenderShader(ID3D11DeviceContext* deviceContext, const int &vertexCount, const int &instanceCount)
 {
 	// Set the vertex input layout
 	deviceContext->IASetInputLayout(m_layout);

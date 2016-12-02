@@ -17,8 +17,8 @@ using namespace std;
 
 
 class FontShaderClass {
- private:
 
+    // —труктура, котора€ используетс€ дл€ передачи параметров в cbuffer шейдера. –азмер структуры должен быть кратен 16. Ќедостающие пол€ добиваютс€ пустышками.
 	struct ConstantBufferType
 	{
 		D3DXMATRIX world;
@@ -28,7 +28,6 @@ class FontShaderClass {
 
 	// We have a new structure type to match the PixleBuffer in the pixel shader.
 	// It contains just the pixel color of the text that will be rendered.
-
 	struct PixelBufferType
 	{
 		D3DXVECTOR4 pixelColor;

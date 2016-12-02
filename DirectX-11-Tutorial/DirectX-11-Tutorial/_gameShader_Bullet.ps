@@ -1,0 +1,32 @@
+// Шейдер теперь принимает на вход массив текстур
+// Доступ к разным текстурам осуществляется посредством третьего параметра, передаваемого в семплер
+//  Пример:
+// float4 textureColor1 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 0));
+// float4 textureColor2 = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, 1));
+
+Texture2DArray myTextureArray;
+SamplerState   SampleType;
+
+struct PixelInputType
+{
+    float4 position  : SV_POSITION;
+    float2 tex       : TEXCOORD0;
+    float3 trailInfo : TEXCOORD2;
+};
+
+
+
+// Pixel Shader
+float4 TexturePixelShader(PixelInputType input) : SV_TARGET
+{
+    float4 textureColor;
+
+    // Рисуем след от пули
+    if (input.trailInfo.z == 1)
+        return float4(0.75, 0.75, 0.75, saturate(1.0 - input.tex.x - 0.2)/5);
+
+    // Рисуем пулю
+    textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+
+    return textureColor * 2;
+}

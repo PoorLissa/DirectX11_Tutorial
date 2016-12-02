@@ -2,11 +2,11 @@
 
 TextOutClass::TextOutClass()
 {
-	m_Font = 0;
+	m_Font       = 0;
 	m_FontShader = 0;
-
 	m_sentence1 = 0;
 	m_sentence2 = 0;
+	m_sentence3 = 0;
 }
 
 TextOutClass::TextOutClass(const TextOutClass& other)
@@ -82,6 +82,10 @@ bool TextOutClass::Initialize(ID3D11Device* device, ID3D11DeviceContext* deviceC
 	if(!result)
 		return false;
 
+	result = InitializeSentence(&m_sentence3, 100, device);
+	if(!result)
+		return false;
+
 	return true;
 }
 
@@ -91,6 +95,7 @@ void TextOutClass::Shutdown()
 	// Release the sentences
 	ReleaseSentence(&m_sentence1);
 	ReleaseSentence(&m_sentence2);
+    ReleaseSentence(&m_sentence3);
 
 	// Release the font shader object.
 	if(m_FontShader) {
@@ -112,15 +117,11 @@ bool TextOutClass::Render(ID3D11DeviceContext* deviceContext, D3DXMATRIX worldMa
 {
 	bool result;
 
-	// Draw the first sentence.
-	result = RenderSentence(deviceContext, m_sentence1, worldMatrix, orthoMatrix);
-	if(!result)
-		return false;
-
-	// Draw the second sentence.
-	result = RenderSentence(deviceContext, m_sentence2, worldMatrix, orthoMatrix);
-	if(!result)
-		return false;
+	// Draw the sentences
+    if( !RenderSentence(deviceContext, m_sentence1, worldMatrix, orthoMatrix) ||
+        !RenderSentence(deviceContext, m_sentence2, worldMatrix, orthoMatrix) ||
+        !RenderSentence(deviceContext, m_sentence3, worldMatrix, orthoMatrix)   )
+        return false;
 
 	return true;
 }
@@ -227,7 +228,9 @@ bool TextOutClass::InitializeSentence(SentenceType** sentence, int maxLength, ID
 
 // UpdateSentence changes the contents of the vertex buffer for the input sentence.
 // It uses the Map and Unmap functions along with memcpy to update the contents of the vertex buffer.
-bool TextOutClass::UpdateSentence(SentenceType* sentence, char* text, int positionX, int positionY, float red, float green, float blue, ID3D11DeviceContext* deviceContext)
+bool TextOutClass::UpdateSentence(SentenceType *sentence, char *text,
+                                    int positionX, int positionY, float red, float green, float blue,
+                                    ID3D11DeviceContext* deviceContext)
 {
 	int numLetters;
 	VertexType* vertices;
@@ -290,19 +293,19 @@ bool TextOutClass::UpdateSentence(SentenceType* sentence, char* text, int positi
 	return true;
 }
 
-// ReleaseSentence is used to release the sentence vertex and index buffer as well as the sentence itself.
-void TextOutClass::ReleaseSentence(SentenceType** sentence)
+// ReleaseSentence is used to release the sentence vertex and index buffer as well as the sentence itself
+void TextOutClass::ReleaseSentence(SentenceType **sentence)
 {
 	if( *sentence )
 	{
 		// Release the sentence vertex buffer.
-		if((*sentence)->vertexBuffer) {
+		if( (*sentence)->vertexBuffer ) {
 			(*sentence)->vertexBuffer->Release();
 			(*sentence)->vertexBuffer = 0;
 		}
 
 		// Release the sentence index buffer.
-		if((*sentence)->indexBuffer) {
+		if( (*sentence)->indexBuffer ) {
 			(*sentence)->indexBuffer->Release();
 			(*sentence)->indexBuffer = 0;
 		}
@@ -343,7 +346,7 @@ bool TextOutClass::RenderSentence(ID3D11DeviceContext* deviceContext, SentenceTy
 	// Render the text using the font shader.
 	result = m_FontShader->Render(deviceContext, sentence->indexCount, worldMatrix, m_baseViewMatrix, orthoMatrix, m_Font->GetTexture(), pixelColor);
 	if(!result)
-		false;
+        return false;
 
 	return true;
 }
@@ -391,7 +394,7 @@ bool TextOutClass::SetFps(int fps, ID3D11DeviceContext *deviceContext)
 		}
 	}
 
-	// Update the sentence vertex buffer with the new string information.
+	// Update the sentence vertex buffer with the new string information
 	result = UpdateSentence(m_sentence1, fpsString, 20, 20, red, green, blue, deviceContext);
 	if (!result)
 		return false;
@@ -421,4 +424,10 @@ bool TextOutClass::SetCpu(int cpu, ID3D11DeviceContext* deviceContext)
 		return false;
 
 	return true;
+}
+
+// Принимаем на вход произвольный текст и выводим его на экран
+bool TextOutClass::SetText(char *text, ID3D11DeviceContext *deviceContext)
+{
+	return UpdateSentence(m_sentence3, text, 20, 60, 0.0f, 1.0f, 0.0f, deviceContext);
 }

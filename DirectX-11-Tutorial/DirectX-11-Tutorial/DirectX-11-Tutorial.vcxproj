@@ -57,11 +57,15 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <SDLCheck>true</SDLCheck>
+      <BrowseInformation>true</BrowseInformation>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
     </Link>
+    <Bscmake>
+      <PreserveSbr>true</PreserveSbr>
+    </Bscmake>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">
     <ClCompile>
@@ -82,6 +86,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="gameShader_Bullet.cpp" />
+    <None Include="_gameShader_Bullet.vs">
+      <FileType>CppCode</FileType>
+    </None>
     <ClCompile Include="__bitmapClassInstancing.cpp" />
     <ClCompile Include="__cpuClass.cpp" />
     <ClCompile Include="__directInput.cpp" />
@@ -106,6 +114,7 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gameShader_Bullet.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="__bitmapClass.h" />
     <ClInclude Include="__bitmapClassInstancing.h" />
@@ -130,9 +139,9 @@
     <ClInclude Include="__textureShaderClassInstancing.h" />
     <ClInclude Include="___Sprite.h" />
     <ClInclude Include="___SpriteInstanced.h" />
-    <ClInclude Include="___SpriteInstanced_withArray.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="_gameShader_Bullet.ps" />
     <None Include="_shaderColor.ps" />
     <None Include="_shaderColor.vs" />
     <None Include="_shaderFont.ps" />

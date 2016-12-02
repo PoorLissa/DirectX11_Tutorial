@@ -16,7 +16,7 @@ struct VertexInputType
 {
     float4 position         : POSITION;
     float2 tex              : TEXCOORD0;
-    float3 instancePosition : TEXCOORD1;    // x = позиция x, y = позиция y, z = повторот на заданный угол
+    float3 instancePosition : TEXCOORD1;    // x = позиция x, y = позиция y, z = поворот на заданный угол
     float3 animationInfo    : TEXCOORD2;
 };
 
