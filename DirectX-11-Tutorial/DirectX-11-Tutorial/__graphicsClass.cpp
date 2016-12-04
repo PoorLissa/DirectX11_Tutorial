@@ -38,7 +38,8 @@ GraphicsClass::GraphicsClass()
     m_BulletShader     = 0;
 	m_LightShader	   = 0;
 	m_Light			   = 0;
-	m_Bitmap		   = 0;
+	m_Bitmap_Tree	   = 0;
+	m_Bitmap_Bgr	   = 0;
 	m_BitmapIns		   = 0;
 	m_TextOut		   = 0;
     sprIns1            = 0;
@@ -176,14 +177,17 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		// You can change this size to whatever you like as it does not need to reflect the exact size of the texture.
 
 		// Create and initialize the bitmap objects:
-        SAFE_CREATE(m_Bitmap,       BitmapClass);
+        SAFE_CREATE(m_Bitmap_Bgr,   BitmapClass);
+		SAFE_CREATE(m_Bitmap_Tree,  BitmapClass);
         SAFE_CREATE(m_BitmapIns,    BitmapClass_Instancing);
 
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
-		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
-        result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
+		result = m_Bitmap_Bgr->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
+        CHECK_RESULT(result, L"Could not initialize the bitmap object.");
+
+		result = m_Bitmap_Tree->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
         CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
 		// От размера изображения при работе с Instancing скорость работы не зависит. Для 15k битмапов (3x3) и (256x256) FPS - одинаковый
@@ -394,7 +398,8 @@ void GraphicsClass::Shutdown()
     SAFE_SHUTDOWN(m_TextOut);
 
 	// Release the Bitmap objects:
-    SAFE_SHUTDOWN(m_Bitmap);
+    SAFE_SHUTDOWN(m_Bitmap_Bgr);
+	SAFE_SHUTDOWN(m_Bitmap_Tree);
     SAFE_SHUTDOWN(m_BitmapIns);
     SAFE_SHUTDOWN(m_BitmapSprite);
     SAFE_SHUTDOWN(m_Cursor);
@@ -498,35 +503,54 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		int xCenter = scrWidth /2;
 		int yCenter = scrHeight/2;
 
-		// Рендерим точно в центр
-		if (!m_Bitmap->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
-			return false;
+		// задник
+		{
+			// Рендерим точно в центр
+			if (!m_Bitmap_Bgr->Render(m_d3d->GetDeviceContext(), 100, 100))
+				return false;
 
-		// Осуществляем необходимые преобразования матриц
-		D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
-        D3DXMatrixTranslation(&translationMatrix, 100.0f, 100.0f, 0.0f);
-		D3DXMatrixScaling(&matScale, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 1.0f);
+			// Осуществляем необходимые преобразования матриц
+			D3DXMatrixTranslation(&translationMatrix, 100.0f, 0.0f, 0.0f);
+			D3DXMatrixScaling(&matScale, 1.0f + 0.01*sin(rotation/10) + 0.0001*zoom, 1.0f + 0.01*sin(rotation/10) + 0.0001*zoom, 1.0f);
 
 
-		// Once the vertex / index buffers are prepared we draw them using the texture shader.
-		// Notice we send in the orthoMatrix instead of the projectionMatrix for rendering 2D.
-		// Due note also that if your view matrix is changing you will need to create a default one for 2D rendering and use it instead of the regular view matrix.
-		// In this tutorial using the regular view matrix is fine as the camera in this tutorial is stationary.
+			// Once the vertex / index buffers are prepared we draw them using the texture shader.
+			// Notice we send in the orthoMatrix instead of the projectionMatrix for rendering 2D.
+			// Due note also that if your view matrix is changing you will need to create a default one for 2D rendering and use it instead of the regular view matrix.
+			// In this tutorial using the regular view matrix is fine as the camera in this tutorial is stationary.
 
-		// Рендерим битмап при помощи текстурного шейдера
-		if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap->GetIndexCount(),
-                worldMatrixZ * translationMatrix * matScale ,
-				    viewMatrix, orthoMatrix, m_Bitmap->GetTexture()) )
-			return false;
+			// Рендерим битмап при помощи текстурного шейдера
+			if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap_Bgr->GetIndexCount(),
+					worldMatrixZ * translationMatrix * matScale ,
+						viewMatrix, orthoMatrix, m_Bitmap_Bgr->GetTexture()) )
+				return false;
+		}
+
+		// дерево
+		{
+			if (!m_Bitmap_Tree->Render(m_d3d->GetDeviceContext(), xCenter - 128, yCenter - 128))
+				return false;
+
+			D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
+			D3DXMatrixTranslation(&translationMatrix, 100.0f, 100.0f, 0.0f);
+			D3DXMatrixScaling(&matScale, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 1.0f);
+
+			if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap_Tree->GetIndexCount(),
+					worldMatrixZ * translationMatrix * matScale ,
+						viewMatrix, orthoMatrix, m_Bitmap_Tree->GetTexture()) )
+				return false;
+		}
 
 		// Рендерим курсор
-		if (!m_Cursor->Render(m_d3d->GetDeviceContext(), mouseX, mouseY))
-			return false;
+		{
+			if (!m_Cursor->Render(m_d3d->GetDeviceContext(), mouseX, mouseY))
+				return false;
 
-		m_d3d->GetWorldMatrix(worldMatrixX);
-        if( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Cursor->GetIndexCount(),
-                worldMatrixX, viewMatrix, orthoMatrix, m_Cursor->GetTexture()) )
-            return false;
+			m_d3d->GetWorldMatrix(worldMatrixX);
+			if( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Cursor->GetIndexCount(),
+					worldMatrixX, viewMatrix, orthoMatrix, m_Cursor->GetTexture()) )
+				return false;
+		}
 
 
 
@@ -633,16 +657,16 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                                 //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
                                 bulletList.push_back( new Bullet(playerPosX, playerPosY,
                                                         mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                            30.0 + rand()%5 * 0.1f ) );
+                                                            50.0 + rand()%10 * 0.1f ) );
                                 bulletListSize++;
                             }
                         #else
                             if( !(canShoot % 10) ) {
-                                int size1 = 100;
+                                int size1 = 200;
                                 int size2 = size1/2;
-                                int num = 5;
+                                int num = 10;
                                 for (int i = 0; i < num; i++) {
-                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 30.0));
+                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0));
                                     bulletListSize++;
                                 }
                             }

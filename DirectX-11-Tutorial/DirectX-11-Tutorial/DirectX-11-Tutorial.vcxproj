@@ -86,7 +86,9 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="gameClasses.cpp" />
     <ClCompile Include="gameShader_Bullet.cpp" />
+    <ClCompile Include="___SpriteInstanced.cpp" />
     <None Include="_gameShader_Bullet.vs">
       <FileType>CppCode</FileType>
     </None>
@@ -114,6 +116,7 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="gameClasses.h" />
     <ClInclude Include="gameShader_Bullet.h" />
     <ClInclude Include="Helpers.h" />
     <ClInclude Include="__bitmapClass.h" />

@@ -37,7 +37,7 @@
 
 // ---------------------------------------------------------------------------------------
 #define fullScreen
-#undef  fullScreen
+//#undef  fullScreen
 
 #if defined fullScreen
 const bool FULL_SCREEN    = true;
@@ -99,7 +99,8 @@ class GraphicsClass {
     LightShaderClass		*m_LightShader;
     LightClass				*m_Light;
 
-    BitmapClass			    *m_Bitmap;          // We create a new private BitmapClass object here
+    BitmapClass			    *m_Bitmap_Tree;		// We create a new private BitmapClass object here
+	BitmapClass			    *m_Bitmap_Bgr;
     BitmapClass			    *m_Cursor;
 
     vector<Sprite*>		     m_spriteVec;

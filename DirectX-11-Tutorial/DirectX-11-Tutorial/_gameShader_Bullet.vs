@@ -56,14 +56,15 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // масштабирование текстуры
         input.position.x *= dist / texsize;
-        input.position.y *= 0.33;
+        input.position.y *= 0.3;
 
         input.position.x += texsize;
     }
     else {
         // Немного сжимаем пулю
-        input.position.x *= 2.0;
+        input.position.x *= 1.0;
         input.position.y *= 0.5;
+		//input.position.y *= 5.0;
     }
 
     // Вращаем на угол

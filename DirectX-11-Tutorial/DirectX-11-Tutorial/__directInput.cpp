@@ -1,5 +1,8 @@
 #include "__directInput.h"
 
+// Ускорим немного нашу мышь, потому что на 1920x1200  она бегает достаточно медленно
+#define MOUSE_SENSITIVITY 2.5f
+
 DirectInputClass::DirectInputClass()
 {
 	m_directInput = 0;
@@ -208,12 +211,12 @@ bool DirectInputClass::ReadMouse()
 // Even if the user keeps moving the mouse to the left we will just keep the cursor at the zero position until they start moving it to the right again.
 void DirectInputClass::ProcessInput()
 {
-	// Update the location of the mouse cursor based on the change of the mouse location during the frame.
-	m_mouseX += m_mouseState.lX;
-	m_mouseY += m_mouseState.lY;
+	// Update the location of the mouse cursor based on the change of the mouse location during the frame
+	m_mouseX += m_mouseState.lX * MOUSE_SENSITIVITY;
+	m_mouseY += m_mouseState.lY * MOUSE_SENSITIVITY;
 	m_mouseZ += m_mouseState.lZ;
 
-	// Ensure the mouse location doesn't exceed the screen width or height.
+	// Ensure the mouse location doesn't exceed the screen width or height
 	if (m_mouseX < 0)
 		m_mouseX = 0;
 
