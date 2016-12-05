@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__highPrecTimer.h"
 
 HighPrecisionTimer::HighPrecisionTimer()

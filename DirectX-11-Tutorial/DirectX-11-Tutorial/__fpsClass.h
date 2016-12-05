@@ -1,12 +1,13 @@
+#pragma once
 #ifndef _FPSCLASS_H_
 #define _FPSCLASS_H_
 
 #pragma comment(lib, "winmm.lib")
 
-#include <windows.h>
-#include <mmsystem.h>
+
 
 class FpsClass {
+
  public:
 	FpsClass();
 	FpsClass(const FpsClass&);

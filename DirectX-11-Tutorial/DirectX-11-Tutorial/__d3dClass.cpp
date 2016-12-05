@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__d3dClass.h"
 
 d3dClass::d3dClass()

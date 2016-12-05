@@ -1,14 +1,15 @@
+#include "stdafx.h"
 #include "__graphicsClass.h"
-#include "__highPrecTimer.h"
 
-#define NUM 500
+#define NUM 100
 
 // »нициализируем статические объекты класса в глобальной области. ѕочему-то они не хот€т инициализироватьс€ в файле собственного класса, а хот€т только здесь
 BitmapClass* Sprite::Bitmap = 0;
 int Bullet::_scrWidth;
 int Bullet::_scrHeight;
 
-
+ThreadPool* gameObjectBase::_thPool = nullptr;
+ThreadPool thPool(10);
 
 std::list<gameObjectBase*> monsterList1;
 std::list<gameObjectBase*> monsterList2;
@@ -75,6 +76,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 	bool result;
 
     gameTimer.Initialize(1);
+
+    gameObjectBase::setThreadPool(&thPool);
 
 	// «апомним размеры текущего экрана
 	scrWidth  = screenWidth;
@@ -207,7 +210,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         m_PlayerBitmapIns = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns) return false;
         m_BulletBitmapIns = new InstancedSprite(scrWidth, scrHeight); if (!m_BulletBitmapIns) return false;
 
-        srand(time(0));
+        srand(unsigned int(time(0)));
 
 //#if 0
         {
@@ -231,7 +234,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
-                int interval = 50 / speed;
+                int interval = int(50 / speed);
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 monsterList2.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
@@ -251,7 +254,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
-                int interval = 50 / speed;
+                int interval = int(50 / speed);
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 monsterList1.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
@@ -293,8 +296,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 		for (int i = 0; i < NUM; i++) {
 
-			int X = (float)rand() / (RAND_MAX + 1) * scrWidth;
-			int Y = (float)rand() / (RAND_MAX + 1) * scrHeight;
+			int X = rand() % scrWidth;
+			int Y = rand() % scrHeight;
 
 			Sprite *spr = new Sprite(X, Y);
 			spr->setBitmap(m_BitmapSprite);
@@ -386,7 +389,7 @@ void GraphicsClass::Shutdown()
     }
 
     if (m_spriteVec.size() > 0)
-        for (int i = 0; i < m_spriteVec.size(); i++)
+        for (unsigned int i = 0; i < m_spriteVec.size(); i++)
             SAFE_DELETE(m_spriteVec[i]);
 
     SAFE_SHUTDOWN(m_PlayerBitmapIns);
@@ -428,8 +431,6 @@ void GraphicsClass::Shutdown()
 
 bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime)
 {
-	bool result;
-
     // Set FPS, CPU usage and a text message:
 	if( !m_TextOut->SetFps( fps, m_d3d->GetDeviceContext()) ||
         !m_TextOut->SetCpu( cpu, m_d3d->GetDeviceContext()) ||
@@ -448,7 +449,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 		//m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 15 * sin(10 * zoom));
 
 		// zoom with the mouse wheel
-		m_Camera->SetPosition(0.0f, 0.0f, -10.0f + 0.005*zoom);
+		m_Camera->SetPosition(0.0f, 0.0f, -10.0f + 0.005f*zoom);
 	}
 
 	// Clear the buffers to begin the scene
@@ -511,7 +512,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 			// ќсуществл€ем необходимые преобразовани€ матриц
 			D3DXMatrixTranslation(&translationMatrix, 100.0f, 0.0f, 0.0f);
-			D3DXMatrixScaling(&matScale, 1.0f + 0.01*sin(rotation/10) + 0.0001*zoom, 1.0f + 0.01*sin(rotation/10) + 0.0001*zoom, 1.0f);
+			D3DXMatrixScaling(&matScale, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f);
 
 
 			// Once the vertex / index buffers are prepared we draw them using the texture shader.
@@ -533,7 +534,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 			D3DXMatrixRotationZ(&worldMatrixZ, rotation / 5);
 			D3DXMatrixTranslation(&translationMatrix, 100.0f, 100.0f, 0.0f);
-			D3DXMatrixScaling(&matScale, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 0.85f + 0.03*sin(rotation) + 0.0001*zoom, 1.0f);
+			D3DXMatrixScaling(&matScale, 0.85f + 0.03f*sin(rotation) + 0.0001f*zoom, 0.85f + 0.03f*sin(rotation) + 0.0001f*zoom, 1.0f);
 
 			if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap_Tree->GetIndexCount(),
 					worldMatrixZ * translationMatrix * matScale ,
@@ -603,7 +604,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
             m_d3d->GetWorldMatrix(matScale);
 
 #if 1
-            static int playerPosX = 0, playerPosY = 0;
+            static float playerPosX = 0, playerPosY = 0;
 
             // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываютс€ в синхронизации с таймером, это добавит нам FPS
             if( onTimer ) {
@@ -649,24 +650,24 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
                     // ≈сли нажата лева€ кнопка мыши, добавл€ем в очередь новые пули
                     if ( Keys->lmbDown ) {
 
-                        #if 1
-                            if( !(canShoot % 2) ) {
+                        #if 0
+                            if( !(canShoot % 1) ) {
                                 int size1 = 20;
                                 int size2 = size1/2;
 
                                 //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
                                 bulletList.push_back( new Bullet(playerPosX, playerPosY,
                                                         mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                            50.0 + rand()%10 * 0.1f ) );
+                                                            60.0f + rand()%10 * 0.1f ) );
                                 bulletListSize++;
                             }
                         #else
-                            if( !(canShoot % 10) ) {
-                                int size1 = 200;
+                            if( !(canShoot % 2) ) {
+                                int size1 = 100;
                                 int size2 = size1/2;
                                 int num = 10;
                                 for (int i = 0; i < num; i++) {
-                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0));
+                                    bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0f));
                                     bulletListSize++;
                                 }
                             }
@@ -681,6 +682,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
                         if ((*iter)->isAlive()) {
                             //(*iter)->Move(0, 0, &monsterList1);       // 1 список 
+                            // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                             (*iter)->Move(0, 0, &VEC);                  // вектор списков
                         }
                         else {
@@ -692,6 +694,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
                         ++iter;
                     }
+                    thPool.waitForAll();
 
                     //if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList, &bulletListSize))
                     if (!m_BulletBitmapIns->initializeInstances(m_d3d->GetDevice(), &bulletList, &bulletListSize, true))

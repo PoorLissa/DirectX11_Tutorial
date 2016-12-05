@@ -1,7 +1,10 @@
 // Some info in how to optimize the renderer
 // https://docs.unity3d.com/Manual/OptimizingGraphicsPerformance.html
 
+#include "stdafx.h"
 #include "__bitmapClassInstancing.h"
+
+
 
 BitmapClass_Instancing::BitmapClass_Instancing()
 {

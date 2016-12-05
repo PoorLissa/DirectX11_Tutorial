@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__lightShaderClass.h"
 
 LightShaderClass::LightShaderClass()

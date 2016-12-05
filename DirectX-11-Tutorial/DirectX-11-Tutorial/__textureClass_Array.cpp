@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__textureClass_Array.h"
 
 TextureArrayClass::TextureArrayClass()

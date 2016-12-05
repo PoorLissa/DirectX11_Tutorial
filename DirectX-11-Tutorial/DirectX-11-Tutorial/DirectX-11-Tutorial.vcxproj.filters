@@ -92,6 +92,9 @@
     <ClCompile Include="___SpriteInstanced.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="stdafx.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="__graphicsClass.h">
@@ -170,6 +173,12 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gameClasses.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="stdafx.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="__threadPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

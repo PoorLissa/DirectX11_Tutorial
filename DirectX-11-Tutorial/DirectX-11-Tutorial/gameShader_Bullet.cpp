@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "gameShader_Bullet.h"
 
 bulletShader_Instancing::bulletShader_Instancing()

@@ -1,11 +1,13 @@
-// The CpuClass is used to determine the percentage of total cpu use that is occurring each second.
-
+// The CpuClass is used to determine the percentage of total cpu use that is occurring each second
+#pragma once
 #ifndef _CPUCLASS_H_
 #define _CPUCLASS_H_
 
 // We use the pdh library to query the cpu usage.
 #pragma comment(lib, "pdh.lib")
 #include <pdh.h>
+
+
 
 class CpuClass {
  public:

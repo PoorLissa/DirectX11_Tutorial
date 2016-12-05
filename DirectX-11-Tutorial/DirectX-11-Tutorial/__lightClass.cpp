@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__lightClass.h"
 
 LightClass::LightClass()

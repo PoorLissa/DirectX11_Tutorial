@@ -1,14 +1,11 @@
+#pragma once
 #ifndef _MODELCLASS_H_
 #define _MODELCLASS_H_
-
-// The fstream library is now included to handle reading from the model text file.
-#include <fstream>
-#include <d3d11.h>
-#include <d3dx10math.h>
 
 #include "__textureClass.h"
 
 using namespace std;
+
 
 
 class ModelClass {

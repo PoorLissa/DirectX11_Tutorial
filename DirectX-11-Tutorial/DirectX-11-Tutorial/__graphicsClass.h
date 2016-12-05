@@ -9,13 +9,9 @@
 
 */
 
+#pragma once
 #ifndef _GRAPHICSCLASS_H_
 #define _GRAPHICSCLASS_H_
-
-#include <stdio.h>
-#include <vector>
-#include <list>
-#include <ctime>
 
 #include "__d3dClass.h"
 #include "__cameraClass.h"
@@ -25,6 +21,7 @@
 #include "__lightShaderClass.h"
 #include "__lightClass.h"
 #include "__bitmapClass.h"
+#include "__highPrecTimer.h"
 #include "__textOutClass.h"
 #include "___Sprite.h"
 #include "___SpriteInstanced.h"
@@ -33,11 +30,11 @@
 #include "__textureShaderClassInstancing.h"
 #include "gameShader_Bullet.h"
 
-#include "Helpers.h"
+#include "__threadPool.h"
 
 // ---------------------------------------------------------------------------------------
 #define fullScreen
-//#undef  fullScreen
+#undef  fullScreen
 
 #if defined fullScreen
 const bool FULL_SCREEN    = true;

@@ -2,14 +2,10 @@
 #ifndef _SPRITE_INSTANCED_H_
 #define _SPRITE_INSTANCED_H_
 
-#include <vector>
-#include <list>
-
 #include "__bitmapClassInstancing.h"
-#include "Helpers.h"
 #include "gameClasses.h"
 
-/*
+/* --------------------------------------------------------------------------------------------------------
     Класс инстанцированного спрайта.
  Унаследован от класса BitmapClass_Instancing.
  Позволяет инициализировать инстанции, принадлежащие классу BitmapClass_Instancing, списком объектов gameObjectBase
@@ -28,7 +24,7 @@
                 sprIns1->GetVertexCount(), sprIns1->GetInstanceCount(),
                     worldMatrixZ * matTrans * matScale,
                         viewMatrix, orthoMatrix, sprIns1->GetTexture(), mouseX - xCenter, yCenter - mouseY);
-*/
+// ----------------------------------------------------------------------------------------------------- */
 
 
 

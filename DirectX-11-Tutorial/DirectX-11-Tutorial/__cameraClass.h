@@ -1,7 +1,8 @@
+#pragma once
 #ifndef _CAMERACLASS_H_
 #define _CAMERACLASS_H_
 
-#include <d3dx10math.h>
+
 
 class CameraClass {
  public:

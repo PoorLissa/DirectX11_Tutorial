@@ -16,11 +16,19 @@
 // You need to define the version of Direct Input you are using in the header or the compiler will generate annoying messages that it is defaulting to version 8.
 #define DIRECTINPUT_VERSION 0x0800
 
+// Ускорим немного нашу мышь, потому что на 1920x1200  она бегает достаточно медленно
+#if 0
+    #define MOUSE_SENSITIVITY 2.5f
+#else
+    #define MOUSE_SENSITIVITY 1.0f
+#endif
+
+
 // The following two libraries need to be linked for Direct Input to work.
 #pragma comment(lib, "dinput8.lib")
 #pragma comment(lib, "dxguid.lib")
 
-#include <dinput.h>
+
 
 class DirectInputClass {
  public:

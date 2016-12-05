@@ -1,12 +1,10 @@
+#pragma once
 #ifndef _FONTCLASS_H_
 #define _FONTCLASS_H_
 
-#include <d3d11.h>
-#include <d3dx10math.h>
-#include <fstream>
-using namespace std;
-
 #include "__textureClass.h"
+
+using namespace std;
 
 
 

@@ -1,22 +1,14 @@
 // The TextureShaderClass is just an updated version of the ColorShaderClass from the previous tutorial.
 // This class will be used to draw the 3D models using vertex and pixel shaders.
-
+#pragma once
 #ifndef _TEXTURESHADERCLASSINSTANCING_H_
 #define _TEXTURESHADERCLASSINSTANCING_H_
-
-#include <d3d11.h>
-#include <d3dx10math.h>
-#include <d3dx11async.h>
-#include <fstream>
-#include "Helpers.h"
-
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
 
 using namespace std;
 
 #define ciRef const int &
+
+
 
 class TextureShaderClass_Instancing {
 

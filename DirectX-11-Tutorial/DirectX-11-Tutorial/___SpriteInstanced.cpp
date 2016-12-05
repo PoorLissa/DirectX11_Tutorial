@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "___SpriteInstanced.h"
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -48,7 +49,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::vector<game
         instances[i].animationInfo = D3DXVECTOR3(
             m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
             m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
-            (*iter)->getAnimPhase()                 // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
+            (float)(*iter)->getAnimPhase()          // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
         );
     }
 
@@ -135,7 +136,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         instances[i].animationInfo = D3DXVECTOR3(
             m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
             m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
-            (*iter)->getAnimPhase()                 // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
+            (float)(*iter)->getAnimPhase()          // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
         );
     }
 
@@ -174,7 +175,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 
 
 
-//
+// Получаем на вход список с данными о пулях и заполняем заполняем массив инстанцированных данных (пули заполняются иначе, не как все остальные данные)
 bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameObjectBase*> *list, const unsigned int *listSize, bool bullet)
 {
     // Set the number of instances in the array. If the list is empty just return true
@@ -306,7 +307,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, gameObjectBase* 
     instances[0].animationInfo = D3DXVECTOR3(
         m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
         m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
-        obj->getAnimPhase()                     // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
+        (float)obj->getAnimPhase()              // фаза анимации - номер текстуры в массиве или порядковый номер кадра в атласе
     );
 
 

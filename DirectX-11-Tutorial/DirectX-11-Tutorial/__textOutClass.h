@@ -6,6 +6,8 @@
 #include "__fontClass.h"
 #include "__fontShaderClass.h"
 
+
+
 class TextOutClass {
 
 	// SentenceType is the structure that holds the rendering information for each text sentence

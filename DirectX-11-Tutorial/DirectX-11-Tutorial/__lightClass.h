@@ -1,9 +1,10 @@
 // Now we will look at the new light class which is very simple.Its purpose is only to maintain the direction and color of lights.
 
+#pragma once
 #ifndef _LIGHTCLASS_H_
 #define _LIGHTCLASS_H_
 
-#include <d3dx10math.h>
+
 
 class LightClass {
  public:

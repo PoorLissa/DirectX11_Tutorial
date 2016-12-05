@@ -5,13 +5,13 @@
 #define WIN32_LEAN_AND_MEAN
 #define appTimerInterval 20
 
-#include <windows.h>
-
 #include "__directInput.h"
 #include "__graphicsClass.h"
 #include "__fpsClass.h"
 #include "__cpuClass.h"
 #include "__highPrecTimer.h"
+
+
 
 class SystemClass {
  public:

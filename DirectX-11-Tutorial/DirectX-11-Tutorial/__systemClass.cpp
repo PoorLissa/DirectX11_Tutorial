@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__systemClass.h"
 
 SystemClass::SystemClass()
@@ -212,7 +213,7 @@ bool SystemClass::Frame()
 		if (onTimer) {
 
 			rotation += (float)D3DX_PI * 0.01f;
-			zoom += 0.002;
+			zoom += 0.002f;
 
 			if (rotation > 360.0f)
 				rotation -= 360.0f;
@@ -226,7 +227,7 @@ bool SystemClass::Frame()
 		}
 
 		// Finally render the graphics to the screen anyway
-        result = m_Graphics->Render(rotation, mouseZ, mouseX, mouseY, &Keys, onTimer);
+        result = m_Graphics->Render(rotation, (float)mouseZ, mouseX, mouseY, &Keys, onTimer);
 		if (!result)
 			return false;
 	}

@@ -1,16 +1,15 @@
-#pragma once
 // --------------------------------------------------------------------------------------------------------
 // BitmapClass will be used to represent an individual 2D image that needs to be rendered to the screen.
 // For every 2D image you have you will need a new BitmapClass for each.
 // Note that this class is just the ModelClass re-written to handle 2D images instead of 3D objects.
 // --------------------------------------------------------------------------------------------------------
 
-#include <d3d11.h>
-#include <d3dx10math.h>
+#pragma once
+#ifndef _BITMAPCLASS_INSTANCING_H_
+#define _BITMAPCLASS_INSTANCING_H_
 
 #include "__textureClass.h"
 #include "__textureClass_Array.h"
-#include "Helpers.h"
 
 #define ciRef const int   &
 #define cfRef const float &
@@ -102,3 +101,5 @@ class BitmapClass_Instancing {
     // Размеры одного кадра анимации из текстурного атласа
     float            m_spriteSliceX, m_spriteSliceY;
 };
+
+#endif

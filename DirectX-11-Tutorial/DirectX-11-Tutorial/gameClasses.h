@@ -2,9 +2,9 @@
 #ifndef _GAME_CLASSES_H_
 #define _GAME_CLASSES_H_
 
-#include <vector>
-#include <list>
-#include <iterator>
+#include "__threadPool.h"
+
+
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -31,11 +31,17 @@ class gameObjectBase {
     virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод дл€ перемещени€ объекта, вызываетс€ в общем цикле
     inline virtual int getAnimPhase() const = 0;                                // метод дл€ получени€ текущей фазы анимации
 
+    inline static void setThreadPool(ThreadPool *thPool) {
+        _thPool = thPool;
+    }
+
  protected:
-    bool    _Alive;
-    float   _X, _Y;
-    float   _Speed;
-    float   _Angle;
+    bool        _Alive;
+    float       _X, _Y;
+    float       _Speed;
+    float       _Angle;
+
+    static ThreadPool *_thPool;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -70,10 +76,12 @@ class Player : public gameObjectBase {
 class Monster : public gameObjectBase {
 
  public:
-    Monster(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty) : gameObjectBase(x, y, angle, speed),
-        animInterval0(interval), animInterval1(interval), animQty(anim_Qty), animPhase(0) {
-    }
-
+    Monster(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
+        : gameObjectBase(x, y, angle, speed),
+            animInterval0(interval),
+            animInterval1(interval),
+            animQty(anim_Qty),
+            animPhase(0) {}
    ~Monster() {}
 
     virtual int Move(const float &x, const float &y, void *Param);
@@ -92,7 +100,7 @@ class Monster : public gameObjectBase {
 class Bullet : public gameObjectBase {
 
  public:
-    Bullet(const int &, const int &, const int &, const int &, const float & = 1.0);
+    Bullet(const float &, const float &, const float &, const float &, const float & = 1.0);
 
    ~Bullet() {}
 
@@ -113,14 +121,18 @@ class Bullet : public gameObjectBase {
 
  private:
 
-    // пересечение отрезка с окружностью ( http://www.cyberforum.ru/cpp-beginners/thread853799.html )
-    bool commonSectionCircle(double, double, double, double, const double &, const double &, const double &);
+    // пересечение отрезка с окружностью
+    // http://www.cyberforum.ru/cpp-beginners/thread853799.html
+    bool commonSectionCircle(float, float, float, float, const int &, const int &, const float &);
+
+    void threadMove(std::vector< std::list<gameObjectBase*>* > *);
 
  private:
     float   _X0, _Y0;               // изначальна€ точка, из которой пул€ летит
-    float   dX, dY;                 // смещени€ по x и по y дл€ нахождени€ новой позиции пули
+    float   _dX, _dY;               // смещени€ по x и по y дл€ нахождени€ новой позиции пули
 
     float   dx, dy, a, b, c;        // переменные дл€ вычислени€ пересечени€ пули с монстром, чтобы не объ€вл€ть их каждый раз в теле функции
+                                    // ??? - надо бы потестить, может и пусть себе объ€вл€ютс€ в теле функции?..
 
     static int _scrWidth;           // «начени€ координат, за пределами которых пул€ считаетс€ ушедшей в молоко
     static int _scrHeight;          // «начени€ координат, за пределами которых пул€ считаетс€ ушедшей в молоко
@@ -133,17 +145,15 @@ class Bullet : public gameObjectBase {
 class Bonus : public gameObjectBase {
 
  public:
-	Bonus(const int &x, const int &y) : gameObjectBase(x, y, 0.0f, 0.0f), lifeTime(500) {}
+	Bonus(const float &x, const float &y) : gameObjectBase(x, y, 0.0f, 0.0f), lifeTime(500) {}
    ~Bonus() {}
 
-   // ƒл€ бонуса пока что просто рассчитываем врем€ жизни
-   virtual inline int Move(const float &, const float &, void *) {
+    // ƒл€ бонуса пока что просто рассчитываем врем€ жизни
+    virtual inline int Move(const float &, const float &, void *) {
    
-	   if( !--lifeTime )
-		   _Alive = false;
-   }
-
-
+        if( !--lifeTime )
+		    _Alive = false;
+    }
 
  private:
 

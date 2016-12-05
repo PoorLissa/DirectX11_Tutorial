@@ -1,4 +1,8 @@
 #pragma once
+#ifndef _SPRITE_H_
+#define _SPRITE_H_
+
+#include "__bitmapClass.h"
 
 // Класс-обертка для BitmapClass, сделанный для того, чтобы иметь возможность задавать вектор спрайтов,
 // у которых была бы одна и та же текстура, которая бы всего один раз на весь вектор передавалась бы в GPU
@@ -11,7 +15,7 @@
 
 // Класс устарел, вместо него следует использовать класс InstancedSprite
 
-#include "__bitmapClass.h"
+
 
 class Sprite {
 
@@ -67,3 +71,5 @@ class Sprite {
 	 int posX, posY;
 	 static BitmapClass *Bitmap;
 };
+
+#endif

@@ -1,14 +1,6 @@
+#pragma once
 #ifndef _COLORSHADERCLASS_H_
 #define _COLORSHADERCLASS_H_
-
-#include <d3d11.h>
-#include <d3dx10math.h>
-#include <d3dx11async.h>
-#include <fstream>
-
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
 
 using namespace std;
 

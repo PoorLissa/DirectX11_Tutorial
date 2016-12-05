@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "gameClasses.h"
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -60,7 +61,7 @@ int Monster::Move(const float &x, const float &y, void *Param)
 
 
 // Конструктор для Пули
-Bullet::Bullet(const int &x, const int &y, const int &x_to, const int &y_to, const float &speed)
+Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y_to, const float &speed)
 				: gameObjectBase(x, y, 0.0f, speed), _X0(x), _Y0(y)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
@@ -69,17 +70,17 @@ Bullet::Bullet(const int &x, const int &y, const int &x_to, const int &y_to, con
     static const float divPIby180 = PI / 180.0f;
     static const float div180byPI = 180.0f / PI;
 
-    dX = x_to - x;
-    dY = y_to - y;
+    _dX = x_to - x;
+    _dY = y_to - y;
 
-    if (dX == 0.0f) {
+    if (_dX == 0.0f) {
 
-        _Angle = dY > 0.0f ? 180.0f : 0.0f;
+        _Angle = _dY > 0.0f ? 180.0f : 0.0f;
     }
     else {
 
-        _Angle = atan(dY / dX) * div180byPI;
-        _Angle = dX > 0.0f ? _Angle + 90.0f : _Angle + 270.0f;
+        _Angle = atan(_dY / _dX) * div180byPI;
+        _Angle = _dX > 0.0f ? _Angle + 90.0f : _Angle + 270.0f;
     }
 
     _Angle = (270.0f - _Angle) * divPIby180;
@@ -90,44 +91,54 @@ Bullet::Bullet(const int &x, const int &y, const int &x_to, const int &y_to, con
 	//	dX = Speed * (X-_x)/Dist;
 	//	dY = Speed * (Y-_y)/Dist;
     // Но мы немного ускоряем вычисление:
-    float Speed_Divided_By_Dist = _Speed / sqrt(dX*dX + dY*dY);
-    dX = Speed_Divided_By_Dist * dX;
-    dY = Speed_Divided_By_Dist * dY;
+    float Speed_Divided_By_Dist = _Speed / sqrt(_dX*_dX + _dY*_dY);
+    _dX = Speed_Divided_By_Dist * _dX;
+    _dY = Speed_Divided_By_Dist * _dY;
 
 	float initialMult = float( 1.0 + rand()%10 ) * 0.1f;
 
-	_X += dX * initialMult;
-	_Y += dY * initialMult;
+	_X += _dX * initialMult;
+	_Y += _dY * initialMult;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
 
+#define useThread
+//#undef  useThread
+#define piercingBullets
+#undef  piercingBullets
 
-// На вход получаем координаты пули и вектор списков с монстрами. Рассчитываем столкновения пуль с монстрами, и кто из них умирает
+// На вход получаем вектор списков с монстрами. Рассчитываем столкновения пуль с монстрами, и кто из них умирает.
+// Координаты пули передаются только для совместимости с сигнатурой базового метода и нигде не используются
 int Bullet::Move(const float &x, const float &y, void *Param)
 {
     std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
+
+#if defined useThread
+    _thPool->runAsync(&Bullet::threadMove, this, VEC);
+    return 0;
+#endif
 
 	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монсторм
 	// ??? - нужно проверить, эффективно ли это, и подобрать размер квадрата
     int squareX0, squareY0, squareX1, squareY1, monsterX, monsterY, squareSide = 100;
 
-    if (dX > 0) {
-        squareX0 = _X;
-        squareX1 = _X + dX;
+    if( _dX > 0 ) {
+        squareX0 = int(_X);
+        squareX1 = int(_X + _dX);
     }
     else {
-        squareX1 = _X;
-        squareX0 = _X + dX;
+        squareX1 = int(_X);
+        squareX0 = int(_X + _dX);
     }
 
-    if (dY > 0) {
-        squareY0 = _Y;
-        squareY1 = _Y + dY;
+    if( _dY > 0 ) {
+        squareY0 = int(_Y);
+        squareY1 = int(_Y + _dY);
     }
     else {
-        squareY1 = _Y;
-        squareY0 = _Y + dY;
+        squareY1 = int(_Y);
+        squareY0 = int(_Y + _dY);
     }
 
     squareX0 += squareSide;
@@ -135,7 +146,7 @@ int Bullet::Move(const float &x, const float &y, void *Param)
     squareY0 += squareSide;
     squareY1 -= squareSide;
 
-    for (int lst = 0; lst < VEC->size(); lst++) {
+    for (unsigned int lst = 0; lst < VEC->size(); lst++) {
         
         std::list<gameObjectBase*> *list = VEC->at(lst);
 
@@ -143,27 +154,29 @@ int Bullet::Move(const float &x, const float &y, void *Param)
         std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
         while (iter != end) {
 
-            monsterX = (*iter)->getPosX();
-            monsterY = (*iter)->getPosY();
+            if( (*iter)->isAlive() ) {
 
-            // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
-            if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {
+                monsterX = (int)(*iter)->getPosX();
+                monsterY = (int)(*iter)->getPosY();
 
-                if( commonSectionCircle(_X, _Y, _X + dX, _Y + dY, monsterX, monsterY, 20) ) {
+                // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
+                if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {
 
-                    (*iter)->setAlive(false);			// монстр убит
+                    if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, monsterX, monsterY, 20) ) {
 
-					if( rand() % 5 == 1 ) {
-#if 1
-						this->_Alive = false;           // пуля истрачена
+                        (*iter)->setAlive(false);			// монстр убит
 
-						dX = dY = 0.0;                  // Останавливаем пулю
-						_X = monsterX;                  // Переносим пулю в 
-						_Y = monsterY;                  // центр монстра
+#ifndef piercingBullets
 
-						return 1;
-					}
+						    this->_Alive = false;           // пуля истрачена
+
+						    _dX = _dY = 0.0;                // Останавливаем пулю
+						    _X = (float)monsterX;           // Переносим пулю в 
+						    _Y = (float)monsterY;           // центр монстра
+
+						    return 1;
 #endif
+                    }
                 }
             }
 
@@ -171,11 +184,11 @@ int Bullet::Move(const float &x, const float &y, void *Param)
         }
     }
 
-    _X += dX;
-    _Y += dY;
+    _X += _dX;
+    _Y += _dY;
 
     if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
-        dX = dY = 0.0;
+        _dX = _dY = 0.0;
         this->_Alive = false;   // пуля ушла в молоко
         return 1;
     }
@@ -186,8 +199,89 @@ int Bullet::Move(const float &x, const float &y, void *Param)
 
 
 
-// пересечение отрезка с окружностью ( http://www.cyberforum.ru/cpp-beginners/thread853799.html )
-bool Bullet::commonSectionCircle(double x1, double y1, double x2, double y2, const double &xCirc, const double &yCirc, const double &Rad)
+// Просчет движения пуль и попадания их в монстров, потоковая версия
+void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
+{
+	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монсторм
+	// ??? - нужно проверить, эффективно ли это, и подобрать размер квадрата
+    int squareX0, squareY0, squareX1, squareY1, monsterX, monsterY, squareSide = 100;
+
+    if( _dX > 0 ) {
+        squareX0 = int(_X);
+        squareX1 = int(_X + _dX);
+    }
+    else {
+        squareX1 = int(_X);
+        squareX0 = int(_X + _dX);
+    }
+
+    if( _dY > 0 ) {
+        squareY0 = int(_Y);
+        squareY1 = int(_Y + _dY);
+    }
+    else {
+        squareY1 = int(_Y);
+        squareY0 = int(_Y + _dY);
+    }
+
+    squareX0 += squareSide;
+    squareX1 -= squareSide;
+    squareY0 += squareSide;
+    squareY1 -= squareSide;
+
+    for (unsigned int lst = 0; lst < VEC->size(); lst++) {
+        
+        std::list<gameObjectBase*> *list = VEC->at(lst);
+
+        // выбираем вектор с монстрами из вектора векторов
+        std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
+        while (iter != end) {
+
+            monsterX = (int)(*iter)->getPosX();
+            monsterY = (int)(*iter)->getPosY();
+
+            // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
+            if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {
+
+                if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, monsterX, monsterY, 20) ) {
+
+                    (*iter)->setAlive(false);			// монстр убит
+
+#ifndef piercingBullets
+
+						this->_Alive = false;           // пуля истрачена
+
+						_dX = _dY = 0.0;                // Останавливаем пулю
+						_X = (float)monsterX;           // Переносим пулю в 
+						_Y = (float)monsterY;           // центр монстра
+
+						return;
+#endif
+                }
+            }
+
+            ++iter;
+        }
+    }
+
+    _X += _dX;
+    _Y += _dY;
+
+    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
+        _dX = _dY = 0.0;
+        this->_Alive = false;   // пуля ушла в молоко
+        return;
+    }
+
+    return;
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// пересечение отрезка с окружностью для определения попадания пули в монстра
+// http://www.cyberforum.ru/cpp-beginners/thread853799.html
+bool Bullet::commonSectionCircle(float x1, float y1, float x2, float y2, const int &xCirc, const int &yCirc, const float &Rad)
 {
     x1 -= xCirc;
     y1 -= yCirc;
@@ -200,7 +294,7 @@ bool Bullet::commonSectionCircle(double x1, double y1, double x2, double y2, con
     // составляем коэффициенты квадратного уравнения на пересечение прямой и окружности.
     // если на отрезке [0..1] есть отрицательные значения, значит отрезок пересекает окружность
     a = dx*dx + dy*dy;
-    b = 2.0 * (x1*dx + y1*dy);
+    b = 2.0f * (x1*dx + y1*dy);
     c = x1*x1 + y1*y1 - Rad*Rad;
 
     // а теперь проверяем, есть ли на отрезке [0..1] решения

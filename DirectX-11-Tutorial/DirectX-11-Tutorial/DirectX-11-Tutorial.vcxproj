@@ -51,8 +51,7 @@
   </PropertyGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <ClCompile>
-      <PrecompiledHeader>
-      </PrecompiledHeader>
+      <PrecompiledHeader>Use</PrecompiledHeader>
       <WarningLevel>Level3</WarningLevel>
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;%(PreprocessorDefinitions)</PreprocessorDefinitions>
@@ -88,6 +87,9 @@
   <ItemGroup>
     <ClCompile Include="gameClasses.cpp" />
     <ClCompile Include="gameShader_Bullet.cpp" />
+    <ClCompile Include="stdafx.cpp">
+      <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
+    </ClCompile>
     <ClCompile Include="___SpriteInstanced.cpp" />
     <None Include="_gameShader_Bullet.vs">
       <FileType>CppCode</FileType>
@@ -119,6 +121,7 @@
     <ClInclude Include="gameClasses.h" />
     <ClInclude Include="gameShader_Bullet.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="stdafx.h" />
     <ClInclude Include="__bitmapClass.h" />
     <ClInclude Include="__bitmapClassInstancing.h" />
     <ClInclude Include="__colorShaderClass.h" />
@@ -140,6 +143,7 @@
     <ClInclude Include="__textureClass_Array.h" />
     <ClInclude Include="__textureShaderClass.h" />
     <ClInclude Include="__textureShaderClassInstancing.h" />
+    <ClInclude Include="__threadPool.h" />
     <ClInclude Include="___Sprite.h" />
     <ClInclude Include="___SpriteInstanced.h" />
   </ItemGroup>

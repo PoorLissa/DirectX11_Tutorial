@@ -5,10 +5,11 @@
 // The most common usage of the TimerClass is to use the frame time to figure out what percentage of a second has passed in the current frame
 // and then move the objects by that percentage.
 
+#pragma once
 #ifndef _HIGHPRECISIONTIMERCLASS_H_
 #define _HIGHPRECISIONTIMERCLASS_H_
 
-#include <windows.h>
+
 
 class HighPrecisionTimer {
 

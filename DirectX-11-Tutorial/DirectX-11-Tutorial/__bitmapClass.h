@@ -7,11 +7,7 @@
 #ifndef _BITMAPCLASS_H_
 #define _BITMAPCLASS_H_
 
-#include <d3d11.h>
-#include <d3dx10math.h>
-
 #include "__textureClass.h"
-#include "Helpers.h"
 
 
 

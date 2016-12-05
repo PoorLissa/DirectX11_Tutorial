@@ -1,16 +1,7 @@
 // The FontShaderClass is just the TextureShaderClass from the previous tutorial renamed with a couple code changes for rendering fonts.
-
+#pragma once
 #ifndef _FONTSHADERCLASS_H_
 #define _FONTSHADERCLASS_H_
-
-#include <d3d11.h>
-#include <d3dx10math.h>
-#include <d3dx11async.h>
-#include <fstream>
-
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
 
 using namespace std;
 

@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__cameraClass.h"
 
 // The class constructor will initialize the position and rotation of the camera to be at the origin of the scene.

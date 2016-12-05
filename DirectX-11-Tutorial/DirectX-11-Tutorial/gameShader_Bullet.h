@@ -6,19 +6,11 @@
 #ifndef _GAME_SHADER_BULLET_H_
 #define _GAME_SHADER_BULLET_H_
 
-#include <d3d11.h>
-#include <d3dx10math.h>
-#include <d3dx11async.h>
-#include <fstream>
-#include "Helpers.h"
-
-// для функции D3DCompileFromFile
-#pragma comment(lib, "d3dcompiler.lib")
-#include "D3Dcompiler.h"
-
 using namespace std;
 
 #define ciRef const int &
+
+
 
 class bulletShader_Instancing {
 

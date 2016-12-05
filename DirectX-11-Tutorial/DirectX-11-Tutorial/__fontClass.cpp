@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__fontClass.h"
 
 FontClass::FontClass()

@@ -1,7 +1,5 @@
+#include "stdafx.h"
 #include "__directInput.h"
-
-// Ускорим немного нашу мышь, потому что на 1920x1200  она бегает достаточно медленно
-#define MOUSE_SENSITIVITY 2.5f
 
 DirectInputClass::DirectInputClass()
 {

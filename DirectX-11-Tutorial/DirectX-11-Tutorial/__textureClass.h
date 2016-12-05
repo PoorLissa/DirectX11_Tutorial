@@ -1,11 +1,8 @@
 // The TextureClass encapsulates the loading, unloading, and accessing of a single texture resource.
 // For each texture needed an object of this class must be instantiated.
-
+#pragma once
 #ifndef _TEXTURECLASS_H_
 #define _TEXTURECLASS_H_
-
-#include <d3d11.h>
-#include <d3dx11tex.h>
 
 
 

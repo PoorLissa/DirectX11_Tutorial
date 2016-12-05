@@ -1,3 +1,4 @@
+#include "stdafx.h"
 #include "__textureShaderClassInstancing.h"
 
 TextureShaderClass_Instancing::TextureShaderClass_Instancing()
