@@ -32,11 +32,11 @@ class BitmapClass_Instancing {
 	// But note that it could be anything else you want to modify for each instance such as color, size, rotation, and so forth.
 	// You can modify multiple things at once for each instance also.
 
-        // float3 position содержит 2 координаты, по которым будет размещен спрайт, и угол поворота, на который этот спрайт нужно развернуть
-        // float3 содержит: а) ширину одного спрайта, б) высоту одного спрайта, в) номер анимации, который нужно использовать
+        // float4 position      содержит: а-б)2 координаты, по которым будет размещен спрайт, в) угол поворота, на который этот спрайт нужно развернуть, г) коэффициент масштабирования спрайта
+        // float3 animationInfo содержит: а) ширину одного спрайта в атласе, б) высоту одного спрайта в атласе, в) номер анимации, который нужно использовать
 	    struct InstanceType {
-		    D3DXVECTOR3  position;	    
-            D3DXVECTOR3  animationInfo; 
+		    D3DXVECTOR4  position;
+            D3DXVECTOR3  animationInfo;
 	    };
 
  public:

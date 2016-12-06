@@ -11,12 +11,12 @@ cbuffer MatrixBuffer
     float  dummy;               //  <-- dummy
 };
 
-// The VertexInputType structure now has the third element which will hold the instanced input position data.
+// The VertexInputType structure now has the third element which will hold the instanced input position data
 struct VertexInputType
 {
     float4 position         : POSITION;
     float2 tex              : TEXCOORD0;
-    float3 instancePosition : TEXCOORD1;    // x = позиция x, y = позиция y, z = поворот на заданный угол
+    float4 instancePosition : TEXCOORD1;    // x = позиция x, y = позиция y, z = поворот на заданный угол, w = масштаб
     float3 animationInfo    : TEXCOORD2;
 };
 
@@ -33,6 +33,15 @@ struct PixelInputType
 PixelInputType TextureVertexShader(VertexInputType input)
 {
     PixelInputType output;
+
+	// изменим масштаб спрайта, если коэффициент масштабирования не равен единице
+	if( input.instancePosition.w != 1.0f ) {
+		input.position.x *= input.instancePosition.w;
+		input.position.y *= input.instancePosition.w;
+	}
+
+	//input.position.x *= 2.0;
+    //input.position.y *= 2.0;
 
     // Change the position vector to be 4 units for proper matrix calculations
     //input.position.w = 1.0f;
@@ -65,7 +74,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // Angle to Radians:
         if( rotationMode == 2.0 )
-            Angle = (Angle - 90.0f) * divPIby180;                       // Без учета начального угла
+            Angle = (Angle - 90.0f) * divPIby180;								// Без учета начального угла
         else
             Angle = (Angle + input.instancePosition.z) * divPIby180;    // С учетом начального угла
     }

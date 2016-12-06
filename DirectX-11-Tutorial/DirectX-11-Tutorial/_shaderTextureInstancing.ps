@@ -42,7 +42,6 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 
         //input.tex = float2(input.tex.x / slicesCntX + float(index % slicesCntX) / slicesCntX, input.tex.y / slicesCntY + float(index / slicesCntX) / slicesCntY);
         input.tex = float2((input.tex.x + float(index % slicesCntX)) / slicesCntX, (input.tex.y + float(index / slicesCntX)) / slicesCntY);
-
     }
 
     textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.animationInfo.z));

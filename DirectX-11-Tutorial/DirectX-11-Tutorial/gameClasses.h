@@ -11,17 +11,26 @@
 class gameObjectBase {
 
  public:
-    gameObjectBase(const float &x, const float &y, const float &angle, const float &speed) : _X(x), _Y(y), _Angle(angle), _Speed(speed) {}
+    gameObjectBase(const float &x, const float &y, const float &scale, const float &angle, const float &speed) :
+		_X(x),
+		_Y(y),
+		_Angle(angle),
+		_Speed(speed),
+		_Scale(scale)
+	{}
     virtual ~gameObjectBase() {}
 
     // --- Ѕазовые методы, которые не переопредел€ютс€ в классах-наследниках ---
     inline float getPosX  () const           { return _X;     } 
     inline float getPosY  () const           { return _Y;     }
     inline float getAngle () const           { return _Angle; }
+	inline float getScale () const           { return _Scale; }
     inline bool  isAlive  () const           { return _Alive; }
+
     inline void  setPosX  (const float &x)   {        _X = x; }
     inline void  setPosY  (const float &y)   {        _Y = y; }
     inline void  setAngle (const float &a)   {    _Angle = a; }
+	inline void  setScale (const float &s)   {    _Scale = s; }
     inline void  setAlive (const  bool &b)   {    _Alive = b; }
 
     // --- ¬иртуальные методы, уникальные дл€ каждого класса-потомка ---
@@ -37,8 +46,9 @@ class gameObjectBase {
     float       _X, _Y;
     float       _Speed;
     float       _Angle;
+	float		_Scale;
 
-    static ThreadPool *_thPool;
+    static ThreadPool *_thPool;		// указатель пул потоков, на котором будут запускатьс€ многопоточные вычислени€
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -48,7 +58,10 @@ class gameObjectBase {
 class Player : public gameObjectBase {
 
  public:
-    Player(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty) : gameObjectBase(x, y, angle, speed) {}
+    Player(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
+		: gameObjectBase(x, y, scale, angle, speed),
+		_Angle0(angle)
+	{}
    ~Player() {}
 
     // ѕока что не используем возвращаемое значение, вместо него пользуемс€ методом isAlive
@@ -64,6 +77,7 @@ class Player : public gameObjectBase {
   private:
     bool    _Left, _Right, _Up, _Down;
     float   _Step;
+	float	_Angle0;	// ”гол, который передаем в конструктор. ѕозвол€ет довернуть спрайт, если он изначально расположен не под тем углом, как мы хотим
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -73,12 +87,13 @@ class Player : public gameObjectBase {
 class Monster : public gameObjectBase {
 
  public:
-    Monster(const float &x, const float &y, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
-        : gameObjectBase(x, y, angle, speed),
+    Monster(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
+        : gameObjectBase(x, y, scale, angle, speed),
             animInterval0(interval),
             animInterval1(interval),
             animQty(anim_Qty),
-            animPhase(0) {}
+            animPhase(0)
+	{}
    ~Monster() {}
 
     virtual int Move(const float &x, const float &y, void *Param);
@@ -97,8 +112,7 @@ class Monster : public gameObjectBase {
 class Bullet : public gameObjectBase {
 
  public:
-    Bullet(const float &, const float &, const float &, const float &, const float & = 1.0);
-
+    Bullet(const float &, const float &, const float &, const float &, const float &, const float &);
    ~Bullet() {}
 
     // ћетод дл€ установки значений _scrWidth и _scrHeight, за пределами которых пули будут исчезать
@@ -133,6 +147,9 @@ class Bullet : public gameObjectBase {
 
     static int _scrWidth;           // «начени€ координат, за пределами которых пул€ считаетс€ ушедшей в молоко
     static int _scrHeight;          // «начени€ координат, за пределами которых пул€ считаетс€ ушедшей в молоко
+
+	// new test
+	unsigned int hitCounter;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -142,7 +159,9 @@ class Bullet : public gameObjectBase {
 class Bonus : public gameObjectBase {
 
  public:
-	Bonus(const float &x, const float &y) : gameObjectBase(x, y, 0.0f, 0.0f), lifeTime(500) {}
+	Bonus(const float &x, const float &y, const float &scale)
+		: gameObjectBase(x, y, scale, 0.0f, 0.0f), lifeTime(500)
+	{}
    ~Bonus() {}
 
     // ƒл€ бонуса пока что просто рассчитываем врем€ жизни

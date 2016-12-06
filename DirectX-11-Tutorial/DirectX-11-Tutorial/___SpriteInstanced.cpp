@@ -39,10 +39,11 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::vector<game
     for (iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
         // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
         //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
-        instances[i].position = D3DXVECTOR3(
+        instances[i].position = D3DXVECTOR4(
             float( (*iter)->getPosX() - 0.5f * scrWidth  ),
             float(-(*iter)->getPosY() + 0.5f * scrHeight ),
-            float( (*iter)->getAngle() )
+            float( (*iter)->getAngle() ),
+			float( 1.0 )
         );
 
         // –азмеры кадра анимации (дл€ текстурного атласа only) и номер анимации
@@ -103,7 +104,6 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 
     // We will now setup the new instance buffer.
     // We start by first setting the number of instances of the triangle that will need to be rendered.
-    // For this tutorial I have manually set it to 4 so that we will have four triangles rendered on the screen.
 
     // Next we create a temporary instance array using the instance count.
     // Note we use the InstanceType structure for the array type which is defined in the ModelClass header file.
@@ -126,10 +126,11 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
     for (iter = list->begin(), end = list->end(); iter != end; ++iter, ++i) {
         // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
         //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
-        instances[i].position = D3DXVECTOR3(
+        instances[i].position = D3DXVECTOR4(
             float( (*iter)->getPosX() - halfWidth),
             float(-(*iter)->getPosY() + halfHeight),
-            float( (*iter)->getAngle() )
+            float( (*iter)->getAngle() ),
+			float( (*iter)->getScale() )
         );
 
         // –азмеры кадра анимации (дл€ текстурного атласа only) и номер анимации
@@ -217,18 +218,19 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         float X =  (*iter)->getPosX() - halfWidth;
         float Y = -(*iter)->getPosY() + halfHeight;
         float A =  (*iter)->getAngle();
+		float S =  (*iter)->getScale();
 
         float X0 =  ptr->getX0() - halfWidth;
         float Y0 = -ptr->getY0() + halfHeight;
 
         // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
         //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
-        instances[i].position      = D3DXVECTOR3(X, Y, A);
+        instances[i].position      = D3DXVECTOR4(X, Y, A, S);
         instances[i].animationInfo = D3DXVECTOR3(0, 0, 0);
 
         // дл€ каждой второй инстанции передаем координаты, откуда летит пул€, чтобы отрисовать шлейф
-        instances[i+1].position      = D3DXVECTOR3(X, Y, A);
-        instances[i+1].animationInfo = D3DXVECTOR3(X0, Y0, 1);
+        instances[i+1].position      = D3DXVECTOR4(X, Y, A, S);
+        instances[i+1].animationInfo = D3DXVECTOR3(X0, Y0, 1.0f);
     }
 
 
@@ -297,10 +299,11 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, gameObjectBase* 
 
     // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
     //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
-    instances[0].position = D3DXVECTOR3(
+    instances[0].position = D3DXVECTOR4(
         float( obj->getPosX() - 0.5f * scrWidth),
         float(-obj->getPosY() + 0.5f * scrHeight),
-        float( obj->getAngle() )
+        float( obj->getAngle() ),
+		float( obj->getScale() )
     );
 
     // –азмеры кадра анимации (дл€ текстурного атласа only) и номер анимации

@@ -249,7 +249,7 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 		int X = 400 + 12 + ( 300 * sin(float(i))) * cos(float(100*i))*sin(float(0.2*i));
 		int Y = 300 - 12 + ( 300 * cos(float(i))) * cos(float(100*i))*sin(float(0.2*i));
 
-		instances[i].position = D3DXVECTOR3(float(X - Width / 2 - Size / 2), float(-Y + Height / 2 - Size / 2), 10 * angle / (i + 1));
+		instances[i].position = D3DXVECTOR4(float(X - Width / 2 - Size / 2), float(-Y + Height / 2 - Size / 2), 10 * angle / (i + 1), 1.0f);
 	}
 
 	angle += m_instanceCount / 1000000.0;

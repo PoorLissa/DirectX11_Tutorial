@@ -216,7 +216,7 @@ bool TextureShaderClass_Instancing::InitializeShader(ID3D11Device* device, HWND 
 
 		polygonLayout[2].SemanticName		  = "TEXCOORD";
 		polygonLayout[2].SemanticIndex		  = 1;
-		polygonLayout[2].Format				  = DXGI_FORMAT_R32G32B32_FLOAT;
+		polygonLayout[2].Format				  = DXGI_FORMAT_R32G32B32A32_FLOAT;
 		polygonLayout[2].InputSlot			  = 1;
 		polygonLayout[2].AlignedByteOffset    = 0;
 		polygonLayout[2].InputSlotClass		  = D3D11_INPUT_PER_INSTANCE_DATA;

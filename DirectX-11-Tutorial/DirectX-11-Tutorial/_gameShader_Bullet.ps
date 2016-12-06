@@ -22,18 +22,16 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
     float4 textureColor;
 
     // Рисуем след от пули
-    if (input.trailInfo.z == 1) {
-
-        //return float4(0, 0, 0, 0);
+    if( input.trailInfo.z == 1.0f ) {
 
 		if(input.tex.y < 0.25f || input.tex.y > 0.75f)
-			return float4(1.0, 1.0, 1.0, saturate(1.0 - input.tex.x - 0.4f)/2);
+			return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
 
-		return float4(1.0, 0.75, 0.5, saturate(1.0 - input.tex.x - 0.2f)/2);
+		return float4(1.0f, 0.75f, 0.5f, saturate(1.0f - input.tex.x - 0.2f)/2.0f);
 	}
 
     // Рисуем пулю
     textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
 
-    return textureColor * float4(1.0, 1.0, 0.0, 1.0) * 2;
+    return textureColor * float4(1.0f, 1.0f, 0.0f, 1.0f) * 2;
 }

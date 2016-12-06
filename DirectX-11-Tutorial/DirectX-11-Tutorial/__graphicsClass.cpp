@@ -23,18 +23,17 @@ struct MonsterList {
     InstancedSprite     *spriteInst;
 };
 
-MonsterList monsterList1;
+std::vector< MonsterList* > VEC;        // ¬ектор, в котором содержатс€ все наши списки монстров. ѕередаем его в обработчик перемещени€ каждой пули дл€ просчета стрельбы
+MonsterList monsterList1;				// —писки с монстрами
 MonsterList monsterList2;
 
 std::list<gameObjectBase*> bulletList;
-unsigned int bulletListSize   = 0;
+unsigned int bulletListSize = 0;
 
 InstancedSprite *m_PlayerBitmapIns1;
 InstancedSprite *m_PlayerBitmapIns2;
 InstancedSprite *m_BulletBitmapIns;
 gameObjectBase  *m_Player;
-
-std::vector< MonsterList* > VEC;        // ¬ектор, в котором содержатс€ все наши списки монстров. ѕередаем его в обработчик перемещени€ каждой пули дл€ просчета стрельбы
 
 HighPrecisionTimer gameTimer;
 char buf[100];
@@ -92,9 +91,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 {
 	bool result;
 
-    gameTimer.Initialize(1);
+    gameTimer.Initialize(100);		// пока что используетс€ просто дл€ замеров интервалов времени при расчетах, onTimer не используетс€
 
-    thPool = new ThreadPool(10);
+    thPool = new ThreadPool(50);
     gameObjectBase::setThreadPool(thPool);
 
 	// «апомним размеры текущего экрана
@@ -108,7 +107,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 	// Initialize the Direct3D object
 	result = m_d3d->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
-    CHECK_RESULT(result, L"Could not initialize Direct3D");
+    CHECK_RESULT(result, L"Could not initialize Direct3d!");
 
 	// Create the camera object.
     SAFE_CREATE(m_Camera, CameraClass);
@@ -207,7 +206,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/seafloor.dds", 256, 256);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/i.jpg", 48, 48);
 		//result = m_Bitmap->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
-		result = m_Bitmap_Bgr->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
+		//result = m_Bitmap_Bgr->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr.bmp", 1600, 900);
+		//result = m_Bitmap_Bgr->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr_1600.jpg", 1600, 900);
+		result = m_Bitmap_Bgr->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr_1600.jpg", screenWidth, screenHeight);
         CHECK_RESULT(result, L"Could not initialize the bitmap object.");
 
 		result = m_Bitmap_Tree->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic4.png", 256, 256);
@@ -229,7 +230,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         sprIns2 = new InstancedSprite(scrWidth, scrHeight);            if (!sprIns2)            return false;
         m_PlayerBitmapIns1 = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns1) return false;
         m_PlayerBitmapIns2 = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns2) return false;
-        m_BulletBitmapIns = new InstancedSprite(scrWidth, scrHeight);  if (!m_BulletBitmapIns)  return false;
+        m_BulletBitmapIns  = new InstancedSprite(scrWidth, scrHeight); if (!m_BulletBitmapIns)  return false;
 
         srand(unsigned int(time(0)));
 
@@ -241,17 +242,19 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             result = sprIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, 1, 45, 45, 200, 310);
             CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
+            monsterList1.spriteInst    = sprIns1;
+            monsterList1.rotationAngle = -90.0f;
+
             for (int i = 0; i < NUM; i++) {
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
+				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
-                monsterList1.objList.push_back(new Monster(x, y, -90.0f, speed, interval, 9));
+                monsterList1.objList.push_back(new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9));
                 monsterList1.listSize++;
-                monsterList1.spriteInst    = sprIns1;
-                monsterList1.rotationAngle = 0.0f;
             }
         }
 //#else
@@ -272,17 +275,19 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
             result = sprIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
             CHECK_RESULT(result, L"Could not initialize the instanced sprite object.");
 
+            monsterList2.spriteInst    = sprIns2;
+            monsterList2.rotationAngle = 0.0f;
+
             for (int i = 0; i < NUM; i++) {
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
+				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-                monsterList2.objList.push_back(new Monster(x, y, 0.0f, speed, interval, 8));
+                monsterList2.objList.push_back(new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8));
                 monsterList2.listSize++;
-                monsterList2.spriteInst    = sprIns2;
-                monsterList2.rotationAngle = -90.0f;
             }
         }
 //#endif
@@ -294,15 +299,15 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
 
 
         // »грок
-//      WCHAR *frames1_1[] = { L"../DirectX-11-Tutorial/data/tank830x800.png" };
-        WCHAR *frames1_1[] = { L"../DirectX-11-Tutorial/data/tankBody1.png" };
-        result = m_PlayerBitmapIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_1, 1, 80, 80);
+		WCHAR *frames1_1[] = { L"../DirectX-11-Tutorial/data/tank_body_1.png" };
+        result = m_PlayerBitmapIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_1, 1, 40, 40);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the Player.");
 
-        WCHAR *frames1_2[] = { L"../DirectX-11-Tutorial/data/tankTower1.png" };
-        result = m_PlayerBitmapIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_2, 1, 80, 80);
+		WCHAR *frames1_2[] = { L"../DirectX-11-Tutorial/data/tank_tower_1.png" };
+        result = m_PlayerBitmapIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_2, 1, 40, 40);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the Player.");
-        m_Player = new Player(scrHalfWidth, scrHalfHeight, 0.0f, 5.0f, 1000, 1);
+
+		m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1);
 
 
 
@@ -311,7 +316,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HWND hwnd)
         WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
         result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
         CHECK_RESULT(result, L"Could not initialize the instanced sprite object for the bullet.");
-        bulletList.push_back(new Bullet(-100, -100, -105, -105, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
+        bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0));    // ??? если за врем€ игры не была выпущена ни одна пул€, все крашитс€ при выходе
         bulletListSize++;
 
 
@@ -556,12 +561,12 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 	// задник
 	{
 		// –ендерим точно в центр
-		if (!m_Bitmap_Bgr->Render(m_d3d->GetDeviceContext(), 100, 100))
+		if (!m_Bitmap_Bgr->Render(m_d3d->GetDeviceContext(), 0, 0) )
 			return false;
 
 		// ќсуществл€ем необходимые преобразовани€ матриц
-		D3DXMatrixTranslation(&matrixTranslation, 100.0f, 0.0f, 0.0f);
-		D3DXMatrixScaling(&matrixScaling, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f);
+		//D3DXMatrixTranslation(&matrixTranslation, 100.0f, 0.0f, 0.0f);
+		//D3DXMatrixScaling(&matrixScaling, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f + 0.01f*sin(rotation/10) + 0.0001f*zoom, 1.0f);
 
 		// Once the vertex / index buffers are prepared we draw them using the texture shader.
 		// Notice we send in the matrixOrthographic instead of the projectionMatrix for rendering 2D.
@@ -700,7 +705,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 #if defined singleShot
                 static char weaponDelay = 2;
 #else
-                static char weaponDelay = 20;
+                static char weaponDelay = 5;
 #endif
                 static char weaponReady = weaponDelay;
                 weaponReady += weaponReady < weaponDelay ? 1 : 0;
@@ -715,7 +720,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                             int size2 = size1/2;
 
                             //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
-                            bulletList.push_back( new Bullet(playerPosX, playerPosY,
+                            bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                     mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
                                                         30.0f + rand()%10 * 0.1f ) );
                             bulletListSize++;
@@ -728,7 +733,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                             int size2 = size1/2;
                             int num = 10;
                             for (int i = 0; i < num; i++) {
-                                bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0f));
+                                bulletList.push_back(new Bullet(playerPosX, playerPosY, 1.0f, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0f));
                                 bulletListSize++;
                             }
                             weaponReady = 0;
@@ -811,9 +816,10 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                                 y += y % 2 ? scrHeight : -scrHeight;
 
                                 float  speed = (rand() % 250 + 10) * 0.1f;
+								float  scale = 0.5f + (rand() % 16) * 0.1f;
                                 int interval = 50 / speed;
 
-                                monsterList->objList.push_back(new Monster(x, y, monsterList->rotationAngle, speed, interval, 9));
+                                monsterList->objList.push_back(new Monster(x, y, scale, monsterList->rotationAngle, speed, interval, 9));
                                 monsterList->listSize++;
                             }
 #endif
@@ -881,7 +887,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
             if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
                     m_PlayerBitmapIns2->GetVertexCount(), m_PlayerBitmapIns2->GetInstanceCount(),
                         matrixWorldZ * matrixTranslation * matrixScaling,
-                            matrixView, matrixOrthographic, m_PlayerBitmapIns2->GetTextureArray(), 2, mouseX - scrHalfWidth, scrHalfHeight - mouseY) )
+                            matrixView, matrixOrthographic, m_PlayerBitmapIns2->GetTextureArray(), 1, mouseX - scrHalfWidth, scrHalfHeight - mouseY) )
             return false;
 #endif
         }

@@ -38,7 +38,8 @@ int Player::Move(const float &x, const float &y, void *Param)
             case 12: _Angle = 135.0f;  break;    // down + right
         }
 
-        _Angle *= divPIby180;
+		// Вручную доворачиваем текстуру игрока на нужный нулевой угол и переводим в радианы
+		_Angle = (_Angle + _Angle0) * divPIby180;
     }
 
     return 0;
@@ -83,8 +84,8 @@ int Monster::Move(const float &x, const float &y, void *Param)
 
 
 // Конструктор для Пули
-Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y_to, const float &speed)
-				: gameObjectBase(x, y, 0.0f, speed)
+Bullet::Bullet(const float &x, const float &y, const float &scale, const float &x_to, const float &y_to, const float &speed)
+				: gameObjectBase(x, y, scale, 0.0f, speed), hitCounter(0)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
     // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
@@ -123,7 +124,7 @@ Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y
 	_Y += _dY * initialMult;
 
     // смещаем пулю так, чтобы она летела не от центра Игрока, а из среза ствола его пушки
-    static const int gunRadius = 35;
+    static const int gunRadius = 35*2;
     _X0 = _X = _X - gunRadius * cos(_Angle);
     _Y0 = _Y = _Y + gunRadius * sin(_Angle);
 }
@@ -273,6 +274,20 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
                 if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, monsterX, monsterY, 20) ) {
 
                     (*iter)->setAlive(false);			// монстр убит
+
+
+					// new test
+					hitCounter++;
+					if(hitCounter > 50) {
+
+						this->_Alive = false;           // пуля истрачена
+
+						_dX = _dY = 0.0;                // Останавливаем пулю
+						_X = (float)monsterX;           // Переносим пулю в 
+						_Y = (float)monsterY;           // центр монстра
+
+						return;
+					}
 
 #ifndef piercingBullets
 

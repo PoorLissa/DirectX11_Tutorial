@@ -22,7 +22,7 @@ struct VertexInputType
 {
     float4 position         : POSITION;
     float2 tex              : TEXCOORD0;
-    float3 instancePosition : TEXCOORD1;    // xy = позиция, z = поворот на заданный угол
+    float4 instancePosition : TEXCOORD1;    // xy = позиция, z = поворот на заданный угол, w = масштаб
     float3 trailInfo        : TEXCOORD2;    // xy = нулевая позиция, z = признак пули (0 = пуля, 1 = след от пули)
 };
 
