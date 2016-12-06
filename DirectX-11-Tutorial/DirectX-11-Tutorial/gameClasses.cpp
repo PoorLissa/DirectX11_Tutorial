@@ -8,16 +8,38 @@
 // ѕеремещение »грока
 int Player::Move(const float &x, const float &y, void *Param)
 {
-	_Step = _Speed;
+    static const float     PI = 3.14159265f;
+    static const float     divPIby180 = PI / 180.0f;
+    static unsigned short  bitFld = 0;
+
+	_Step  = _Speed;
+    bitFld = 0;
 
     // в случае нажати€ двух клавиш уменьшаем шаг в sqrt(2) раз, чтобы компенсировать сложение двух векторов движени€
     if( ( _Up && _Left ) || ( _Up && _Right ) || ( _Down && _Left ) || ( _Down && _Right ) )
         _Step *= 0.7071068f;
 
-    if (  _Down ) _Y += _Step;
-    if (  _Left ) _X -= _Step;
-    if (    _Up ) _Y -= _Step;
-    if ( _Right ) _X += _Step;
+    if (  _Down ) { _Y += _Step; bitFld |= 1 << 3; }
+    if (  _Left ) { _X -= _Step; bitFld |= 1 << 0; }
+    if (    _Up ) { _Y -= _Step; bitFld |= 1 << 1; }
+    if ( _Right ) { _X += _Step; bitFld |= 1 << 2; }
+
+    if ( bitFld ) {
+
+        switch (bitFld) {
+    
+            case 1:  _Angle =   0.0f;  break;    // left
+            case 2:  _Angle = 270.0f;  break;    // up
+            case 4:  _Angle = 180.0f;  break;    // right
+            case 8:  _Angle =  90.0f;  break;    // down
+            case 3:  _Angle = 315.0f;  break;    // up + left
+            case 6:  _Angle = 225.0f;  break;    // up + right
+            case 9:  _Angle =  45.0f;  break;    // down + left
+            case 12: _Angle = 135.0f;  break;    // down + right
+        }
+
+        _Angle *= divPIby180;
+    }
 
     return 0;
 }
@@ -62,7 +84,7 @@ int Monster::Move(const float &x, const float &y, void *Param)
 
 //  онструктор дл€ ѕули
 Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y_to, const float &speed)
-				: gameObjectBase(x, y, 0.0f, speed), _X0(x), _Y0(y)
+				: gameObjectBase(x, y, 0.0f, speed)
 {
 	// ¬ычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливани€
     // Ѕудем затем передавать этот угол в шейдер, одновременно запреща€ все другие повороты спрайта
@@ -95,10 +117,15 @@ Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y
     _dX = Speed_Divided_By_Dist * _dX;
     _dY = Speed_Divided_By_Dist * _dY;
 
+    // «ададим пул€м разброс по начальной точке, чтобы они не шли ровными р€дами
 	float initialMult = float( 1.0 + rand()%10 ) * 0.1f;
-
 	_X += _dX * initialMult;
 	_Y += _dY * initialMult;
+
+    // смещаем пулю так, чтобы она летела не от центра »грока, а из среза ствола его пушки
+    static const int gunRadius = 35;
+    _X0 = _X = _X - gunRadius * cos(_Angle);
+    _Y0 = _Y = _Y + gunRadius * sin(_Angle);
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -106,7 +133,7 @@ Bullet::Bullet(const float &x, const float &y, const float &x_to, const float &y
 #define useThread
 //#undef  useThread
 #define piercingBullets
-#undef  piercingBullets
+//#undef  piercingBullets
 
 // Ќа вход получаем вектор списков с монстрами. –ассчитываем столкновени€ пуль с монстрами, и кто из них умирает.
 //  оординаты пули передаютс€ только дл€ совместимости с сигнатурой базового метода и нигде не используютс€

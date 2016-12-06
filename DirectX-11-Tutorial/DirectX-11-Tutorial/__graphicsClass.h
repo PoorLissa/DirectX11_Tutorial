@@ -23,14 +23,14 @@
 #include "__bitmapClass.h"
 #include "__highPrecTimer.h"
 #include "__textOutClass.h"
+#include "__threadPool.h"
 #include "___Sprite.h"
 #include "___SpriteInstanced.h"
-
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
 #include "gameShader_Bullet.h"
 
-#include "__threadPool.h"
+
 
 // ---------------------------------------------------------------------------------------
 #define fullScreen
@@ -77,8 +77,16 @@ class GraphicsClass {
     bool Render(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
 
  private:
-    int scrWidth;
-    int scrHeight;
+    bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
+    bool Render3d(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
+
+ private:
+
+    // ѕоскольку мы рендерим кадры 1 раз в 20 мс, то не будем каждый раз создавать переменные дл€ функции рендеринга, а зададим их один раз и навсегда:
+    bool		 result;
+	D3DXMATRIX	 matrixView, matrixProjection, matrixWorldX, matrixWorldY, matrixWorldZ, matrixOrthographic, matrixTranslation, matrixScaling;
+
+    int scrWidth, scrHeight, scrHalfWidth, scrHalfHeight;
 
     char                    *msg;       // текстовое сообщение, которое можно вывести на экран
 
@@ -86,24 +94,23 @@ class GraphicsClass {
     CameraClass			    *m_Camera;
     ModelClass				*m_Model;
 
-    //ColorShaderClass		        *m_ColorShader;
-
     TextureShaderClass		        *m_TextureShader;       //  лассы дл€ шейдеров
     TextureShaderClass_Instancing   *m_TextureShaderIns;
     TextureShaderClass_Instancing   *m_TextureShaderInsArr;
+    LightShaderClass		        *m_LightShader;
     bulletShader_Instancing         *m_BulletShader;
+//    ColorShaderClass		        *m_ColorShader;
 
-    LightShaderClass		*m_LightShader;
     LightClass				*m_Light;
 
-    BitmapClass			    *m_Bitmap_Tree;		// We create a new private BitmapClass object here
+    BitmapClass			    *m_Bitmap_Tree;		// BitmapClass object
 	BitmapClass			    *m_Bitmap_Bgr;
     BitmapClass			    *m_Cursor;
 
     vector<Sprite*>		     m_spriteVec;
     BitmapClass			    *m_BitmapSprite;
 
-	TextOutClass			*m_TextOut;         // There is a new private variable for the TextClass object
+	TextOutClass			*m_TextOut;         // TextClass object
 
 	BitmapClass_Instancing	*m_BitmapIns;
     BitmapClass_Instancing	*m_BitmapInsArray;

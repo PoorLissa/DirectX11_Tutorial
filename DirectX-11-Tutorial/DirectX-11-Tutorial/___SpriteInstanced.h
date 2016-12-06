@@ -5,6 +5,8 @@
 #include "__bitmapClassInstancing.h"
 #include "gameClasses.h"
 
+
+
 /* --------------------------------------------------------------------------------------------------------
      ласс инстанцированного спрайта.
  ”наследован от класса BitmapClass_Instancing.
@@ -32,6 +34,7 @@
 class InstancedSprite : public BitmapClass_Instancing {
 
  public:
+    //InstancedSprite() {}
     InstancedSprite(int width, int height) : scrWidth(width), scrHeight(height) {}
    ~InstancedSprite() {}
 

@@ -47,7 +47,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
     } else {
 
-        // Поворачиваем спрайты так, что они все смотрят на одну и ту же точку в пространстве
+        // Поворачиваем спрайт так, что он смотрит на указанную точку в пространстве
         static const float PI = 3.14159265f;
         static const float divPIby180 = PI / 180.0f;
         static const float div180byPI = 180.0f / PI;
@@ -64,7 +64,10 @@ PixelInputType TextureVertexShader(VertexInputType input)
         }
 
         // Angle to Radians:
-        Angle = (Angle + input.instancePosition.z) * divPIby180;
+        if( rotationMode == 2.0 )
+            Angle = (Angle - 90.0f) * divPIby180;                       // Без учета начального угла
+        else
+            Angle = (Angle + input.instancePosition.z) * divPIby180;    // С учетом начального угла
     }
 
 

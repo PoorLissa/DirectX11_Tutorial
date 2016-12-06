@@ -1,5 +1,8 @@
 // ѕытаемс€ разобратьс€ в чужом Thread Pool
 // https://habrahabr.ru/post/188234/
+//
+// and another one to see to: https://github.com/progschj/ThreadPool
+// and about c++11 threads:   https://habrahabr.ru/post/182610/
 // -----------------------------------------------------------------------------------
 
 #pragma once

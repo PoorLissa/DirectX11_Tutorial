@@ -24,6 +24,8 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
     // –исуем след от пули
     if (input.trailInfo.z == 1) {
 
+        //return float4(0, 0, 0, 0);
+
 		if(input.tex.y < 0.25f || input.tex.y > 0.75f)
 			return float4(1.0, 1.0, 1.0, saturate(1.0 - input.tex.x - 0.4f)/2);
 
