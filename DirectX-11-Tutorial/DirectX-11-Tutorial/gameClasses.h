@@ -21,8 +21,8 @@ class gameObjectBase {
     virtual ~gameObjectBase() {}
 
     // --- Базовые методы, которые не переопределяются в классах-наследниках ---
-    inline float getPosX  () const           { return _X;     } 
-    inline float getPosY  () const           { return _Y;     }
+    inline float getPosX  () const           { return _X;     }
+	inline float getPosY  () const           { return _Y;     }
     inline float getAngle () const           { return _Angle; }
 	inline float getScale () const           { return _Scale; }
     inline bool  isAlive  () const           { return _Alive; }
@@ -32,6 +32,13 @@ class gameObjectBase {
     inline void  setAngle (const float &a)   {    _Angle = a; }
 	inline void  setScale (const float &s)   {    _Scale = s; }
     inline void  setAlive (const  bool &b)   {    _Alive = b; }
+
+    // пробуем возвращать не по значению, а по указателю
+	inline const float* getPosX_ptr  () const  { return &_X;     }
+    inline const float* getPosY_ptr  () const  { return &_Y;     }
+    inline const float* getAngle_ptr () const  { return &_Angle; }
+	inline const float* getScale_ptr () const  { return &_Scale; }
+    inline const bool * isAlive_ptr  () const  { return &_Alive; }
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
     virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
@@ -122,9 +129,12 @@ class Bullet : public gameObjectBase {
         _scrHeight = height + addedSize;
     }
 
-    inline virtual int   getAnimPhase() const { return 0;   }
-    inline         float getX0()        const { return _X0; }
-    inline         float getY0()        const { return _Y0; }
+    inline virtual int   getAnimPhase() const {  return 0;   }
+    inline         float getX0()        const {  return _X0; }
+    inline         float getY0()        const {  return _Y0; }
+
+	inline const   float* getX0_ptr  () const { return &_X0; }
+    inline const   float* getY0_ptr  () const { return &_Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло

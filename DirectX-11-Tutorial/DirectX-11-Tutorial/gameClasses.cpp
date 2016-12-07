@@ -265,8 +265,13 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
         std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
         while (iter != end) {
 
+#ifndef usePtrReturn
             monsterX = (int)(*iter)->getPosX();
             monsterY = (int)(*iter)->getPosY();
+#else
+            monsterX = (int)*(*iter)->getPosX_ptr();
+            monsterY = (int)*(*iter)->getPosY_ptr();
+#endif
 
             // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
             if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {

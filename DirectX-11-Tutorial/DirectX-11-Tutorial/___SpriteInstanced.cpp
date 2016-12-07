@@ -127,10 +127,17 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
         //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         instances[i].position = D3DXVECTOR4(
+#ifndef usePtrReturn
             float( (*iter)->getPosX() - halfWidth),
             float(-(*iter)->getPosY() + halfHeight),
             float( (*iter)->getAngle() ),
 			float( (*iter)->getScale() )
+#else
+            float( *(*iter)->getPosX_ptr() - halfWidth),
+            float(-*(*iter)->getPosY_ptr() + halfHeight),
+            float( *(*iter)->getAngle_ptr() ),
+			float( *(*iter)->getScale_ptr() )
+#endif
         );
 
         // –азмеры кадра анимации (дл€ текстурного атласа only) и номер анимации
@@ -215,6 +222,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 
         Bullet *ptr = (Bullet*)(*iter);
 
+#ifndef usePtrReturn
         float X =  (*iter)->getPosX() - halfWidth;
         float Y = -(*iter)->getPosY() + halfHeight;
         float A =  (*iter)->getAngle();
@@ -222,6 +230,16 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 
         float X0 =  ptr->getX0() - halfWidth;
         float Y0 = -ptr->getY0() + halfHeight;
+#else
+        float X =  *(*iter)->getPosX_ptr() - halfWidth;
+        float Y = -*(*iter)->getPosY_ptr() + halfHeight;
+        float A =  *(*iter)->getAngle_ptr();
+		float S =  *(*iter)->getScale_ptr();
+
+        float X0 =  *ptr->getX0_ptr() - halfWidth;
+        float Y0 = -*ptr->getY0_ptr() + halfHeight;
+#endif
+
 
         // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
         //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
@@ -299,11 +317,19 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, gameObjectBase* 
 
     // ѕозици€ спрайта на экране и поворот спрайта на заданный угол
     //  оординаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
+
     instances[0].position = D3DXVECTOR4(
+#ifndef usePtrReturn
         float( obj->getPosX() - 0.5f * scrWidth),
         float(-obj->getPosY() + 0.5f * scrHeight),
         float( obj->getAngle() ),
 		float( obj->getScale() )
+#else
+        float( *obj->getPosX_ptr() - 0.5f * scrWidth),
+        float(-*obj->getPosY_ptr() + 0.5f * scrHeight),
+        float( *obj->getAngle_ptr() ),
+		float( *obj->getScale_ptr() )
+#endif
     );
 
     // –азмеры кадра анимации (дл€ текстурного атласа only) и номер анимации
