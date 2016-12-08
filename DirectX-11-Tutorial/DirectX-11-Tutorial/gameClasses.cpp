@@ -26,7 +26,7 @@ int Player::Move(const float &x, const float &y, void *Param)
 
     if ( bitFld ) {
 
-        switch (bitFld) {
+        switch( bitFld ) {
     
             case 1:  _Angle =   0.0f;  break;    // left
             case 2:  _Angle = 270.0f;  break;    // up
@@ -42,7 +42,121 @@ int Player::Move(const float &x, const float &y, void *Param)
 		_Angle = (_Angle + _Angle0) * divPIby180;
     }
 
+
+
+    // Просчитываем эффекты:
+    #define finalFactor     0.2f;
+    #define timeRemaining   EffectsCounters[effect]
+    static unsigned int finalPart = EFFECT_DEFAULT_LENGTH * finalFactor;
+
+    for (int effect = 0; effect < Bonus::Effects::_totalQty; effect++) {
+
+        // Уменьшаем оставшееся время эффекта на каждом новом кадре
+        if( timeRemaining > 0 ) {
+
+            timeRemaining--;
+
+            // Когда до истечения эффекта остается 20% от его базовой длительности:
+            // Плавно переинициализируем таймер от (appTimerInterval * SLOW_EFFECT_FACTOR) до (appTimerInterval * 1)
+
+            if( timeRemaining < finalPart ) {
+
+                switch( effect ) {
+    
+                    case Bonus::Effects::SLOW:
+                    {
+                        float factor = (SLOW_EFFECT_FACTOR - 1);
+
+                        factor *= float(timeRemaining) / (finalPart);  // [1 ... 0];
+
+                        appTimer->reInitialize(appTimerInterval + appTimerInterval * factor);
+                    }
+                    break;
+                }
+            }
+
+        }
+        else {
+        
+            // Отключаем эффекты, когда время их действия истекло
+            switch( effect ) {
+    
+                case Bonus::Effects::SLOW:
+                {
+                    appTimer->reInitialize(appTimerInterval);
+                }
+                break;
+
+                case Bonus::Effects::FREEZE:
+                {
+        
+                }
+                break;
+
+                case Bonus::Effects::HEAL:
+                {
+        
+                }
+                break;
+
+                case Bonus::Effects::SHIELD:
+                {
+        
+                }
+                break;
+            }        
+        }
+    }
+
     return 0;
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// Устанавливаем бонусный эффект для Игрока
+void Player::setEffect(const int &effect)
+{
+    // Если эффект уже действует, просто продлеваем его длительность
+    if( EffectsCounters[effect] > 0 ) {
+
+        EffectsCounters[effect] += EFFECT_DEFAULT_LENGTH;
+
+    }
+    else {
+
+        // Если эффект еще не действует, устанавливаем ему длительность и вызываем соответствующий метод
+        EffectsCounters[effect] = EFFECT_DEFAULT_LENGTH;
+
+        switch( effect ) {
+    
+            case Bonus::Effects::SLOW:
+            {
+                appTimer->reInitialize(appTimerInterval * SLOW_EFFECT_FACTOR);
+            }
+            break;
+
+            case Bonus::Effects::FREEZE:
+            {
+        
+            }
+            break;
+
+            case Bonus::Effects::HEAL:
+            {
+        
+            }
+            break;
+
+            case Bonus::Effects::SHIELD:
+            {
+        
+            }
+            break;
+        }
+    }
+
+    return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -131,10 +245,6 @@ Bullet::Bullet(const float &x, const float &y, const float &scale, const float &
 // ------------------------------------------------------------------------------------------------------------------------
 
 
-#define useThread
-//#undef  useThread
-#define piercingBullets
-//#undef  piercingBullets
 
 // На вход получаем вектор списков с монстрами. Рассчитываем столкновения пуль с монстрами, и кто из них умирает.
 // Координаты пули передаются только для совместимости с сигнатурой базового метода и нигде не используются

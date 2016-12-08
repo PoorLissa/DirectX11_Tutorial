@@ -37,7 +37,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::vector<game
     std::vector<gameObjectBase*>::iterator iter, end;
     int i = 0;
     for (iter = vec->begin(), end = vec->end(); iter != end; ++iter, ++i) {
-        // Позиция спрайта на экране и поворот спрайта на заданный угол
+        // Позиция одной инстанции спрайта на экране, поворот этого спрайта на заданный угол и коэффициент масштабирования
         // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         instances[i].position = D3DXVECTOR4(
             float( (*iter)->getPosX() - 0.5f * scrWidth  ),
@@ -124,20 +124,14 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
     float halfHeight = 0.5f * scrHeight;
 
     for (iter = list->begin(), end = list->end(); iter != end; ++iter, ++i) {
-        // Позиция спрайта на экране и поворот спрайта на заданный угол
+
+        // Позиция одной инстанции спрайта на экране, поворот этого спрайта на заданный угол и коэффициент масштабирования
         // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         instances[i].position = D3DXVECTOR4(
-#ifndef usePtrReturn
             float( (*iter)->getPosX() - halfWidth),
             float(-(*iter)->getPosY() + halfHeight),
             float( (*iter)->getAngle() ),
 			float( (*iter)->getScale() )
-#else
-            float( *(*iter)->getPosX_ptr() - halfWidth),
-            float(-*(*iter)->getPosY_ptr() + halfHeight),
-            float( *(*iter)->getAngle_ptr() ),
-			float( *(*iter)->getScale_ptr() )
-#endif
         );
 
         // Размеры кадра анимации (для текстурного атласа only) и номер анимации
@@ -220,28 +214,17 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 
     for (iter = list->begin(), end = list->end(); iter != end; ++iter, i+=2) {
 
-        Bullet *ptr = (Bullet*)(*iter);
+        Bullet *obj = (Bullet*)(*iter);
 
-#ifndef usePtrReturn
         float X =  (*iter)->getPosX() - halfWidth;
         float Y = -(*iter)->getPosY() + halfHeight;
         float A =  (*iter)->getAngle();
 		float S =  (*iter)->getScale();
 
-        float X0 =  ptr->getX0() - halfWidth;
-        float Y0 = -ptr->getY0() + halfHeight;
-#else
-        float X =  *(*iter)->getPosX_ptr() - halfWidth;
-        float Y = -*(*iter)->getPosY_ptr() + halfHeight;
-        float A =  *(*iter)->getAngle_ptr();
-		float S =  *(*iter)->getScale_ptr();
+        float X0 =  obj->getX0() - halfWidth;
+        float Y0 = -obj->getY0() + halfHeight;
 
-        float X0 =  *ptr->getX0_ptr() - halfWidth;
-        float Y0 = -*ptr->getY0_ptr() + halfHeight;
-#endif
-
-
-        // Позиция спрайта на экране и поворот спрайта на заданный угол
+        // Позиция одной инстанции спрайта на экране, поворот этого спрайта на заданный угол и коэффициент масштабирования
         // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         instances[i].position      = D3DXVECTOR4(X, Y, A, S);
         instances[i].animationInfo = D3DXVECTOR3(0, 0, 0);
@@ -315,21 +298,14 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, gameObjectBase* 
     // An instance can be modified in any way you want it to be.
     // For this tutorial I used position as it is easy to see visually which helps understand how instancing works.
 
-    // Позиция спрайта на экране и поворот спрайта на заданный угол
+    // Позиция одной инстанции спрайта на экране, поворот этого спрайта на заданный угол и коэффициент масштабирования
     // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
 
     instances[0].position = D3DXVECTOR4(
-#ifndef usePtrReturn
         float( obj->getPosX() - 0.5f * scrWidth),
         float(-obj->getPosY() + 0.5f * scrHeight),
         float( obj->getAngle() ),
 		float( obj->getScale() )
-#else
-        float( *obj->getPosX_ptr() - 0.5f * scrWidth),
-        float(-*obj->getPosY_ptr() + 0.5f * scrHeight),
-        float( *obj->getAngle_ptr() ),
-		float( *obj->getScale_ptr() )
-#endif
     );
 
     // Размеры кадра анимации (для текстурного атласа only) и номер анимации

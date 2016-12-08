@@ -68,7 +68,7 @@ class GraphicsClass {
 	GraphicsClass(const GraphicsClass &);
    ~GraphicsClass();
 
-	bool Initialize(int, int, HWND);
+	bool Initialize(int, int, HighPrecisionTimer *, HWND);
 	void Shutdown();
 	bool Frame(const int &, const int &, const float &);
 
@@ -113,10 +113,10 @@ class GraphicsClass {
 	TextOutClass			*m_TextOut;         // TextClass object
 
 	BitmapClass_Instancing	*m_BitmapIns;
-    BitmapClass_Instancing	*m_BitmapInsArray;
 
     InstancedSprite         *sprIns1;           // Инстанцированные спрайты с анимацией
     InstancedSprite         *sprIns2;
+    InstancedSprite         *sprIns3;
 };
 
 #endif

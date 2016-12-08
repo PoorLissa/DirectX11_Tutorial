@@ -4,6 +4,8 @@
 #include "stdafx.h"
 #include "__bitmapClassInstancing.h"
 
+// ------------------------------------------------------------------------------------------------------------------------
+
 
 
 BitmapClass_Instancing::BitmapClass_Instancing()
@@ -13,14 +15,23 @@ BitmapClass_Instancing::BitmapClass_Instancing()
     m_TextureArray   = 0;
 	m_instanceBuffer = 0;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 BitmapClass_Instancing::BitmapClass_Instancing(const BitmapClass_Instancing& other)
 {
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 BitmapClass_Instancing::~BitmapClass_Instancing()
 {
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // »нициализаци€ одной текстурой из файла
 bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, int screenHeight,
@@ -45,13 +56,6 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 	// This will be an important variable that will locate where it last drew this image.
 	// If the image location hasn't changed since last frame then it won't modify the dynamic vertex buffer which will save us some cycles.
 
-	// Initialize the previous rendering position to negative one.
-/*
-	m_previousPosX = -1;
-	m_previousPosY = -1;
-*/
-
-
 	// The buffers are then created and the texture for this bitmap image is also loaded in.
 
 	// Initialize the vertex and index buffers.
@@ -66,6 +70,9 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, int screenWidth, i
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // »нициализаци€ массивом текстур из списка файлов
 bool BitmapClass_Instancing::Initialize(ID3D11Device *device, ciRef screenWidth, ciRef screenHeight,
@@ -108,6 +115,9 @@ bool BitmapClass_Instancing::Initialize(ID3D11Device *device, ciRef screenWidth,
 
     return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The Shutdown function will release the vertex and index buffers as well as the texture that was used for the bitmap image.
 void BitmapClass_Instancing::Shutdown()
@@ -120,6 +130,9 @@ void BitmapClass_Instancing::Shutdown()
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // Render puts the buffers of the 2D image on the video card
 bool BitmapClass_Instancing::Render(ID3D11DeviceContext *deviceContext)
@@ -129,6 +142,9 @@ bool BitmapClass_Instancing::Render(ID3D11DeviceContext *deviceContext)
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // InitializeBuffers is the function that is used to build the vertex and index buffer that will be used to draw the 2D image
 bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device, const int &positionX, const int &positionY)
@@ -151,7 +167,7 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device, const int &
     // Initialize vertex array to zeros at first.
     memset(vertices, 0, sizeof(VertexType) * m_vertexCount);
 
-    // -----------------------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------------
     // “еперь мы совсем отказываемс€ от использовани€ динамического буфера дл€ вершин и инициализируем буфер сразу при создании,
     // т.к. хотим скорости и потому что вершины квада не мен€ютс€ со временем.
     // Ќа вход мы получаем координаты центра экрана и переносим спрайт так, что он своим центром лежит в левом верхнем углу
@@ -182,7 +198,7 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device, const int &
     vertices[5].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
     vertices[5].texture  = D3DXVECTOR2(1.0f, 1.0f);
 
-    // -----------------------------------------------------------------------------------------------------------------------------------
+    // ------------------------------------------------------------------------------------------------------------------------
 
     // Set up the description of the static vertex buffer.
     vertexBufferDesc.Usage          = D3D11_USAGE_DEFAULT;
@@ -209,10 +225,15 @@ bool BitmapClass_Instancing::InitializeBuffers(ID3D11Device *device, const int &
 
     return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // это был вариант дл€ отладки, сейчас не используетс€, т.к. дл€ этого существует класс-наследник (InstancedSprite),
 // который умеет инициализировать данные из вход€щего массива
 bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
+
+    return false;
 
 	InstanceType			*instances;
 	D3D11_BUFFER_DESC		 instanceBufferDesc;
@@ -285,6 +306,9 @@ bool BitmapClass_Instancing::initializeInstances(ID3D11Device *device) {
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // ShutdownBuffers releases the vertex and index buffers.
 void BitmapClass_Instancing::ShutdownBuffers()
@@ -297,6 +321,9 @@ void BitmapClass_Instancing::ShutdownBuffers()
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The RenderBuffers function sets up the vertex and index buffers on the GPU to be drawn by the shader
 void BitmapClass_Instancing::RenderBuffers(ID3D11DeviceContext *deviceContext)
@@ -335,8 +362,11 @@ void BitmapClass_Instancing::RenderBuffers(ID3D11DeviceContext *deviceContext)
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
 
-// The following function loads the texture that will be used for drawing the 2D image.
+
+
+// The following function loads the texture that will be used for drawing the 2D image
 bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
 	bool result;
@@ -351,6 +381,9 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR *filename)
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The following function loads the texture that will be used for drawing the 2D image
 // ¬ерси€ дл€ загрузки массива текстур
@@ -367,6 +400,9 @@ bool BitmapClass_Instancing::LoadTexture(ID3D11Device *device, WCHAR **fileNames
 
     return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 //This ReleaseTexture function releases the texture that was loaded.
 void BitmapClass_Instancing::ReleaseTexture()
@@ -379,3 +415,4 @@ void BitmapClass_Instancing::ReleaseTexture()
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------

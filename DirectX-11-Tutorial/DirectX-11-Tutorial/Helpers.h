@@ -4,9 +4,7 @@
 #define SAFE_RELEASE(obj)                  { if (obj) { (obj)->Release();                  (obj) = nullptr; }   }
 #define SAFE_SHUTDOWN(obj)                 { if (obj) { (obj)->Shutdown(); delete   (obj); (obj) = nullptr; }   }
 #define SAFE_DELETE(obj)                   {                               delete   (obj); (obj) = nullptr;     }
+#define SAFE_DELETE_IF(obj)                { if (obj) {                    delete   (obj); (obj) = nullptr; }   }
 #define SAFE_DELETE_ARRAY(obj)             {                               delete [](obj); (obj) = nullptr;     }
-#define CHECK_RESULT(res, str)             { if(!res) { MessageBox(hwnd, str, L"Error", MB_OK); return false; } }
+#define CHECK_RESULT(hwnd, res, str)       { if(!res) { MessageBox(hwnd, str, L"Error", MB_OK); return false; } }
 #define CHECK_FAILED(res)                  { if(FAILED(res))                                    return false;   }
-
-#define usePtrReturn
-#undef  usePtrReturn

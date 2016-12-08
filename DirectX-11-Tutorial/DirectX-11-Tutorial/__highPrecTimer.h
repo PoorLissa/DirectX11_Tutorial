@@ -18,7 +18,8 @@ class HighPrecisionTimer {
 	HighPrecisionTimer(const HighPrecisionTimer &);
    ~HighPrecisionTimer();
 
-	bool  Initialize(float);
+	bool  Initialize(const float &);        // set initial timer options and interval
+    void  reInitialize(const float &);      // change interval so we can manage time flow of the application
 	bool  Frame();
 	float GetTime();
 
@@ -30,6 +31,8 @@ class HighPrecisionTimer {
 
 	float m_Interval;
 	float m_TimePassed;
+
+    int id;
 };
 
 #endif

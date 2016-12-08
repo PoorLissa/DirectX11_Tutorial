@@ -29,100 +29,53 @@ bool SystemClass::Initialize()
 	screenWidth  = 0;
 	screenHeight = 0;
 
-	// Initialize the windows api.
+	// Initialize the windows api
 	InitializeWindows(screenWidth, screenHeight);
 
-	// Create the direct input object. This object will be used to handle reading the keyboard input from the user.
-	m_Input = new DirectInputClass;
-	if (!m_Input)
-		return false;
+	// Create and initialize the TimerClass object
+    SAFE_CREATE(m_Timer, HighPrecisionTimer);
+	result = m_Timer->Initialize(appTimerInterval);
+    CHECK_RESULT(m_hwnd, result, L"Could not initialize the Timer object.");
 
-	// Initialize the direct input object
+	// Create and initialize the Direct Input object. This object will be used to handle reading the keyboard input from the user
+    SAFE_CREATE(m_Input, DirectInputClass);
 	result = m_Input->Initialize(m_hinstance, m_hwnd, screenWidth, screenHeight);
-	if (!result) {
-		MessageBox(m_hwnd, L"Could not initialize the input object.", L"Error", MB_OK);
-		return false;
-	}
+    CHECK_RESULT(m_hwnd, result, L"Could not initialize the input object.");
 
-	// Create the graphics object.  This object will handle rendering all the graphics for this application.
-	m_Graphics = new GraphicsClass;
-	if (!m_Graphics)
-		return false;
-
-	// Initialize the graphics object.
-	result = m_Graphics->Initialize(screenWidth, screenHeight, m_hwnd);
-	if (!result)
-		return false;
+	// Create the graphics object. This object will handle rendering all the graphics for this application
+    SAFE_CREATE(m_Graphics, GraphicsClass);
+	if( !m_Graphics->Initialize(screenWidth, screenHeight, m_Timer, m_hwnd) )
+        return false;
 
 	// Create and initialize the FpsClass object
-	m_Fps = new FpsClass;
-	if (!m_Fps)
-		return false;
-
-	// Initialize the fps object
+    SAFE_CREATE(m_Fps, FpsClass);
 	m_Fps->Initialize();
 	
-	
 	// Create and initialize the CpuClass object
-	m_Cpu = new CpuClass;
-	if (!m_Cpu)
-		return false;
-
-	// Initialize the cpu object.
+    SAFE_CREATE(m_Cpu, CpuClass);
 	m_Cpu->Initialize();
-
-	// Create and initialize the TimerClass object
-	m_Timer = new HighPrecisionTimer;
-	if (!m_Timer)
-		return false;
-
-	// Initialize the timer object ()
-	result = m_Timer->Initialize(appTimerInterval);
-	if (!result) {
-		MessageBox(m_hwnd, L"Could not initialize the Timer object.", L"Error", MB_OK);
-		return false;
-	}
 
 	return true;
 }
 
 void SystemClass::Shutdown()
 {
-	// Release the timer object.
-	if (m_Timer) {
-		delete m_Timer;
-		m_Timer = 0;
-	}
+	// Release the timer object
+    SAFE_DELETE_IF(m_Timer);
 
-	// Release the cpu object.
-	if (m_Cpu) {
-		m_Cpu->Shutdown();
-		delete m_Cpu;
-		m_Cpu = 0;
-	}
+	// Release the cpu object
+    SAFE_SHUTDOWN(m_Cpu);
 
-	// Release the fps object.
-	if (m_Fps) {
-		delete m_Fps;
-		m_Fps = 0;
-	}
+	// Release the fps object
+    SAFE_DELETE_IF(m_Fps);
 
-	// Release the graphics object.
-	if (m_Graphics) {
-		m_Graphics->Shutdown();
-		delete m_Graphics;
-		m_Graphics = 0;
-	}
+	// Release the graphics object
+    SAFE_SHUTDOWN(m_Graphics);
 
-	// Releasing the DirectInput object now requires a Shutdown call previous to deleting the object.
-	// Release the input object.
-	if (m_Input) {
-		m_Input->Shutdown();
-		delete m_Input;
-		m_Input = 0;
-	}
+	// Releasing the DirectInput object now requires a Shutdown call previous to deleting the object
+    SAFE_SHUTDOWN(m_Input);
 
-	// Shutdown the window.
+	// Shutdown the window
 	ShutdownWindows();
 
 	return;
@@ -224,12 +177,19 @@ bool SystemClass::Frame()
             Keys.left    = m_Input->IsKeyPressed(DIK_A);
             Keys.right   = m_Input->IsKeyPressed(DIK_D);
             Keys.lmbDown = m_Input->IsLeftMouseButtonDown();
-		}
 
+            // ??? - перенес рендеринг сцены под условие onTimer, и теперь фпс вырос хз в 10 раз!
+            // Нужно протестить еще на нормальной видяхе, правда это или глюк
+            result = m_Graphics->Render(rotation, (float)mouseZ, mouseX, mouseY, &Keys, onTimer);
+		    if (!result)
+			    return false;
+		}
+/*
 		// Finally render the graphics to the screen anyway
         result = m_Graphics->Render(rotation, (float)mouseZ, mouseX, mouseY, &Keys, onTimer);
 		if (!result)
 			return false;
+*/
 	}
 
 	return true;

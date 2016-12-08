@@ -3,6 +3,8 @@
 #define _GAME_CLASSES_H_
 
 #include "__threadPool.h"
+#include "__highPrecTimer.h"
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -21,11 +23,11 @@ class gameObjectBase {
     virtual ~gameObjectBase() {}
 
     // --- Базовые методы, которые не переопределяются в классах-наследниках ---
-    inline float getPosX  () const           { return _X;     }
-	inline float getPosY  () const           { return _Y;     }
-    inline float getAngle () const           { return _Angle; }
-	inline float getScale () const           { return _Scale; }
-    inline bool  isAlive  () const           { return _Alive; }
+    inline const float& getPosX  () const    {    return _X;  }
+	inline const float& getPosY  () const    {    return _Y;  }
+    inline const float& getAngle () const    { return _Angle; }
+	inline const float& getScale () const    { return _Scale; }
+    inline const bool & isAlive  () const    { return _Alive; }
 
     inline void  setPosX  (const float &x)   {        _X = x; }
     inline void  setPosY  (const float &y)   {        _Y = y; }
@@ -33,16 +35,9 @@ class gameObjectBase {
 	inline void  setScale (const float &s)   {    _Scale = s; }
     inline void  setAlive (const  bool &b)   {    _Alive = b; }
 
-    // пробуем возвращать не по значению, а по указателю
-	inline const float* getPosX_ptr  () const  { return &_X;     }
-    inline const float* getPosY_ptr  () const  { return &_Y;     }
-    inline const float* getAngle_ptr () const  { return &_Angle; }
-	inline const float* getScale_ptr () const  { return &_Scale; }
-    inline const bool * isAlive_ptr  () const  { return &_Alive; }
-
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
     virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
-    inline virtual int getAnimPhase() const = 0;                                // метод для получения текущей фазы анимации
+    inline virtual const int& getAnimPhase() const = 0;                         // метод для получения текущей фазы анимации
 
     inline static void setThreadPool(ThreadPool *thPool) {
         _thPool = thPool;
@@ -61,30 +56,54 @@ class gameObjectBase {
 
 
 
+// Класс со всеми возможными эффектами, которые могут накладываться на игрока/монстров.
+// Пришлось вынести enum в отдельный класс, чтобы иметь возможность пользоваться конструкциями вида Bonus::Effects::totalQty.
+// Без отдельного класса это было невозможно, т.к. предварительное объявление в случае с enum не работает, а просто вынести класс Bonus выше класса Player
+// тоже не удалось, т.к. тогда в классе Bonus ломается указатель на Player, и опять же предварительное объявление Player не спасает 0_o
+class BonusEffects {
+ public:
+    // Последний элемент _totalQty всегда будет хранить актуальное количество эффектов
+    static enum Effects { HEAL = 0, FREEZE, SHIELD, SLOW, _totalQty };
+};
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
 // Класс игрового объекта - Игрок
 class Player : public gameObjectBase {
 
  public:
-    Player(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
+    Player(const float &x, const float &y, const float &scale, const float &angle, const float &speed,
+            const int &interval, const int &anim_Qty, HighPrecisionTimer *timer)
 		: gameObjectBase(x, y, scale, angle, speed),
-		_Angle0(angle)
-	{}
+		    _Angle0(angle),
+            appTimer(timer)
+	{
+        for (int i = 0; i < BonusEffects::Effects::_totalQty; i++)
+            EffectsCounters[i] = 0;
+    }
+
    ~Player() {}
 
-    // Пока что не используем возвращаемое значение, вместо него пользуемся методом isAlive
+    // Пока что не используем возвращаемое значение, как предполагалось когда-то, а вместо этого пользуемся методом isAlive
     virtual int Move(const float & = 0, const float & = 0, void* = nullptr);
 
-    inline virtual int getAnimPhase() const  {    return 0; }
+    virtual inline const int& getAnimPhase() const { return 0; }
 
-    void inline setDirectionL(const bool &b) { _Left  = b; }
-    void inline setDirectionR(const bool &b) { _Right = b; }
-    void inline setDirectionU(const bool &b) { _Up    = b; }
-    void inline setDirectionD(const bool &b) { _Down  = b; }
+    inline void setDirectionL(const bool &l) { _Left  = l; }
+    inline void setDirectionR(const bool &r) { _Right = r; }
+    inline void setDirectionU(const bool &u) { _Up    = u; }
+    inline void setDirectionD(const bool &d) { _Down  = d; }
+
+    void setEffect(const int &);
 
   private:
     bool    _Left, _Right, _Up, _Down;
     float   _Step;
 	float	_Angle0;	// Угол, который передаем в конструктор. Позволяет довернуть спрайт, если он изначально расположен не под тем углом, как мы хотим
+
+    HighPrecisionTimer *appTimer;                                       // Указатель на общий таймер приложения
+    unsigned int EffectsCounters[BonusEffects::Effects::_totalQty];     // Массив счетчиков длительности эффектов
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -105,7 +124,7 @@ class Monster : public gameObjectBase {
 
     virtual int Move(const float &x, const float &y, void *Param);
 
-	inline virtual int getAnimPhase() const { return animPhase; }
+	virtual inline const int& getAnimPhase() const { return animPhase; }
 
  private:
 	 int animInterval0, animInterval1;
@@ -129,12 +148,9 @@ class Bullet : public gameObjectBase {
         _scrHeight = height + addedSize;
     }
 
-    inline virtual int   getAnimPhase() const {  return 0;   }
-    inline         float getX0()        const {  return _X0; }
-    inline         float getY0()        const {  return _Y0; }
-
-	inline const   float* getX0_ptr  () const { return &_X0; }
-    inline const   float* getY0_ptr  () const { return &_Y0; }
+    virtual inline const int  & getAnimPhase() const {  return   0; }
+            inline const float& getX0()        const {  return _X0; }
+            inline const float& getY0()        const {  return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
@@ -166,25 +182,54 @@ class Bullet : public gameObjectBase {
 
 
 // Класс игрового объекта - Бонус
-class Bonus : public gameObjectBase {
+class Bonus : public gameObjectBase, public BonusEffects {
 
  public:
-	Bonus(const float &x, const float &y, const float &scale)
-		: gameObjectBase(x, y, scale, 0.0f, 0.0f), lifeTime(500)
+	Bonus(const float &x, const float &y, Effects effect)
+		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f),
+          BonusEffects(),
+            _LifeTime(1000),
+            _Effect(effect),
+            _AngleCounter(rand()%10),
+            _ScaleCounter(0)
 	{}
    ~Bonus() {}
 
-    // Для бонуса пока что просто рассчитываем время жизни
-    virtual inline int Move(const float &, const float &, void *) {
+    // Для бонуса рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
+    virtual inline int Move(const float &x, const float &y, void *Param) {
+
+        Player *player = static_cast<Player*>(Param);
+
+        // Бонус взят (??? расстояние пока что выбрано методом научного тыка и считается не по окружности, а по квадрату)
+        // При этом бонус умирает, а игрок получает новый эффект
+        if( abs(_X - player->getPosX()) < 33 && abs(_Y - player->getPosY()) < 33 ) {
+
+            player->setEffect(_Effect);
+            _Alive = false;
+            return 1;
+        }
+
+        // Немного шевелим бонусный спрайт
+        _AngleCounter += 0.01f;
+        _ScaleCounter += 0.01f;
+
+        _Angle = 0.5f * sin(_AngleCounter);
+        _Scale = _ScaleCounter < 0.33f ? _ScaleCounter * 3.0f :  1.0f + 0.1f * sin(_ScaleCounter);
    
-        if( !--lifeTime )
+        if( --_LifeTime <= 0 )
 		    _Alive = false;
+
+        return 0;
     }
 
- private:
+    // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
+    virtual inline const int& getAnimPhase() const { return _Effect; }
 
  private:
-	 unsigned int lifeTime;
+	 unsigned int _LifeTime;
+     unsigned int _Effect;
+     float        _AngleCounter;
+     float        _ScaleCounter;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
