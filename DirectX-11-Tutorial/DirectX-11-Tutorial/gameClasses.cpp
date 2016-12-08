@@ -8,8 +8,7 @@
 // Перемещение Игрока
 int Player::Move(const float &x, const float &y, void *Param)
 {
-    static const float     PI = 3.14159265f;
-    static const float     divPIby180 = PI / 180.0f;
+    static const float     divPIby180 = D3DX_PI / 180.0f;
     static unsigned short  bitFld = 0;
 
 	_Step  = _Speed;
@@ -42,14 +41,12 @@ int Player::Move(const float &x, const float &y, void *Param)
 		_Angle = (_Angle + _Angle0) * divPIby180;
     }
 
-
-
     // Просчитываем эффекты:
     #define finalFactor     0.2f;
     #define timeRemaining   EffectsCounters[effect]
     static unsigned int finalPart = EFFECT_DEFAULT_LENGTH * finalFactor;
 
-    for (int effect = 0; effect < Bonus::Effects::_totalQty; effect++) {
+    for (unsigned int effect = 0; effect < Bonus::Effects::_totalQty; effect++) {
 
         // Уменьшаем оставшееся время эффекта на каждом новом кадре
         if( timeRemaining > 0 ) {
@@ -115,7 +112,7 @@ int Player::Move(const float &x, const float &y, void *Param)
 
 
 // Устанавливаем бонусный эффект для Игрока
-void Player::setEffect(const int &effect)
+void Player::setEffect(const unsigned int &effect)
 {
     // Если эффект уже действует, просто продлеваем его длительность
     if( EffectsCounters[effect] > 0 ) {
@@ -199,13 +196,14 @@ int Monster::Move(const float &x, const float &y, void *Param)
 
 // Конструктор для Пули
 Bullet::Bullet(const float &x, const float &y, const float &scale, const float &x_to, const float &y_to, const float &speed)
-				: gameObjectBase(x, y, scale, 0.0f, speed), hitCounter(0)
+				: gameObjectBase(x, y, scale, 0.0f, speed),
+                    hitCounter(0),
+                    squareSide(200)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
     // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
-    static const float PI = 3.14159265f;
-    static const float divPIby180 = PI / 180.0f;
-    static const float div180byPI = 180.0f / PI;
+    static const float divPIby180 = D3DX_PI / 180.0f;
+    static const float div180byPI = 180.0f / D3DX_PI;
 
     _dX = x_to - x;
     _dY = y_to - y;
@@ -341,9 +339,10 @@ int Bullet::Move(const float &x, const float &y, void *Param)
 void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
 {
 	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монсторм
-	// ??? - нужно проверить, эффективно ли это, и подобрать размер квадрата
-    int squareX0, squareY0, squareX1, squareY1, monsterX, monsterY, squareSide = 100;
+	// При (2 * 20000 монстров) и порядка 50-100 пулях дает разницу примерно в 10 фпс (~33 против ~23)
+    // ??? Нужно еще поэкспериментировать с размером квадрата
 
+    // ??? - Можно еще сделать проверку на нулевую точку: если монстр левее нулевой точки. а пуля летит вправо, то она никогда в него не попадет
     if( _dX > 0 ) {
         squareX0 = int(_X);
         squareX1 = int(_X + _dX);
@@ -375,13 +374,8 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
         std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
         while (iter != end) {
 
-#ifndef usePtrReturn
             monsterX = (int)(*iter)->getPosX();
             monsterY = (int)(*iter)->getPosY();
-#else
-            monsterX = (int)*(*iter)->getPosX_ptr();
-            monsterY = (int)*(*iter)->getPosY_ptr();
-#endif
 
             // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
             if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {

@@ -74,11 +74,11 @@ class GraphicsClass {
 
 	void logMsg(char *);
 
-    bool Render(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
+    bool Render(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
 
  private:
-    bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
-    bool Render3d(const float &, const float &, const int &, const int &, const keysPressed *, bool = false);
+    bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
+    bool Render3d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
 
  private:
 

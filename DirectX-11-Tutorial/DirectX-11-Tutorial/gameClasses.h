@@ -37,7 +37,7 @@ class gameObjectBase {
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
     virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
-    inline virtual const int& getAnimPhase() const = 0;                         // метод для получения текущей фазы анимации
+    inline virtual const unsigned int& getAnimPhase() const = 0;                // метод для получения текущей фазы анимации
 
     inline static void setThreadPool(ThreadPool *thPool) {
         _thPool = thPool;
@@ -60,6 +60,8 @@ class gameObjectBase {
 // Пришлось вынести enum в отдельный класс, чтобы иметь возможность пользоваться конструкциями вида Bonus::Effects::totalQty.
 // Без отдельного класса это было невозможно, т.к. предварительное объявление в случае с enum не работает, а просто вынести класс Bonus выше класса Player
 // тоже не удалось, т.к. тогда в классе Bonus ломается указатель на Player, и опять же предварительное объявление Player не спасает 0_o
+
+// ??? - короче, ошибка была в том, что нужно было определять методы вне класса, и тогда все ОК
 class BonusEffects {
  public:
     // Последний элемент _totalQty всегда будет хранить актуальное количество эффектов
@@ -74,12 +76,12 @@ class Player : public gameObjectBase {
 
  public:
     Player(const float &x, const float &y, const float &scale, const float &angle, const float &speed,
-            const int &interval, const int &anim_Qty, HighPrecisionTimer *timer)
+            const unsigned int &interval, const unsigned int &anim_Qty, HighPrecisionTimer *timer)
 		: gameObjectBase(x, y, scale, angle, speed),
 		    _Angle0(angle),
             appTimer(timer)
 	{
-        for (int i = 0; i < BonusEffects::Effects::_totalQty; i++)
+        for (unsigned int i = 0; i < BonusEffects::Effects::_totalQty; i++)
             EffectsCounters[i] = 0;
     }
 
@@ -88,14 +90,14 @@ class Player : public gameObjectBase {
     // Пока что не используем возвращаемое значение, как предполагалось когда-то, а вместо этого пользуемся методом isAlive
     virtual int Move(const float & = 0, const float & = 0, void* = nullptr);
 
-    virtual inline const int& getAnimPhase() const { return 0; }
+    virtual inline const unsigned int& getAnimPhase() const { return 0; }
 
     inline void setDirectionL(const bool &l) { _Left  = l; }
     inline void setDirectionR(const bool &r) { _Right = r; }
     inline void setDirectionU(const bool &u) { _Up    = u; }
     inline void setDirectionD(const bool &d) { _Down  = d; }
 
-    void setEffect(const int &);
+    void setEffect(const unsigned int &);
 
   private:
     bool    _Left, _Right, _Up, _Down;
@@ -113,7 +115,7 @@ class Player : public gameObjectBase {
 class Monster : public gameObjectBase {
 
  public:
-    Monster(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const int &interval, const int &anim_Qty)
+    Monster(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const unsigned int &interval, const unsigned int &anim_Qty)
         : gameObjectBase(x, y, scale, angle, speed),
             animInterval0(interval),
             animInterval1(interval),
@@ -124,11 +126,11 @@ class Monster : public gameObjectBase {
 
     virtual int Move(const float &x, const float &y, void *Param);
 
-	virtual inline const int& getAnimPhase() const { return animPhase; }
+	virtual inline const unsigned int& getAnimPhase() const { return animPhase; }
 
  private:
-	 int animInterval0, animInterval1;
-	 int animQty, animPhase;
+	 int            animInterval0, animInterval1;
+	 unsigned int   animQty, animPhase;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -148,9 +150,9 @@ class Bullet : public gameObjectBase {
         _scrHeight = height + addedSize;
     }
 
-    virtual inline const int  & getAnimPhase() const {  return   0; }
-            inline const float& getX0()        const {  return _X0; }
-            inline const float& getY0()        const {  return _Y0; }
+    virtual inline const unsigned int& getAnimPhase() const { return   0; }
+            inline const float&        getX0()        const { return _X0; }
+            inline const float&        getY0()        const { return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
@@ -169,7 +171,9 @@ class Bullet : public gameObjectBase {
     float   _dX, _dY;               // смещения по x и по y для нахождения новой позиции пули
 
     float   dx, dy, a, b, c;        // переменные для вычисления пересечения пули с монстром, чтобы не объявлять их каждый раз в теле функции
-                                    // ??? - надо бы потестить, может и пусть себе объявляются в теле функции?..
+                                    // ??? - надо бы потестить, может и пусть себе объявляются в теле функции?.. - вроде особой разницы нет...
+
+    int squareX0, squareY0, squareX1, squareY1, monsterX, monsterY, squareSide;
 
     static int _scrWidth;           // Значения координат, за пределами которых пуля считается ушедшей в молоко
     static int _scrHeight;          // Значения координат, за пределами которых пуля считается ушедшей в молоко
@@ -185,10 +189,10 @@ class Bullet : public gameObjectBase {
 class Bonus : public gameObjectBase, public BonusEffects {
 
  public:
-	Bonus(const float &x, const float &y, Effects effect)
+	Bonus(const float &x, const float &y, const Effects &effect)
 		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f),
           BonusEffects(),
-            _LifeTime(1000),
+            _LifeTime(500),
             _Effect(effect),
             _AngleCounter(rand()%10),
             _ScaleCounter(0)
@@ -223,7 +227,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
     }
 
     // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
-    virtual inline const int& getAnimPhase() const { return _Effect; }
+    virtual inline const unsigned int& getAnimPhase() const { return _Effect; }
 
  private:
 	 unsigned int _LifeTime;

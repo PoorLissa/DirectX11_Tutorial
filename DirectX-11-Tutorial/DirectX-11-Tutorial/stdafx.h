@@ -42,4 +42,4 @@
 #define piercingBullets
 //#undef  piercingBullets   // don't use Piercing Bullets
 #define singleShot
-//#undef  singleShot          // don't use single shot bullets
+#undef  singleShot          // don't use single shot bullets

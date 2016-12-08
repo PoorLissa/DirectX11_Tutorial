@@ -1,10 +1,8 @@
 #include "stdafx.h"
 #include "__graphicsClass.h"
 
-
-
 // ------------------------------------------------------------------------------------------------------------------------
-#define NUM 3
+#define NUM 20000
 
 // Инициализируем статические объекты класса в глобальной области. Почему-то они не хотят инициализироваться в файле собственного класса, а хотят только здесь
 BitmapClass* Sprite::Bitmap = 0;
@@ -313,7 +311,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             }
         }
 //#endif
-        // Бонусы, список
+        // Бонусы
         {
             // Массив текстур, 1 шт
 		    WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/bonus_Heal.png",
@@ -333,10 +331,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             for (int i = 0; i < framesNum; i++) {
                 int       x = 50 + rand() % (scrWidth  - 100);
                 int       y = 50 + rand() % (scrHeight - 100);
-				float scale = 1.0f;
 
-                // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-                //bonusList1.objList.push_back(new Bonus(x, y, scale, Bonus::Effects::Freeze));
                 bonusList1.objList.push_back(new Bonus(x, y, Bonus::Effects(i)));
                 bonusList1.listSize++;
             }
@@ -538,7 +533,7 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 
 
 
-bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, bool onTimer)
+bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, const bool &onTimer)
 {
 	bool result;
 
@@ -594,7 +589,7 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 
 
 // --- 2d Rendering ---
-bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, bool onTimer)
+bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, const bool & onTimer)
 {
     // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
     // If you're using orthographic projection, then you can specify any coordinates you want for the left/right/top/bottom value.
@@ -766,7 +761,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 #if defined singleShot
                 static char weaponDelay = 2;
 #else
-                static char weaponDelay = 10;
+                static char weaponDelay = 1;
 #endif
 
                 static char weaponReady = weaponDelay;
@@ -866,7 +861,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                             // Spawn new Bonus in the place of killed Monster
 #if 1
-                            if( !(rand() % 100) )
+                            if( !(rand() % 100000) )
                             {
                                 bonusList1.objList.push_back(new Bonus(MonsterObj->getPosX(), MonsterObj->getPosY(), Bonus::Effects(rand() % 4)));
                                 bonusList1.listSize++;
@@ -1216,7 +1211,7 @@ selector = -1;
 
 
 
-bool GraphicsClass::Render3d(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, bool onTimer)
+bool GraphicsClass::Render3d(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, const bool & onTimer)
 {
     // Put the model vertex and index buffers on the graphics pipeline to prepare them for drawing
     m_Model->Render(m_d3d->GetDeviceContext());

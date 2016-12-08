@@ -180,16 +180,17 @@ bool SystemClass::Frame()
 
             // ??? - перенес рендеринг сцены под условие onTimer, и теперь фпс вырос хз в 10 раз!
             // Нужно протестить еще на нормальной видяхе, правда это или глюк
+/*
             result = m_Graphics->Render(rotation, (float)mouseZ, mouseX, mouseY, &Keys, onTimer);
 		    if (!result)
 			    return false;
+*/
 		}
-/*
+
 		// Finally render the graphics to the screen anyway
         result = m_Graphics->Render(rotation, (float)mouseZ, mouseX, mouseY, &Keys, onTimer);
 		if (!result)
 			return false;
-*/
 	}
 
 	return true;
