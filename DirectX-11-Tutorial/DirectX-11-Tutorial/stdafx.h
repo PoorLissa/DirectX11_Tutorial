@@ -29,17 +29,4 @@
 
 // Project-related
 #include "Helpers.h"
-
-// -----------------------------------------------------------------------------------
-
-// Let us put our global defines here for a time being...
-#define appTimerInterval        20
-#define EFFECT_DEFAULT_LENGTH   100
-#define SLOW_EFFECT_FACTOR      5
-
-#define useThread
-//#undef  useThread         // don't use Threading
-#define piercingBullets
-//#undef  piercingBullets   // don't use Piercing Bullets
-#define singleShot
-#undef  singleShot          // don't use single shot bullets
+#include "Globals.h"

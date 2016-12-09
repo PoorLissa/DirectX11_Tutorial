@@ -5,6 +5,10 @@
 #include "__threadPool.h"
 #include "__highPrecTimer.h"
 
+#define cfRef  const float &
+#define ciRef  const int   &
+#define cuiRef const unsigned int &
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -13,42 +17,45 @@
 class gameObjectBase {
 
  public:
-    gameObjectBase(const float &x, const float &y, const float &scale, const float &angle, const float &speed) :
+    gameObjectBase(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef health) :
 		_X(x),
 		_Y(y),
 		_Angle(angle),
 		_Speed(speed),
-		_Scale(scale)
+		_Scale(scale),
+        _Health(health),
+        _HealthMax(health)
 	{}
     virtual ~gameObjectBase() {}
 
     // --- Базовые методы, которые не переопределяются в классах-наследниках ---
-    inline const float& getPosX  () const    {    return _X;  }
-	inline const float& getPosY  () const    {    return _Y;  }
-    inline const float& getAngle () const    { return _Angle; }
-	inline const float& getScale () const    { return _Scale; }
-    inline const bool & isAlive  () const    { return _Alive; }
+    inline const float& getPosX   () const    {    return _X;   }
+	inline const float& getPosY   () const    {    return _Y;   } 
+    inline const float& getAngle  () const    { return _Angle;  }
+	inline const float& getScale  () const    { return _Scale;  }
+    inline const int  & getHealth () const    { return _Health; }
+    inline const bool & isAlive   () const    { return _Alive;  }
 
-    inline void  setPosX  (const float &x)   {        _X = x; }
-    inline void  setPosY  (const float &y)   {        _Y = y; }
-    inline void  setAngle (const float &a)   {    _Angle = a; }
-	inline void  setScale (const float &s)   {    _Scale = s; }
-    inline void  setAlive (const  bool &b)   {    _Alive = b; }
+    inline void  setPosX   (const float &x)   {        _X = x;  }
+    inline void  setPosY   (const float &y)   {        _Y = y;  }
+    inline void  setAngle  (const float &a)   {    _Angle = a;  }
+	inline void  setScale  (const float &s)   {    _Scale = s;  }
+    inline void  setHealth (const int   &h)   {   _Health = h;  }
+    inline void  setAlive  (const bool  &b)   {    _Alive = b;  }
+
+    inline static void setThreadPool(ThreadPool *thPool) { _thPool = thPool; }
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
-    virtual int Move(const float & = 0, const float & = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
-    inline virtual const unsigned int& getAnimPhase() const = 0;                // метод для получения текущей фазы анимации
-
-    inline static void setThreadPool(ThreadPool *thPool) {
-        _thPool = thPool;
-    }
+    virtual int Move(cfRef = 0, cfRef = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
+    inline virtual cuiRef getAnimPhase() const        = 0;      // метод для получения текущей фазы анимации объекта
 
  protected:
-    bool        _Alive;
-    float       _X, _Y;
-    float       _Speed;
-    float       _Angle;
-	float		_Scale;
+    bool            _Alive;
+    float           _X, _Y;
+    float           _Speed;
+    float           _Angle;
+	float		    _Scale;
+    unsigned int    _Health, _HealthMax;
 
     static ThreadPool *_thPool;		// указатель пул потоков, на котором будут запускаться многопоточные вычисления
 };
@@ -64,8 +71,18 @@ class gameObjectBase {
 // ??? - короче, ошибка была в том, что нужно было определять методы вне класса, и тогда все ОК
 class BonusEffects {
  public:
-    // Последний элемент _totalQty всегда будет хранить актуальное количество эффектов
-    static enum Effects { HEAL = 0, FREEZE, SHIELD, SLOW, _totalQty };
+    // Последним элементом всегда должен быть _totalEffectsQty: так он всегда будет хранить актуальное количество эффектов
+    static enum Effects { HEAL = 0, FREEZE, SHIELD, PIERCING, SLOW, _totalEffectsQty };
+};
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// Класс со всеми видами оружия, доступными игроку
+class BonusWeapons {
+ public:
+    // PISTOL должен всегда быть самым первым, от него считаются номера
+    static enum Weapons { PISTOL = 100, RIFLE, SHOTGUN, _lastElement, _totalWeaponsQty = _lastElement - PISTOL };
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -75,22 +92,21 @@ class BonusEffects {
 class Player : public gameObjectBase {
 
  public:
-    Player(const float &x, const float &y, const float &scale, const float &angle, const float &speed,
-            const unsigned int &interval, const unsigned int &anim_Qty, HighPrecisionTimer *timer)
-		: gameObjectBase(x, y, scale, angle, speed),
+    Player(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef interval, cuiRef anim_Qty, HighPrecisionTimer *timer)
+		: gameObjectBase(x, y, scale, angle, speed, PLAYER_DEFAULT_HEALTH),
 		    _Angle0(angle),
             appTimer(timer)
 	{
-        for (unsigned int i = 0; i < BonusEffects::Effects::_totalQty; i++)
+        for (unsigned int i = 0; i < BonusEffects::Effects::_totalEffectsQty; i++)
             EffectsCounters[i] = 0;
     }
 
    ~Player() {}
 
     // Пока что не используем возвращаемое значение, как предполагалось когда-то, а вместо этого пользуемся методом isAlive
-    virtual int Move(const float & = 0, const float & = 0, void* = nullptr);
+    virtual int Move(cfRef = 0, cfRef = 0, void* = nullptr);
 
-    virtual inline const unsigned int& getAnimPhase() const { return 0; }
+    virtual inline cuiRef getAnimPhase() const { return 0; }
 
     inline void setDirectionL(const bool &l) { _Left  = l; }
     inline void setDirectionR(const bool &r) { _Right = r; }
@@ -104,8 +120,11 @@ class Player : public gameObjectBase {
     float   _Step;
 	float	_Angle0;	// Угол, который передаем в конструктор. Позволяет довернуть спрайт, если он изначально расположен не под тем углом, как мы хотим
 
-    HighPrecisionTimer *appTimer;                                       // Указатель на общий таймер приложения
-    unsigned int EffectsCounters[BonusEffects::Effects::_totalQty];     // Массив счетчиков длительности эффектов
+    HighPrecisionTimer *appTimer;                                               // Указатель на общий таймер приложения
+    unsigned int EffectsCounters[BonusEffects::Effects::_totalEffectsQty];      // Массив счетчиков длительности эффектов
+
+    // Бонусные эффекты
+    bool _Shielded;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -115,8 +134,8 @@ class Player : public gameObjectBase {
 class Monster : public gameObjectBase {
 
  public:
-    Monster(const float &x, const float &y, const float &scale, const float &angle, const float &speed, const unsigned int &interval, const unsigned int &anim_Qty)
-        : gameObjectBase(x, y, scale, angle, speed),
+    Monster(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef interval, cuiRef anim_Qty)
+        : gameObjectBase(x, y, scale, angle, speed, MONSTER_DEFAULT_HEALTH),
             animInterval0(interval),
             animInterval1(interval),
             animQty(anim_Qty),
@@ -124,13 +143,17 @@ class Monster : public gameObjectBase {
 	{}
    ~Monster() {}
 
-    virtual int Move(const float &x, const float &y, void *Param);
+    virtual int Move(cfRef x, cfRef y, void *Param);
 
-	virtual inline const unsigned int& getAnimPhase() const { return animPhase; }
+	virtual inline cuiRef getAnimPhase() const { return animPhase; }
+
+    static inline void setFreeze(const bool &Freeze) { _freezeEffect = Freeze;  }   // Bonus - Заморозка монстров
 
  private:
 	 int            animInterval0, animInterval1;
 	 unsigned int   animQty, animPhase;
+
+     static bool    _freezeEffect;                  // Когда выставлена в true, все монстры замораживаются на месте
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -140,23 +163,25 @@ class Monster : public gameObjectBase {
 class Bullet : public gameObjectBase {
 
  public:
-    Bullet(const float &, const float &, const float &, const float &, const float &, const float &);
+    Bullet(cfRef, cfRef, cfRef, cfRef, cfRef, cfRef);
    ~Bullet() {}
 
     // Метод для установки значений _scrWidth и _scrHeight, за пределами которых пули будут исчезать
-    static void setScrSize(unsigned int width, unsigned int height) {
+    static void setScrSize(cuiRef width, cuiRef height) {
         unsigned int addedSize = 50;
         _scrWidth  = width  + addedSize;
         _scrHeight = height + addedSize;
     }
 
-    virtual inline const unsigned int& getAnimPhase() const { return   0; }
-            inline const float&        getX0()        const { return _X0; }
-            inline const float&        getY0()        const { return _Y0; }
+    virtual inline       cuiRef getAnimPhase() const { return   0; }
+            inline const float& getX0()        const { return _X0; }
+            inline const float& getY0()        const { return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
-    virtual int Move(const float &, const float &, void *);
+    virtual int Move(cfRef, cfRef, void *);
+
+    static inline void setPiercing(const bool &p) { _PiercingBullets = p; }
 
  private:
 
@@ -164,6 +189,7 @@ class Bullet : public gameObjectBase {
     // http://www.cyberforum.ru/cpp-beginners/thread853799.html
     bool commonSectionCircle(float, float, float, float, const int &, const int &, const float &);
 
+    // Потоковый просчет попаданий пули в монстров
     void threadMove(std::vector< std::list<gameObjectBase*>* > *);
 
  private:
@@ -178,8 +204,7 @@ class Bullet : public gameObjectBase {
     static int _scrWidth;           // Значения координат, за пределами которых пуля считается ушедшей в молоко
     static int _scrHeight;          // Значения координат, за пределами которых пуля считается ушедшей в молоко
 
-	// new test
-	unsigned int hitCounter;
+    static bool _PiercingBullets;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -189,8 +214,8 @@ class Bullet : public gameObjectBase {
 class Bonus : public gameObjectBase, public BonusEffects {
 
  public:
-	Bonus(const float &x, const float &y, const Effects &effect)
-		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f),
+	Bonus(cfRef x, cfRef y, const Effects &effect)
+		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f, 1),
           BonusEffects(),
             _LifeTime(500),
             _Effect(effect),
@@ -200,7 +225,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
    ~Bonus() {}
 
     // Для бонуса рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual inline int Move(const float &x, const float &y, void *Param) {
+    virtual inline int Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
@@ -227,7 +252,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
     }
 
     // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
-    virtual inline const unsigned int& getAnimPhase() const { return _Effect; }
+    virtual inline cuiRef getAnimPhase() const { return _Effect; }
 
  private:
 	 unsigned int _LifeTime;
@@ -237,6 +262,58 @@ class Bonus : public gameObjectBase, public BonusEffects {
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
+
+
+// Класс игрового объекта - Оружие
+class Weapon : public gameObjectBase, public BonusWeapons {
+
+ public:
+	Weapon(cfRef x, cfRef y, const Weapons &weapon)
+		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f, 1),
+          BonusWeapons(),
+            _LifeTime(500),
+            _Weapon(weapon),
+            _AngleCounter(rand()%10),
+            _ScaleCounter(0)
+	{}
+   ~Weapon() {}
+
+    // Для бонуса-оружия рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
+    virtual inline int Move(cfRef x, cfRef y, void *Param) {
+
+        Player *player = static_cast<Player*>(Param);
+
+        // Бонус-оружие взят (??? расстояние пока что выбрано методом научного тыка и считается не по окружности, а по квадрату)
+        // При этом бонус-оружие умирает, а игрок получает новую пушку
+        if( abs(_X - player->getPosX()) < 33 && abs(_Y - player->getPosY()) < 33 ) {
+
+            player->setEffect(_Weapon);
+            _Alive = false;
+            return 1;
+        }
+
+        // Немного шевелим бонусный спрайт
+        _AngleCounter += 0.01f;
+        _ScaleCounter += 0.01f;
+
+        _Angle = 0.5f * sin(_AngleCounter);
+        _Scale = _ScaleCounter < 0.33f ? _ScaleCounter * 3.0f :  1.0f + 0.1f * sin(_ScaleCounter);
+   
+        if( --_LifeTime <= 0 )
+		    _Alive = false;
+
+        return 0;
+    }
+
+    // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
+    virtual inline cuiRef getAnimPhase() const { return _Weapon; }
+
+ private:
+	 unsigned int _LifeTime;
+     unsigned int _Weapon;
+     float        _AngleCounter;
+     float        _ScaleCounter;
+};
 // ------------------------------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------------------------------

@@ -24,8 +24,7 @@
 #include "__highPrecTimer.h"
 #include "__textOutClass.h"
 #include "__threadPool.h"
-#include "___Sprite.h"
-#include "___SpriteInstanced.h"
+#include "__SpriteInstanced.h"
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
 #include "gameShader_Bullet.h"
@@ -106,9 +105,6 @@ class GraphicsClass {
     BitmapClass			    *m_Bitmap_Tree;		// BitmapClass object
 	BitmapClass			    *m_Bitmap_Bgr;
     BitmapClass			    *m_Cursor;
-
-    vector<Sprite*>		     m_spriteVec;
-    BitmapClass			    *m_BitmapSprite;
 
 	TextOutClass			*m_TextOut;         // TextClass object
 

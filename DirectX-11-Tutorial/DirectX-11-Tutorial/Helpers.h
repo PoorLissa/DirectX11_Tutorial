@@ -1,3 +1,6 @@
+#pragma once
+#ifndef _HELPERS_H_
+#define _HELPERS_H_
 
 #define SAFE_CREATE(obj, Class)            { (obj) = new Class();    if (!(obj)) return false;                  }
 #define SAFE_CREATE_ARRAY(obj, Class, Qty) { (obj) = new Class[Qty]; if (!(obj)) return false;                  }
@@ -8,3 +11,5 @@
 #define SAFE_DELETE_ARRAY(obj)             {                               delete [](obj); (obj) = nullptr;     }
 #define CHECK_RESULT(hwnd, res, str)       { if(!res) { MessageBox(hwnd, str, L"Error", MB_OK); return false; } }
 #define CHECK_FAILED(res)                  { if(FAILED(res))                                    return false;   }
+
+#endif

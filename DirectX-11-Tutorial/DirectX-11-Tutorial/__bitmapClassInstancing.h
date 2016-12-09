@@ -2,6 +2,9 @@
 // BitmapClass will be used to represent an individual 2D image that needs to be rendered to the screen.
 // For every 2D image you have you will need a new BitmapClass for each.
 // Note that this class is just the ModelClass re-written to handle 2D images instead of 3D objects.
+// 
+// Это инстанцированный класс битмапа, он может, используя одну и ту же модель, отрисовать сразу несколько
+// спрайтов на экране за один проход, что сильно ускоряет рендеринг.
 // --------------------------------------------------------------------------------------------------------
 
 #pragma once

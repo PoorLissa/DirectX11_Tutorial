@@ -4,20 +4,33 @@
 #include "stdafx.h"
 #include "__bitmapClass.h"
 
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
 BitmapClass::BitmapClass()
 {
 	m_vertexBuffer = 0;
 	m_indexBuffer  = 0;
 	m_Texture	   = 0;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 BitmapClass::BitmapClass(const BitmapClass& other)
 {
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 BitmapClass::~BitmapClass()
 {
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 bool BitmapClass::Initialize(ID3D11Device *device, int screenWidth, int screenHeight, WCHAR* textureFilename, int bitmapWidth, int bitmapHeight)
 {
@@ -60,6 +73,9 @@ bool BitmapClass::Initialize(ID3D11Device *device, int screenWidth, int screenHe
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The Shutdown function will release the vertex and index buffers as well as the texture that was used for the bitmap image.
 void BitmapClass::Shutdown()
@@ -72,6 +88,9 @@ void BitmapClass::Shutdown()
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // Render puts the buffers of the 2D image on the video card.
 // As input it takes the position of where to render the image on the screen.
@@ -93,12 +112,18 @@ bool BitmapClass::Render(ID3D11DeviceContext *deviceContext, int positionX, int 
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // GetIndexCount returns the number of indexes for the 2D image. This will pretty much always be six.
 int BitmapClass::GetIndexCount()
 {
 	return m_indexCount;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The GetTexture function returns a pointer to the texture resource for this 2D image.
 // The shader will call this function so it has access to the image when drawing the buffers.
@@ -106,8 +131,11 @@ ID3D11ShaderResourceView* BitmapClass::GetTexture()
 {
 	return m_Texture->GetTexture();
 }
+// ------------------------------------------------------------------------------------------------------------------------
 
-// InitializeBuffers is the function that is used to build the vertex and index buffer that will be used to draw the 2D image.
+
+
+// InitializeBuffers is the function that is used to build the vertex and index buffer that will be used to draw the 2d image.
 bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 {
 	VertexType				*vertices;
@@ -120,22 +148,18 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 
 	// We set the vertices to six since we are making a square out of two triangles, so six points are needed. The indices will be the same.
 
-	// Set the number of vertices in the vertex array.
+	// Set the number of vertices in the vertex array
 	m_vertexCount = 6;
-	// Set the number of indices in the index array.
+	// Set the number of indices in the index array
 	m_indexCount = m_vertexCount;
 
-	// Create the vertex array.
-	vertices = new VertexType[m_vertexCount];
-	if (!vertices)
-		return false;
+	// Create the vertex array
+    SAFE_CREATE_ARRAY(vertices, VertexType, m_vertexCount);
 
-	// Create the index array.
-	indices = new unsigned long[m_indexCount];
-	if (!indices)
-		return false;
+	// Create the index array
+    SAFE_CREATE_ARRAY(indices, unsigned long, m_indexCount);
 
-	// Initialize vertex array to zeros at first.
+	// Initialize vertex array to zeros at first
 	memset(vertices, 0, (sizeof(VertexType) * m_vertexCount));
 
 	// Load the index array with data.
@@ -148,7 +172,7 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 	// We are now creating a dynamic vertex buffer so we can modify the data inside the vertex buffer each frame if we need to.
 	// To make it dynamic we set Usage to D3D11_USAGE_DYNAMIC and CPUAccessFlags to D3D11_CPU_ACCESS_WRITE in the description.
 
-	// Set up the description of the static vertex buffer.
+	// Set up the description of the static vertex buffer
 	vertexBufferDesc.Usage			= D3D11_USAGE_DYNAMIC;
 	vertexBufferDesc.ByteWidth		= sizeof(VertexType) * m_vertexCount;
 	vertexBufferDesc.BindFlags		= D3D11_BIND_VERTEX_BUFFER;
@@ -156,19 +180,19 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 	vertexBufferDesc.MiscFlags		= 0;
 	vertexBufferDesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the vertex data.
+	// Give the subresource structure a pointer to the vertex data
 	vertexData.pSysMem			= vertices;
 	vertexData.SysMemPitch		= 0;
 	vertexData.SysMemSlicePitch = 0;
 
 	// Now create the vertex buffer.
 	result = device->CreateBuffer(&vertexBufferDesc, &vertexData, &m_vertexBuffer);
-	if (FAILED(result))
-		return false;
+    CHECK_FAILED(result);
 
-	// We don't need to make the index buffer dynamic since the six indices will always point to the same six vertices even though the coordinates of the vertex may change.
+	// We don't need to make the index buffer dynamic since the six indices will always point to the same six vertices
+    // even though the coordinates of the vertex may change
 
-	// Set up the description of the static index buffer.
+	// Set up the description of the static index buffer
 	indexBufferDesc.Usage			= D3D11_USAGE_DEFAULT;
 	indexBufferDesc.ByteWidth		= sizeof(unsigned long)* m_indexCount;
 	indexBufferDesc.BindFlags		= D3D11_BIND_INDEX_BUFFER;
@@ -176,22 +200,22 @@ bool BitmapClass::InitializeBuffers(ID3D11Device *device)
 	indexBufferDesc.MiscFlags		= 0;
 	indexBufferDesc.StructureByteStride = 0;
 
-	// Give the subresource structure a pointer to the index data.
+	// Give the subresource structure a pointer to the index data
 	indexData.pSysMem		   = indices;
 	indexData.SysMemPitch	   = 0;
 	indexData.SysMemSlicePitch = 0;
 
-	// Create the index buffer.
+	// Create the index buffer
 	result = device->CreateBuffer(&indexBufferDesc, &indexData, &m_indexBuffer);
-	if (FAILED(result))
-		return false;
+	CHECK_FAILED(result);
 
-	// Release the arrays now that the vertex and index buffers have been created and loaded.
+	// Release the arrays now that the vertex and index buffers have been created and loaded
     SAFE_DELETE_ARRAY(vertices);
     SAFE_DELETE_ARRAY(indices);
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
 
 // ShutdownBuffers releases the vertex and index buffers.
 void BitmapClass::ShutdownBuffers()
@@ -204,6 +228,9 @@ void BitmapClass::ShutdownBuffers()
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The UpdateBuffers function is called each frame to update the contents of the dynamic vertex buffer
 // to re-position the 2D bitmap image on the screen if need be.
@@ -240,15 +267,15 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int position
 	bottom = top - (float)m_bitmapHeight;
 
 
-	// Now that the coordinates are calculated create a temporary vertex array and fill it with the new six vertex points.
+	// Now that the coordinates are calculated create a temporary vertex array and fill it with the new six vertex points
 
-	// Create the vertex array.
+	// Create the vertex array
 	vertices = new VertexType[m_vertexCount];
 	if (!vertices)
 		return false;
 
-	// Load the vertex array with data.
-	// First triangle.
+	// Load the vertex array with data
+	// First triangle:
 	vertices[0].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
 	vertices[0].texture  = D3DXVECTOR2(0.0f, 0.0f);
 	vertices[1].position = D3DXVECTOR3(right, bottom, 0.0f);	// Bottom right
@@ -256,7 +283,7 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int position
 	vertices[2].position = D3DXVECTOR3(left, bottom, 0.0f);		// Bottom left
 	vertices[2].texture  = D3DXVECTOR2(0.0f, 1.0f);
 
-	// Second triangle.
+	// Second triangle:
 	vertices[3].position = D3DXVECTOR3(left, top, 0.0f);		// Top left
 	vertices[3].texture  = D3DXVECTOR2(0.0f, 0.0f);
 	vertices[4].position = D3DXVECTOR3(right, top, 0.0f);		// Top right
@@ -267,25 +294,27 @@ bool BitmapClass::UpdateBuffers(ID3D11DeviceContext *deviceContext, int position
 
 	// Now copy the contents of the vertex array into the vertex buffer using the Map and memcpy functions.
 
-	// Lock the vertex buffer so it can be written to.
+	// Lock the vertex buffer so it can be written to
 	result = deviceContext->Map(m_vertexBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedResource);
-	if (FAILED(result))
-		return false;
+	CHECK_FAILED(result);
 
-	// Get a pointer to the data in the vertex buffer.
+	// Get a pointer to the data in the vertex buffer
 	verticesPtr = (VertexType*)mappedResource.pData;
 
-	// Copy the data into the vertex buffer.
+	// Copy the data into the vertex buffer
 	memcpy(verticesPtr, (void*)vertices, (sizeof(VertexType)* m_vertexCount));
 
-	// Unlock the vertex buffer.
+	// Unlock the vertex buffer
 	deviceContext->Unmap(m_vertexBuffer, 0);
 
-	// Release the vertex array as it is no longer needed.
+	// Release the vertex array as it is no longer needed
     SAFE_DELETE_ARRAY(vertices);
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The RenderBuffers function sets up the vertex and index buffers on the GPU to be drawn by the shader
 void BitmapClass::RenderBuffers(ID3D11DeviceContext *deviceContext)
@@ -309,28 +338,35 @@ void BitmapClass::RenderBuffers(ID3D11DeviceContext *deviceContext)
 	// Следующий шаг - обратиться к шейдеру, чтобы он отрисовал указанный примитив на основе активных буферов: вершинного и индексного
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // The following function loads the texture that will be used for drawing the 2D image.
 bool BitmapClass::LoadTexture(ID3D11Device *device, WCHAR *filename)
 {
 	bool result;
 
-	// Create the texture object.
+	// Create the texture object
     SAFE_CREATE(m_Texture, TextureClass);
 
-	// Initialize the texture object.
+	// Initialize the texture object
 	result = m_Texture->Initialize(device, filename);
 	if (!result)
 		return false;
 
 	return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 //This ReleaseTexture function releases the texture that was loaded.
 void BitmapClass::ReleaseTexture()
 {
-	// Release the texture object.
+	// Release the texture object
     SAFE_SHUTDOWN(m_Texture);
 
 	return;
 }
+// ------------------------------------------------------------------------------------------------------------------------

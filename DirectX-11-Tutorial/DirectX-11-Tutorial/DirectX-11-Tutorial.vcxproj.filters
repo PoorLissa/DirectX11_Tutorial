@@ -15,72 +15,15 @@
     <Filter Include="Shader Files\gameShaders">
       <UniqueIdentifier>{6e1c3a93-c1a6-43b8-8c2b-bcf68d9b285a}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Source Files\Engine.cpp">
+      <UniqueIdentifier>{769715cc-9a23-456f-a557-b93a029aaa34}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Header Files\Engine.h">
+      <UniqueIdentifier>{831aa269-60c8-4113-85f3-0a45cff23c80}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__systemClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__graphicsClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__d3dClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__modelClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__cameraClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__colorShaderClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__textureClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__textureShaderClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__lightShaderClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__lightClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__bitmapClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__fontClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__fontShaderClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__textOutClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__fpsClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__cpuClass.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__highPrecTimer.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__directInput.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__bitmapClassInstancing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__textureShaderClassInstancing.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="__textureClass_Array.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gameShader_Bullet.cpp">
@@ -89,83 +32,77 @@
     <ClCompile Include="gameClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="___SpriteInstanced.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="stdafx.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="__bitmapClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__bitmapClassInstancing.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__cameraClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__colorShaderClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__cpuClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__d3dClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__directInput.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__fontClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__fontShaderClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__fpsClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__graphicsClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__highPrecTimer.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__lightClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__lightShaderClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__modelClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__SpriteInstanced.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__systemClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__textOutClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureClass_Array.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureShaderClass.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
+    <ClCompile Include="__textureShaderClassInstancing.cpp">
+      <Filter>Source Files\Engine.cpp</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
-    <ClInclude Include="__graphicsClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__systemClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__d3dClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__modelClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__cameraClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__textureClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__textureShaderClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__lightShaderClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__lightClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__bitmapClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__fontClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__fontShaderClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__textOutClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__fpsClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__cpuClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__highPrecTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__directInput.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="___Sprite.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__colorShaderClass.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__bitmapClassInstancing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__textureShaderClassInstancing.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="___SpriteInstanced.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="__textureClass_Array.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -178,7 +115,79 @@
     <ClInclude Include="stdafx.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="__bitmapClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__bitmapClassInstancing.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__cameraClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__colorShaderClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__cpuClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__d3dClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__directInput.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__fontClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__fontShaderClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__fpsClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__graphicsClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__highPrecTimer.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__lightClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__lightShaderClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__modelClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__Sprite.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__SpriteInstanced.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__systemClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__textOutClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureClass_Array.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureShaderClass.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="__textureShaderClassInstancing.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
     <ClInclude Include="__threadPool.h">
+      <Filter>Header Files\Engine.h</Filter>
+    </ClInclude>
+    <ClInclude Include="Globals.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

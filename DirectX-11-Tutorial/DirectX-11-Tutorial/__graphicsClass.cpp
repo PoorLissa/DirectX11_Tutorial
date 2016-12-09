@@ -1,16 +1,9 @@
 #include "stdafx.h"
 #include "__graphicsClass.h"
 
-// ------------------------------------------------------------------------------------------------------------------------
-#define NUM 20000
+#define NUM 500
 
-// Инициализируем статические объекты класса в глобальной области. Почему-то они не хотят инициализироваться в файле собственного класса, а хотят только здесь
-BitmapClass* Sprite::Bitmap = 0;
-int Bullet::_scrWidth;
-int Bullet::_scrHeight;
-
-ThreadPool* gameObjectBase::_thPool = nullptr;          // инициализация статического пула потоков семейства объектов gameObjectBase
-ThreadPool *thPool;                                     // указатель на пул потоков
+ThreadPool *thPool; // указатель на пул потоков
 
 // Вспомогательная структура для хранения списка монстров и всей сопутствующей инфы
 // Хотел объявить ее в файле gameClasses.h, но не удалось из-за перекрестных инклюдов :(
@@ -50,7 +43,6 @@ GraphicsClass::GraphicsClass()
 	m_d3d			   = 0;
 	m_Camera		   = 0;
 	m_Model			   = 0;
-//	m_ColorShader	   = 0;
 	m_TextureShader    = 0;
 	m_TextureShaderIns = 0;
     m_BulletShader     = 0;
@@ -126,14 +118,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 	result = m_d3d->Initialize(screenWidth, screenHeight, VSYNC_ENABLED, hwnd, FULL_SCREEN, SCREEN_DEPTH, SCREEN_NEAR);
     CHECK_RESULT(hwnd, result, L"Could not initialize Direct3d!");
 
-	// Create the camera object.
+	// Create the camera object
     SAFE_CREATE(m_Camera, CameraClass);
 
-	// Set the initial position of the camera.
+	// Set the initial position of the camera
 	m_Camera->SetPosition(0.0f, 0.0f, -10.0f);
 
 #if 1
-	// Create the model object.
+	// Create the model object
     SAFE_CREATE(m_Model, ModelClass);
 
 	// Initialize the model object
@@ -151,13 +143,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
     SAFE_CREATE(m_ColorShader, ColorShaderClass);
 	result = m_ColorShader->Initialize(m_d3d->GetDevice(), hwnd);
     CHECK_RESULT(hwnd, result, L"Could not initialize the color shader object.");
-#endif
-
-#if 0
-	// Create and initialize the texture shader (TextureShaderClass) object
-    SAFE_CREATE(m_TextureShader, TextureShaderClass);
-	result = m_TextureShader->Initialize(m_d3d->GetDevice(), hwnd);
-    CHECK_RESULT(hwnd, result, L"Could not initialize the texture shader object.");
 #endif
 
 #if 1
@@ -314,16 +299,18 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
         // Бонусы
         {
             // Массив текстур, 1 шт
+            // Порядок следования файлов должен совпадать с порядком бонусов в BonusEffects::Effects!
 		    WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/bonus_Heal.png",
                                 L"../DirectX-11-Tutorial/data/bonus_Freeze.png",
                                 L"../DirectX-11-Tutorial/data/bonus_Shield.png",
+                                L"../DirectX-11-Tutorial/data/bonus_Piercing.png",
                                 L"../DirectX-11-Tutorial/data/bonus_Slow.png"
             };
 
             unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
 
             result = sprIns3->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 45, 45);
-            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object.");
+            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for Bonuses.");
 
             bonusList1.spriteInst    = sprIns3;
             bonusList1.rotationAngle = 0.0f;
@@ -345,42 +332,29 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
 
         // Игрок
-		WCHAR *frames1_1[] = { L"../DirectX-11-Tutorial/data/tank_body_1.png" };
-        result = m_PlayerBitmapIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_1, 1, 40, 40);
-        CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the Player.");
+        {
+		    WCHAR *frames1[] = { L"../DirectX-11-Tutorial/data/tank_body_1.png" };
+            result = m_PlayerBitmapIns1->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1, 1, 40, 40);
+            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the Player.");
 
-		WCHAR *frames1_2[] = { L"../DirectX-11-Tutorial/data/tank_tower_1.png" };
-        result = m_PlayerBitmapIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames1_2, 1, 40, 40);
-        CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the Player.");
+		    WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/tank_tower_1.png" };
+            result = m_PlayerBitmapIns2->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 40, 40);
+            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the Player.");
 
-		m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1, appTimer);
+		    m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1, appTimer);
+        }
 
 
 
         // Пули
-        Bullet::setScrSize(screenWidth, screenHeight);
-        WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
-        result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
-        CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
-        bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0));    // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
-        bulletListSize++;
-
-
-
-        // Битмапы
-        SAFE_CREATE(m_BitmapSprite, BitmapClass);
-		result = m_BitmapSprite->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/pic5.png", 24, 24);
-        CHECK_RESULT(hwnd, result, L"Could not initialize the bitmap object.");
-
-		for (int i = 0; i < NUM; i++) {
-
-			int X = rand() % scrWidth;
-			int Y = rand() % scrHeight;
-
-			Sprite *spr = new Sprite(X, Y);
-			spr->setBitmap(m_BitmapSprite);
-			m_spriteVec.push_back(spr);
-		}
+        {
+            Bullet::setScrSize(screenWidth, screenHeight);
+            WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
+            result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
+            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
+            bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0));    // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
+            bulletListSize++;
+        }
 	}
 
 
@@ -471,10 +445,6 @@ void GraphicsClass::Shutdown()
         }
     }
 
-    if (m_spriteVec.size() > 0)
-        for (unsigned int i = 0; i < m_spriteVec.size(); i++)
-            SAFE_DELETE(m_spriteVec[i]);
-
     SAFE_SHUTDOWN(m_PlayerBitmapIns1);
     SAFE_SHUTDOWN(m_PlayerBitmapIns2);
     SAFE_SHUTDOWN(m_BulletBitmapIns);
@@ -489,7 +459,6 @@ void GraphicsClass::Shutdown()
     SAFE_SHUTDOWN(m_Bitmap_Bgr);
 	SAFE_SHUTDOWN(m_Bitmap_Tree);
     SAFE_SHUTDOWN(m_BitmapIns);
-    SAFE_SHUTDOWN(m_BitmapSprite);
     SAFE_SHUTDOWN(m_Cursor);
 
     // Release the light object:
@@ -639,7 +608,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 			return false;
 	}
 
-	// дерево
+	// Вращающееся дерево - просто для красоты!
 	{
 		if (!m_Bitmap_Tree->Render(m_d3d->GetDeviceContext(), scrHalfWidth - 128, scrHalfHeight - 128))
 			return false;
@@ -759,7 +728,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 #define BulletObj (*iter)
 
 #if defined singleShot
-                static char weaponDelay = 2;
+                static char weaponDelay = 5;
 #else
                 static char weaponDelay = 1;
 #endif
@@ -779,7 +748,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                             //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
                             bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                     mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                        50.0f + rand()%10 * 0.1f ) );
+                                                        30.0f + rand()%10 * 0.1f ) );
                             bulletListSize++;
                             weaponReady = 0;
                         }
@@ -860,13 +829,12 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                         else {
 
                             // Spawn new Bonus in the place of killed Monster
-#if 1
-                            if( !(rand() % 100000) )
+                            if( !(rand() % BONUS_DROP_CHANCE) )
                             {
-                                bonusList1.objList.push_back(new Bonus(MonsterObj->getPosX(), MonsterObj->getPosY(), Bonus::Effects(rand() % 4)));
+                                bonusList1.objList.push_back(new Bonus(MonsterObj->getPosX(), MonsterObj->getPosY(),
+                                    Bonus::Effects(rand() % Bonus::Effects::_totalEffectsQty)));
                                 bonusList1.listSize++;
                             }
-#endif
 
                             delete MonsterObj;
                             iter = monsterList->objList.erase(iter);
@@ -1023,184 +991,17 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
 
 
-	// render bitmaps from vector
-#if 0
-	// test-fast-render
-
-	// при смене разрешения вот это влияет на масштаб
-	xCenter = 600;
-	yCenter = 450;
-
-	if (!m_spriteVec.size() || !m_spriteVec[0]->Render(m_d3d->GetDeviceContext(), xCenter - 24, yCenter - 24))
-		return false;
-
-	ID3D11DeviceContext		 *device   = m_d3d->GetDeviceContext();
-	ID3D11ShaderResourceView *texture  = m_spriteVec[0]->getTexture();
-	int						  indexCnt = m_spriteVec[0]->getIndexCount();
-	int x, y;
-
-	static int selector;
-	static float frameCount = 1001.0f;
-	frameCount++;
-
-	if( frameCount > 1000 ) {
-		frameCount = 0.0f;
-		selector = (float)rand() / (RAND_MAX + 1) * 20;
-	}
-
-selector = -1;
-
-	for (int i = 0; i < m_spriteVec.size(); i++) {
-
-		m_spriteVec[i]->getCoords(x, y);
-
-		switch( selector ) {
-
-			case -1:
-
-				D3DXMatrixRotationZ(&matrixWorldZ, i/100.0);
-				D3DXMatrixScaling(&matScale, 1.0f, 1.0f, 1.0f);
-				break;
-			
-			case 0:
-				// лайк геоид
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.5*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.05*zoom, 1.0f);
-				break;
-
-			case 1:
-				// половина геоида
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.25*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.05*zoom, 1.0f);
-				break;
-
-			case 2:
-				// густая окружность, при масштабировании мышью типа ефекты
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 3:
-				// Opera
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.0005*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 4:
-				// Big Opera
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 5:
-				// Big ROUND Opera
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 6:
-				// Big SQUARE Opera
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 7:
-				// Moebeus DNA 1
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.03*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + sin(i) * 0.03*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 8:
-				// square MOBEUS DNA 2
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + cos(i) * 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 9:
-				// round pulsing jaws of atan
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 2*sin(rotation*0.5)*atan(i) * 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 10:
-				// majic ninja mask
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + sin(i) * 0.05*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 5*sin(rotation*0.5)* 0.05*cos(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 11:
-				// rotating circles 1
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.75*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.751*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 12:
-				// rotating wheel of crawling bugs
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.101*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 13:
-				// circle of changing phases 1
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/5000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/3000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 14:
-				// circle of SLOW changing phases 2
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.1*sin(rotation*i/50000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/25000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 15:
-				// circle of SLOW changing phases 3 - eye of the Dragon
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.35*sin(rotation*i/50000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/25000) + 0.0005*zoom, 1.0f);
-				break;
-
-			case 16:
-
-				break;
-
-			default:
-				D3DXMatrixRotationZ(&matrixWorldZ, (rotation+i) / 10);
-				//D3DXMatrixTranslation(&matTrans, x * cos(rotation/100 + .002*i) - 400.0f, y - 300.0f, 0.0f);
-				//D3DXMatrixScaling(&matScale, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f + 0.05*sin(rotation*i/5000) + 0.0005*zoom, 1.0f);
-				D3DXMatrixScaling(&matScale, 0.5f + 0.35*sin(rotation*i/10000) + 0.0005*zoom, 0.5f + 0.1*sin(rotation*i/15000) + 0.0005*zoom, 1.0f);
-		}
-
-		// **********************************************************************************************************************************
-
-		if( i == 0 ) {
-
-			if (!m_TextureShader->Render(device, indexCnt,
-				matrixWorldZ * matScale * matTrans,
-				matrixView, matrixOrthographic, texture, true))
-				return false;
-		}
-		else {
-
-			if (!m_TextureShader->Render(device, indexCnt,
-				matrixWorldZ * matScale * matTrans,
-				matrixView, matrixOrthographic, texture, false))
-				return false;
-		}
-	}
-
-#endif
-
 	// text Out
 	// We call the text object to render all its sentences to the screen here.
 	// And just like with 2D images we disable the Z buffer before drawing and then enable it again after all the 2D has been drawn.
 
-	// Render the text strings.
-	result = m_TextOut->Render(m_d3d->GetDeviceContext(), matrixWorldX, matrixOrthographic);
-	if(!result)
-		return false;
-
+	// Render the text strings
+	if( !m_TextOut->Render(m_d3d->GetDeviceContext(), matrixWorldX, matrixOrthographic) )
+        return false;
 
     // Заканчиваем работу с 2d-режимом:
 	m_d3d->TurnOffAlphaBlending();
+
 	// After all the 2D rendering is done we turn the Z buffer back on for the next round of 3D rendering.
 	// Turn the Z buffer back on now that all 2D rendering has completed.
 	m_d3d->TurnZBufferOn();
@@ -1223,16 +1024,13 @@ bool GraphicsClass::Render3d(const float &rotation, const float &zoom, const int
 
 	// Если мы сначала умножаем на поворачивающие матрицы, а потом уже на сдвигающую, то повернутый объект правильно сдвигается в нужную точку
 	// Если сначала поставить сдвигающую, то объект начинает бегать по экрану
-	result = m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
-        matrixWorldX * matrixWorldY * matrixWorldZ * matrixTranslation,
-		    matrixView, matrixProjection,
-			    m_Model->GetTexture(),
-				    m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
-					    m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower()
-	);
-
-    if (!result)
-        return false;
+	if( !m_LightShader->Render(m_d3d->GetDeviceContext(), m_Model->GetIndexCount(),
+            matrixWorldX * matrixWorldY * matrixWorldZ * matrixTranslation,
+		        matrixView, matrixProjection,
+			        m_Model->GetTexture(),
+				        m_Light->GetDirection(), m_Light->GetAmbientColor(), m_Light->GetDiffuseColor(),
+					        m_Camera->GetPosition(), m_Light->GetSpecularColor(), m_Light->GetSpecularPower() ) )
+    return false;
 
     return true;
 }
