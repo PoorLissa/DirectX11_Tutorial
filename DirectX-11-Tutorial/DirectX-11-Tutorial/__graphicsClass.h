@@ -55,6 +55,13 @@ struct keysPressed {
     bool lmbDown;
 };
 
+template <typename T>
+bool sortPredicate(const T * const &a, const T * const &b)
+{
+   return *a < *b;
+}
+// ---------------------------------------------------------------------------------------
+
 
 
 class GraphicsClass {
@@ -71,6 +78,8 @@ class GraphicsClass {
 	void logMsg(char *);
 
     bool Render(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
+
+    void Sort(std::list<gameObjectBase*> *);
 
  private:
     bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);

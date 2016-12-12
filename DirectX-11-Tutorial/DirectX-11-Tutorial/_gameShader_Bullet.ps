@@ -31,7 +31,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         break;
 
         // –исуем огненную пулю
-        case 1.0f:
+        case 24.0f:
         {
             float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
             return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
@@ -41,18 +41,42 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         // –исуем ионную пулю
         case 2.0f:
         {
+            // находим точки, принадлежащие кругу
             float dx = 2* input.tex.x - 1;
             float dy = 2* input.tex.y - 1;
             float hyp = (dx * dx + dy * dy);
-            return float4(1, 1, 1, 1 - hyp) ;
 
-            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-            //return float4(0,0,0,0);
-            return float4(1.0f, 1.0f, 1.0f, saturate(textureColor.w));
+            // отрисовываем переднюю половину круга, т.к. задн€€ не нужна, еЄ нам дает хвост (см. case 102.0f)
+            return input.tex.x > 0.5 ?
+                float4(0, 0, 0, 0)   :
+                float4(1, 1, 1, (1.5 - hyp * 1.5));
+
+            //return float4(1, 1, 1, 1 - hyp) ;
+
+            //float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+            //return float4(1.0f, 1.0f, 1.0f, saturate(textureColor.w));
             //return float4(1.0f, 1.0f, 1.0f, step(0.5f, textureColor.w));
             //return float4(1.0f, 1.0f, 1.0f, ((textureColor.w / input.tex.x) * 0.1f));
+            //return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((0.5f - input.tex.x/2) - (1.0f - input.tex.y)) );
+        }
+        break;
 
-            return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((0.5f - input.tex.x/2) - (1.0f - input.tex.y)) );
+        case 3.0f:
+        {
+            float dx = 2* input.tex.x - 1;
+            float dy = 2* input.tex.y - 1;
+            float hyp = (dx * dx + dy * dy);
+
+            float CircleRadiusInPixel = 10.0;
+            float BorderWidthInPixel  = 1.0;
+
+            if((0.95 - hyp) * CircleRadiusInPixel > BorderWidthInPixel*0.5)
+                return float4(0.1, 0.5, 0.3, 0.25 - hyp / 3) * 1.1;
+            else
+                if((0.99 - hyp) * CircleRadiusInPixel > BorderWidthInPixel*0.1)
+                    return float4(0.1, 0.5, 0.3, 0.3 - hyp/4) * 3.0;
+                else
+                    return float4(1, 0, 0, 0);
         }
         break;
 
@@ -67,7 +91,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         break;
 
         // –исуем след от огненной пули
-        case 101.0f:
+        case 124.0f:
         {
             float G = input.tex.y >= 0.5f ? ( input.tex.y - 0.5) : ((0.5f - input.tex.y));
 
@@ -81,20 +105,14 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         // –исуем след от ионной пули
         case 102.0f:
         {
-            float aaa = 5.0;
-
-            float bbb = input.tex.x < 0.25f ? 0.1f : 0.0f;
-
             if(input.tex.y < 0.5f)
-                return aaa * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y) - bbb) );
+                return 5.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y)) );
             else
-                return aaa * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y) - bbb) );
-
-
+                return 5.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
+/*
             float dx = 2* input.tex.x - 1;
             float dy = 2* input.tex.y - 1;
             float hyp = (dx * dx + dy * dy);
-
 
             return float4(1, 1, 1, 1 - hyp);
 
@@ -103,7 +121,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 
             float4 circleColor = float4(1, 0, 0, 1);
             float4 otherColor  = float4(1, 0, 0, 0);
-/*
+
             if(abs(hyp - 0.95) * CircleRadiusInPixel > BorderWidthInPixel*0.5) {
 
                 //return float4(1, 0, 0, 0.5);
@@ -120,7 +138,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
             }
             else
                 return float4(1, 1, 1, 0);
-*/
+
 
             float nonBorder = saturate( (hyp-.8) * CircleRadiusInPixel / BorderWidthInPixel*0.5 );
 
@@ -156,6 +174,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
                 return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y)) );
             else
                 return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
+*/
         }
         break;
 

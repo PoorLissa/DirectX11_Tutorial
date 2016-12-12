@@ -212,9 +212,6 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 	float halfWidth  = 0.5f * scrWidth;
     float halfHeight = 0.5f * scrHeight;
 
-    UINT  bulletsType = Bullet::getBulletsType();
-    float trailType   = bulletsType + 100;
-
     for (iter = list->begin(), end = list->end(); iter != end; ++iter, i+=2) {
 
         Bullet *obj = (Bullet*)(*iter);
@@ -227,16 +224,18 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         float X0 =  obj->getX0() - halfWidth;
         float Y0 = -obj->getY0() + halfHeight;
 
+        UINT bulletType = obj->getBulletType();
+
         // Для каждой пули посылаем не одну, а две инстанции: для самой пули и для ее шлейфа
 
         // Позиция одной инстанции спрайта на экране, поворот этого спрайта на заданный угол и коэффициент масштабирования
         // Координаты в формате: (0, 0) - верхний левый угол экрана, (maxX, maxY) - нижний правый угол
         instances[ i ].position      = D3DXVECTOR4(X, Y, A, S);
-        instances[ i ].animationInfo = D3DXVECTOR3(0, 0, bulletsType);
+        instances[ i ].animationInfo = D3DXVECTOR3(0, 0, bulletType);
 
         // для каждой второй инстанции передаем координаты, откуда летит пуля, чтобы отрисовать шлейф
         instances[i+1].position      = D3DXVECTOR4(X, Y, A, S);
-        instances[i+1].animationInfo = D3DXVECTOR3(X0, Y0, trailType);
+        instances[i+1].animationInfo = D3DXVECTOR3(X0, Y0, bulletType + 100);
     }
 
 

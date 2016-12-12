@@ -355,11 +355,11 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             weaponList1.spriteInst = sprIns4;
             weaponList1.listSize   = 0;
 
-            for (int i = 0; i < 3; i++) {
-                int        x = 50 + rand() % (scrWidth  - 100);
-                int        y = 50 + rand() % (scrHeight - 100);
 
-                // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
+            for (int i = BonusWeapons::Weapons::PISTOL; i < BonusWeapons::Weapons::_lastWeapon; i++) {
+                int x = 50 + rand() % (scrWidth  - 100);
+                int y = 50 + rand() % (scrHeight - 100);
+
                 weaponList1.objList.push_back(new Weapon(x, y, BonusWeapons::Weapons(i)));
                 weaponList1.listSize++;
             }
@@ -377,6 +377,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the Player.");
 
 		    m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1, appTimer);
+            ((Player*)m_Player)->resetBulletsType();
+            ((Player*)m_Player)->setEffect(100);
         }
 
 
@@ -387,7 +389,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128_blurred.png" };
             result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
             CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
-            bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0));    // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
+            // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
+            bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0, 0));
             bulletListSize++;
         }
 	}
@@ -736,12 +739,29 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 logMsg(str);
             }
 
+#if defined useSorting
+            {
+                monsterList1.objList.sort(sortPredicate<gameObjectBase>);
+                monsterList2.objList.sort(sortPredicate<gameObjectBase>);
+
+                gameTimer.Frame();
+
+                char str[100] = "sorting took:  ";
+                char num_string[32];
+
+                sprintf_s(num_string, "%f", gameTimer.GetTime());
+                strcat_s(str, 100, num_string);
+
+                logMsg(str);
+            }
+#endif
+
             std::list<gameObjectBase*>::iterator iter, end;
+
+            Player *player = (Player*)m_Player;
 
             // --- Player ---
             {
-                Player *player = (Player*)m_Player;
-
                 player->setDirectionL(Keys->left );
                 player->setDirectionR(Keys->right);
                 player->setDirectionU(Keys->up   );
@@ -763,44 +783,39 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
             {
                 #define BulletObj (*iter)
 
-#if defined singleShot
-                static char weaponDelay = 10;
-#else
-                static char weaponDelay = 1;
-#endif
-
-                static char weaponReady = weaponDelay;
-                weaponReady += weaponReady < weaponDelay ? 1 : 0;
-
                 // Если нажата левая кнопка мыши, добавляем в очередь новые пули
                 if ( Keys->lmbDown ) {
 
-                    #if defined singleShot
-                        if( !(weaponReady % weaponDelay) )
-                        {
+                    if( !player->getWeaponBurst() ) {
+
+                        if( player->isWeaponReady() ) {
+
                             int size1 = 20;
                             int size2 = size1/2;
 
-                            //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
                             bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                     mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                        2.0f + rand()%10 * 0.1f ) );
+                                                        5.0f + rand()%10 * 0.1f, player->getBulletsType() ) );
                             bulletListSize++;
-                            weaponReady = 0;
                         }
-                    #else
-                        if( !(weaponReady % weaponDelay) )
-                        {
+
+                    }
+                    else {
+
+                        if( player->isWeaponReady() ) {
+
                             int size1 = 100;
                             int size2 = size1/2;
-                            int num = 10;
+                            int num = 5;
                             for (int i = 0; i < num; i++) {
-                                bulletList.push_back(new Bullet(playerPosX, playerPosY, 1.0f, mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2, 50.0f));
+                                bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
+                                                        mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
+                                                            10.0f + rand()%10 * 0.1f, player->getBulletsType() ) );
                                 bulletListSize++;
                             }
-                            weaponReady = 0;
                         }
-                    #endif
+
+                    }
                 }
 
                 // Просчитываем движение всех пуль
@@ -1115,4 +1130,17 @@ bool GraphicsClass::Render3d(const float &rotation, const float &zoom, const int
 
     return true;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+//
+void GraphicsClass::Sort(std::list<gameObjectBase*> *list)
+{
+
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+// ------------------------------------------------------------------------------------------------------------------------
+
 // ------------------------------------------------------------------------------------------------------------------------

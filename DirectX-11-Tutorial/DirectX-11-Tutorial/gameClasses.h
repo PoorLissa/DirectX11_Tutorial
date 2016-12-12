@@ -43,11 +43,17 @@ class gameObjectBase {
     inline void  setHealth (const int   &h)   {   _Health = h;  }
     inline void  setAlive  (const bool  &b)   {    _Alive = b;  }
 
+    // Перегрузим оператор сравнения для сортировки списка (монстров). Кроме этого потребуется предикат сортировки, если мы хотим сортировать список указателей
+    // http://stackoverflow.com/questions/6404160/sort-a-stdlistmyclass-with-myclassoperatormyclass-other
+    inline const bool operator < (const gameObjectBase &other) const {
+        return this == &other ? false : _X < other._X;
+    }
+
     inline static void setThreadPool(ThreadPool *thPool) { _thPool = thPool; }
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
-    virtual int Move(cfRef = 0, cfRef = 0, void* = 0) = 0;      // метод для перемещения объекта, вызывается в общем цикле
-    inline virtual cuiRef getAnimPhase() const        = 0;      // метод для получения текущей фазы анимации объекта
+    virtual void Move(cfRef = 0, cfRef = 0, void* = 0) = 0;     // метод для перемещения объекта, вызывается в общем цикле
+    inline virtual cuiRef getAnimPhase() const         = 0;     // метод для получения текущей фазы анимации объекта
 
  protected:
     bool            _Alive;
@@ -82,7 +88,7 @@ class BonusEffects {
 class BonusWeapons {
  public:
     // PISTOL должен всегда быть самым первым, от него считаются номера
-    static enum Weapons { PISTOL = 100, RIFLE, SHOTGUN, _lastElement, _totalWeaponsQty = _lastElement - PISTOL };
+    static enum Weapons { PISTOL = 100, RIFLE, SHOTGUN, _lastWeapon, _totalWeaponsQty = _lastWeapon - PISTOL };
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -95,7 +101,9 @@ class Player : public gameObjectBase {
     Player(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef interval, cuiRef anim_Qty, HighPrecisionTimer *timer)
 		: gameObjectBase(x, y, scale, angle, speed, PLAYER_DEFAULT_HEALTH),
 		    _Angle0(angle),
-            appTimer(timer)
+            _appTimer(timer),
+            _bulletsType(0),
+            _bulletsType_old(12345)
 	{
         for (unsigned int i = 0; i < BonusEffects::Effects::_totalEffectsQty; i++)
             EffectsCounters[i] = 0;
@@ -103,8 +111,9 @@ class Player : public gameObjectBase {
 
    ~Player() {}
 
-    // Пока что не используем возвращаемое значение, как предполагалось когда-то, а вместо этого пользуемся методом isAlive
-    virtual int Move(cfRef = 0, cfRef = 0, void* = nullptr);
+   enum BulletsType { NORMAL, ION, FREEZE, FIRE, PIERCING };
+
+    virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr);
 
     virtual inline cuiRef getAnimPhase() const { return 0; }
 
@@ -115,16 +124,41 @@ class Player : public gameObjectBase {
 
     void setEffect(const unsigned int &);
 
+    inline void setShieldedMode    (const bool &mode)        { _isShielded   = mode;         }
+    inline void setBulletsType_On  (const BulletsType &mode) { _bulletsType |=  (1 << mode); }
+    inline void setBulletsType_Off (const BulletsType &mode) { _bulletsType &= ~(1 << mode); }
+    inline void resetBulletsType   ()                        { _bulletsType  = 0;            }
+    inline unsigned short getBulletsType() const             {          return _bulletsType; }
+    inline const bool& isShielded() const                    {           return _isShielded; }
+
+    inline const UINT& getWeaponDelay() const                {          return _weaponDelay; }
+    inline const UINT& getBulletSpeed() const                {    return _weaponBulletSpeed; }
+    inline const UINT& getWeaponBurst() const                {    return _weaponBurstMode;   }
+
+    inline const bool& isWeaponReady() {
+
+        if( !(_weaponReady % _weaponDelay) ) {
+            _weaponReady = 0;
+            return true;
+        }
+
+        return false;
+    }
+
   private:
     bool    _Left, _Right, _Up, _Down;
     float   _Step;
 	float	_Angle0;	// Угол, который передаем в конструктор. Позволяет довернуть спрайт, если он изначально расположен не под тем углом, как мы хотим
 
-    HighPrecisionTimer *appTimer;                                               // Указатель на общий таймер приложения
+    HighPrecisionTimer *_appTimer;                                              // Указатель на общий таймер приложения
     unsigned int EffectsCounters[BonusEffects::Effects::_totalEffectsQty];      // Массив счетчиков длительности эффектов
 
     // Бонусные эффекты
-    bool _Shielded;
+    bool _isShielded;
+    // Эффекты пуль. Устанавливаются на игрока (навсегда или до отмены) и при генерации пуль устанавливаются на каждую пулю в отдельности
+    unsigned short _bulletsType, _bulletsType_old;
+
+    unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstMode, _weaponReady;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -143,7 +177,7 @@ class Monster : public gameObjectBase {
 	{}
    ~Monster() {}
 
-    virtual int Move(cfRef x, cfRef y, void *Param);
+    virtual void Move(cfRef x, cfRef y, void *Param);
 
 	virtual inline cuiRef getAnimPhase() const { return animPhase; }
 
@@ -163,7 +197,7 @@ class Monster : public gameObjectBase {
 class Bullet : public gameObjectBase {
 
  public:
-    Bullet(cfRef, cfRef, cfRef, cfRef, cfRef, cfRef);
+    Bullet(cfRef, cfRef, cfRef, cfRef, cfRef, cfRef, UINT);
    ~Bullet() {}
 
     // Метод для установки значений _scrWidth и _scrHeight, за пределами которых пули будут исчезать
@@ -179,12 +213,12 @@ class Bullet : public gameObjectBase {
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
-    virtual int Move(cfRef, cfRef, void *);
+    virtual void Move(cfRef, cfRef, void *);
 
-    static inline       void          setBulletsType(const unsigned int &type) { _bulletsType = type; }
-    static inline const unsigned int& getBulletsType()                         { return _bulletsType; }
-    static inline       void          setPiercing(const bool &mode)            {    _piercing = mode; }
-    static inline const bool        & getPiercing()                            {    return _piercing; }
+    inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
+    inline const unsigned int& getBulletType()                          { return _bulletType; }
+    inline       void          setPiercing(const bool &mode)            {   _piercing = mode; }
+    inline const bool        & getPiercing()                            {   return _piercing; }
 
  private:
 
@@ -193,7 +227,7 @@ class Bullet : public gameObjectBase {
     bool commonSectionCircle(float, float, float, float, const int &, const int &, const float &);
 
     // Потоковый просчет попаданий пули в монстров
-    void threadMove(std::vector< std::list<gameObjectBase*>* > *);
+    void threadMove(void *);
 
  private:
     float   _X0, _Y0;               // изначальная точка, из которой пуля летит
@@ -202,13 +236,16 @@ class Bullet : public gameObjectBase {
     float   dx, dy, a, b, c;        // переменные для вычисления пересечения пули с монстром, чтобы не объявлять их каждый раз в теле функции
                                     // ??? - надо бы потестить, может и пусть себе объявляются в теле функции?.. - вроде особой разницы нет...
 
-    int squareX0, squareY0, squareX1, squareY1, monsterX, monsterY, squareSide;
+    int _squareX0, _squareY0,       // координаты квадрата, описанного вокруг вектора смещения пули в одной итерации
+        _squareX1, _squareY1,
+        _monsterX, _monsterY,
+        _squareSide;
 
     static int _scrWidth;           // Значения координат, за пределами которых пуля считается ушедшей в молоко
     static int _scrHeight;          // Значения координат, за пределами которых пуля считается ушедшей в молоко
 
-    static UINT _bulletsType;       // 0 - обычная пуля, 1 - огненная, 2 - ионная, 3 - плазменная, 4 - импульсная, 5 - замораживающая
-    static bool _piercing;          // false - пуля при попадании в монстра исчезает, true - пуля пронизывает монстра, теряя часть своей жизни (true при огненных пулях и гауссовом оружии)
+    UINT _bulletType;               // 0 - обычная пуля, 1 - огненная, 2 - ионная, 3 - плазменная, 4 - импульсная, 5 - замораживающая
+    bool _piercing;                 // false - пуля при попадании в монстра исчезает, true - пуля пронизывает монстра, теряя часть своей жизни (true при огненных пулях и гауссовом оружии)
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -229,7 +266,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
    ~Bonus() {}
 
     // Для бонуса рассчитываем оставшееся время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual inline int Move(cfRef x, cfRef y, void *Param) {
+    virtual inline void Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
@@ -239,7 +276,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
 
             player->setEffect(_Effect);
             _Alive = false;
-            return 1;
+            return;
         }
 
         // Немного шевелим бонусный спрайт
@@ -252,7 +289,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
         if( --_LifeTime <= 0 )
 		    _Alive = false;
 
-        return 0;
+        return;
     }
 
     // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
@@ -283,7 +320,7 @@ class Weapon : public gameObjectBase, public BonusWeapons {
    ~Weapon() {}
 
     // Для бонуса-оружия рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual inline int Move(cfRef x, cfRef y, void *Param) {
+    virtual inline void Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
@@ -293,7 +330,7 @@ class Weapon : public gameObjectBase, public BonusWeapons {
 
             player->setEffect(_Weapon);
             _Alive = false;
-            return 1;
+            return;
         }
 
         // Немного шевелим бонусный спрайт
@@ -309,11 +346,11 @@ class Weapon : public gameObjectBase, public BonusWeapons {
         if( --_LifeTime <= 0 )
 		    _Alive = false;
 
-        return 0;
+        return;
     }
 
     // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
-    virtual inline cuiRef getAnimPhase() const { return _Weapon; }
+    virtual inline cuiRef getAnimPhase() const { return _Weapon - Weapons::PISTOL; }
 
  private:
 	 unsigned int _LifeTime;

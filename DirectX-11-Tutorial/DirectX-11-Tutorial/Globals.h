@@ -5,7 +5,7 @@
 // Let us put our global defines here
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             1
+#define MONSTERS_QTY             3
 
 #define fullScreen
 #undef  fullScreen
@@ -26,5 +26,8 @@
 
 #define singleShot                              // don't use single shot bullets
 //#undef  singleShot
+
+#define useSorting
+//#undef  useSorting
 
 #endif

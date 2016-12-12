@@ -47,6 +47,8 @@ PixelInputType TextureVertexShader(VertexInputType input)
     static int texsize = 10;
     float dist = 0.0f, dX = 0.0f, dY = 0.0f;
 
+    static unsigned int ionFactor = 5;
+
     // в случае пуль этот параметр указывает на тип пули / шлейфа
     switch( input.trailInfo.z )
     {
@@ -57,15 +59,21 @@ PixelInputType TextureVertexShader(VertexInputType input)
         break;
 
         // огненная пуля
-        case 1.0f:
+        case 24.0f:
             input.position.x *= 2.0f;
             input.position.y *= 2.0f;
         break;
 
         // ионная пуля
         case 2.0f:
-            input.position.x *= 5.0f;
-            input.position.y *= 5.0f;
+            input.position.x *= ionFactor;
+            input.position.y *= ionFactor;
+        break;
+
+        // тестовая пуля
+        case 3.0f:
+            input.position.x *= 10;
+            input.position.y *= 10;
         break;
 
         // шлейф обычной пули
@@ -82,7 +90,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
         break;
 
         // шлейф огненной пули
-        case 101.0f:
+        case 124.0f:
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
             dist = sqrt(dX*dX + dY*dY);
@@ -99,13 +107,13 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
-            dist = sqrt(dX*dX + dY*dY);
+
+            // делаем шлейф покороче, чем у обычной или огненной пули
+            dist = ionFactor > 7 ? sqrt(dX*dX + dY*dY) : sqrt(dX*dX + dY*dY) / 1.5;
 
             // масштабирование текстуры
-            //input.position.x *= aaa;
-
             input.position.x *= dist / texsize;
-            input.position.y *= 5.0f;
+            input.position.y *= ionFactor;
         break;
     }
 

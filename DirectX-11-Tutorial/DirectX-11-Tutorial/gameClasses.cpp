@@ -5,8 +5,6 @@
 bool Monster :: _freezeEffect = false;
 int  Bullet  :: _scrWidth     = 0;
 int  Bullet  :: _scrHeight    = 0;
-UINT Bullet  :: _bulletsType  = 2;
-bool Bullet  :: _piercing     = false;
 
 ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейства объектов gameObjectBase
 // ------------------------------------------------------------------------------------------------------------------------
@@ -14,7 +12,7 @@ ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейс
 
 
 // Перемещение Игрока
-int Player::Move(cfRef x, cfRef y, void *Param)
+void Player::Move(cfRef x, cfRef y, void *Param)
 {
     static const float     divPIby180 = D3DX_PI / 180.0f;
     static unsigned short  bitFld = 0;
@@ -53,7 +51,7 @@ int Player::Move(cfRef x, cfRef y, void *Param)
         }
     }
 
-
+    _weaponReady += _weaponReady < _weaponDelay ? 1 : 0;
 
     // --- Просчитываем бонусные эффекты ---
     {
@@ -84,7 +82,7 @@ int Player::Move(cfRef x, cfRef y, void *Param)
 
                                 factor *= float(timeRemaining) / (finalPart);  // [1 ... 0];
 
-                                appTimer->reInitialize(appTimerInterval + appTimerInterval * factor);
+                                _appTimer->reInitialize(appTimerInterval + appTimerInterval * factor);
                             }
                             break;
                         }
@@ -98,7 +96,7 @@ int Player::Move(cfRef x, cfRef y, void *Param)
                     {
                         case Bonus::Effects::SLOW:
                         {
-                            appTimer->reInitialize(appTimerInterval);
+                            _appTimer->reInitialize(appTimerInterval);
                         }
                         break;
 
@@ -116,15 +114,19 @@ int Player::Move(cfRef x, cfRef y, void *Param)
 
                         case Bonus::Effects::SHIELD:
                         {
-                            _Shielded = false;
+                            _isShielded = false;
                         }
                         break;
 
                         case Bonus::Effects::FIRE_BULLETS:
                         {
-                            Bullet::setBulletsType(0);      // set to notmal
-                            Bullet::setPiercing(false);     // set to not piercing
-                            // надо потом тут сделать вместо фолс - статический метод, который возвращал бы значение статического поля basePiercing (чтобы не отключить пирсинг у гауссовой пушки)
+                            setBulletsType_Off(Player::BulletsType::FIRE);
+                            setBulletsType_Off(Player::BulletsType::PIERCING);
+                            setBulletsType_On (Player::BulletsType::NORMAL);
+
+                            // Восстановим тип пуль, который был до установки эффекта
+                            _bulletsType = _bulletsType_old;
+                            _bulletsType_old = 12345;   // magic number, который, как мы полагаем, никогда не появится в виде комбинации существующих эффектов
                         }
                         break;
                     }
@@ -138,7 +140,7 @@ int Player::Move(cfRef x, cfRef y, void *Param)
     #undef finalFactor
     #undef timeRemaining
 
-    return 0;
+    return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -174,7 +176,7 @@ void Player::setEffect(const unsigned int &effect)
             {
                 case Bonus::Effects::SLOW:
                 {
-                    appTimer->reInitialize(appTimerInterval * SLOW_EFFECT_FACTOR);
+                    _appTimer->reInitialize(appTimerInterval * SLOW_EFFECT_FACTOR);
                 }
                 break;
 
@@ -192,14 +194,19 @@ void Player::setEffect(const unsigned int &effect)
 
                 case Bonus::Effects::SHIELD:
                 {
-                    _Shielded = true;
+                    _isShielded = true;
                 }
                 break;
 
                 case Bonus::Effects::FIRE_BULLETS:
                 {
-                    Bullet::setBulletsType(1);      // set to fire bullets
-                    Bullet::setPiercing(true);      // set to piercing bullets
+                    // Запомним текущий тип пуль
+                    if( _bulletsType_old == 12345 )
+                        _bulletsType_old = _bulletsType;
+
+                    setBulletsType_On(Player::BulletsType::FIRE);
+                    setBulletsType_On(Player::BulletsType::PIERCING);
+                    int aaa = 1;
                 }
                 break;
             }
@@ -207,25 +214,35 @@ void Player::setEffect(const unsigned int &effect)
     }
 
     // Взяли новое оружие
-    if( effect >= BonusWeapons::Weapons::PISTOL && effect < BonusWeapons::Weapons::_lastElement ) {
+    if( effect >= BonusWeapons::Weapons::PISTOL && effect < BonusWeapons::Weapons::_lastWeapon ) {
     
         switch( effect )
         {
             case BonusWeapons::Weapons::PISTOL:
             {
-            
+                this->resetBulletsType();
+                _weaponDelay       = 50;
+                _weaponReady       = _weaponDelay;
+                _weaponBulletSpeed = 10;
+                _weaponBurstMode   = 0;
             }
             break;
 
             case BonusWeapons::Weapons::RIFLE:
             {
-            
+                _weaponDelay       = 10;
+                _weaponReady       = _weaponDelay;
+                _weaponBulletSpeed = 30;
+                _weaponBurstMode   = 0;
             }
             break;
 
             case BonusWeapons::Weapons::SHOTGUN:
             {
-            
+                _weaponDelay       = 30;
+                _weaponReady       = _weaponDelay;
+                _weaponBulletSpeed = 30;
+                _weaponBurstMode   = 1;
             }
             break;
         }
@@ -240,7 +257,7 @@ void Player::setEffect(const unsigned int &effect)
 
 
 // Перемещение Монстра
-int Monster::Move(cfRef x, cfRef y, void *Param)
+void Monster::Move(cfRef x, cfRef y, void *Param)
 {
     if( !_freezeEffect ) {
 
@@ -271,16 +288,17 @@ int Monster::Move(cfRef x, cfRef y, void *Param)
 	    }
     }
 
-    return 0;
+    return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define BULLET_BONUS_LIFE 0
+#define BULLET_BONUS_LIFE 0 // для гауссового оружия
 
 // Конструктор для Пули
-Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef speed)
+Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef speed, UINT bulletType)
 				: gameObjectBase(x, y, scale, 0.0f, speed, BULLET_DEFAULT_HEALTH + BULLET_BONUS_LIFE),
-                    squareSide(200)
+                    _squareSide(100),
+                    _bulletType(bulletType)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
     // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
@@ -293,6 +311,7 @@ Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef spee
     if (_dX == 0.0f) {
 
         _Angle = _dY > 0.0f ? 180.0f : 0.0f;
+
     }
     else {
 
@@ -328,14 +347,15 @@ Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef spee
 
 // На вход получаем вектор списков с монстрами. Рассчитываем столкновения пуль с монстрами, и кто из них умирает.
 // Координаты пули передаются только для совместимости с сигнатурой базового метода и нигде не используются
-int Bullet::Move(cfRef x, cfRef y, void *Param)
+void Bullet::Move(cfRef x, cfRef y, void *Param)
 {
-    std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
-
 #if defined useThread
-    _thPool->runAsync(&Bullet::threadMove, this, VEC);
-    return 0;
-#endif
+
+    _thPool->runAsync(&Bullet::threadMove, this, Param);
+
+#else
+
+    std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
 
 	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монсторм
     if( _dX > 0 ) {
@@ -402,45 +422,47 @@ int Bullet::Move(cfRef x, cfRef y, void *Param)
     if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
         _dX = _dY = 0.0;
         this->_Alive = false;   // пуля ушла в молоко
-        return 1;
+        return;
     }
 
-    return 0;
+#endif
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
 
 
 // Просчет движения пуль и попадания их в монстров, потоковая версия
-void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
+void Bullet::threadMove(void *Param)
 {
+    std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
+
 	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монстром
 	// При (2 * 20000 монстров) и порядка 50-100 пулях дает разницу примерно в 10 фпс (~33 против ~23)
     // ??? Нужно еще поэкспериментировать с размером квадрата
 
     // ??? - Можно еще сделать проверку на нулевую точку: если монстр левее нулевой точки. а пуля летит вправо, то она никогда в него не попадет
     if( _dX > 0 ) {
-        squareX0 = int(_X);
-        squareX1 = int(_X + _dX);
+        _squareX0 = int(_X);
+        _squareX1 = int(_X + _dX);
     }
     else {
-        squareX1 = int(_X);
-        squareX0 = int(_X + _dX);
+        _squareX1 = int(_X);
+        _squareX0 = int(_X + _dX);
     }
 
     if( _dY > 0 ) {
-        squareY0 = int(_Y);
-        squareY1 = int(_Y + _dY);
+        _squareY0 = int(_Y);
+        _squareY1 = int(_Y + _dY);
     }
     else {
-        squareY1 = int(_Y);
-        squareY0 = int(_Y + _dY);
+        _squareY1 = int(_Y);
+        _squareY0 = int(_Y + _dY);
     }
 
-    squareX0 += squareSide;
-    squareX1 -= squareSide;
-    squareY0 += squareSide;
-    squareY1 -= squareSide;
+    _squareX0 -= _squareSide;
+    _squareX1 += _squareSide;
+    _squareY0 -= _squareSide;
+    _squareY1 += _squareSide;
 
     for (unsigned int lst = 0; lst < VEC->size(); lst++) {
         
@@ -450,14 +472,28 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
         std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
         while (iter != end) {
 
-            monsterX = (int)(*iter)->getPosX();
-            monsterY = (int)(*iter)->getPosY();
+            _monsterX = (int)(*iter)->getPosX();
+            _monsterY = (int)(*iter)->getPosY();
+
+#if defined useSorting
+
+            // Сортировка в списках монстров сделана по иксовой координате
+            // В таком случае, пока мы не приблизились к левой стороне грубого квадрата, мы пропускаем всех монстров
+            if( _monsterX < _squareX0 ) {
+                ++iter;
+                continue;
+            }
+            // ... а как только мы прошли правую его сторону, то прерываем цикл, т.к. все остальные монстры будут еще правее
+            if( _monsterX > _squareX1 )
+                break;
+
+#endif
 
             // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
-            if( squareX0 > monsterX && squareX1 < monsterX && squareY0 > monsterY && squareY1 < monsterY ) {
+            if( _squareX0 < _monsterX && _squareX1 > _monsterX && _squareY0 < _monsterY && _squareY1 > _monsterY ) {
 
                 // Если грубая проверка положительна, просчитываем точное столкновение
-                if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, monsterX, monsterY, 20) ) {
+                if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, 20) ) {
 
                     (*iter)->setAlive(false);			// монстр убит
 
@@ -470,8 +506,8 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
 						this->_Alive = false;
 
 						_dX = _dY = 0.0;                // Останавливаем пулю
-						_X = (float)monsterX;           // Переносим пулю в центр монстра
-						_Y = (float)monsterY;           //
+						_X = (float)_monsterX;           // Переносим пулю в центр монстра
+						_Y = (float)_monsterY;           //
 
 						return;
 					}
