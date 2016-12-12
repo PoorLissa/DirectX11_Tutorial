@@ -72,7 +72,7 @@ class gameObjectBase {
 class BonusEffects {
  public:
     // Последним элементом всегда должен быть _totalEffectsQty: так он всегда будет хранить актуальное количество эффектов
-    static enum Effects { HEAL = 0, FREEZE, SHIELD, PIERCING, SLOW, _totalEffectsQty };
+    static enum Effects { HEAL = 0, FREEZE, SHIELD, FIRE_BULLETS, SLOW, _totalEffectsQty };
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -181,7 +181,10 @@ class Bullet : public gameObjectBase {
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
     virtual int Move(cfRef, cfRef, void *);
 
-    static inline void setPiercing(const bool &p) { _PiercingBullets = p; }
+    static inline       void          setBulletsType(const unsigned int &type) { _bulletsType = type; }
+    static inline const unsigned int& getBulletsType()                         { return _bulletsType; }
+    static inline       void          setPiercing(const bool &mode)            {    _piercing = mode; }
+    static inline const bool        & getPiercing()                            {    return _piercing; }
 
  private:
 
@@ -204,7 +207,8 @@ class Bullet : public gameObjectBase {
     static int _scrWidth;           // Значения координат, за пределами которых пуля считается ушедшей в молоко
     static int _scrHeight;          // Значения координат, за пределами которых пуля считается ушедшей в молоко
 
-    static bool _PiercingBullets;
+    static UINT _bulletsType;       // 0 - обычная пуля, 1 - огненная, 2 - ионная, 3 - плазменная, 4 - импульсная, 5 - замораживающая
+    static bool _piercing;          // false - пуля при попадании в монстра исчезает, true - пуля пронизывает монстра, теряя часть своей жизни (true при огненных пулях и гауссовом оружии)
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -224,7 +228,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
 	{}
    ~Bonus() {}
 
-    // Для бонуса рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
+    // Для бонуса рассчитываем оставшееся время жизни, поворот, масштаб и взаимодействие с Игроком
     virtual inline int Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
@@ -271,7 +275,7 @@ class Weapon : public gameObjectBase, public BonusWeapons {
 	Weapon(cfRef x, cfRef y, const Weapons &weapon)
 		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f, 1),
           BonusWeapons(),
-            _LifeTime(500),
+            _LifeTime(5500),
             _Weapon(weapon),
             _AngleCounter(rand()%10),
             _ScaleCounter(0)
@@ -296,9 +300,12 @@ class Weapon : public gameObjectBase, public BonusWeapons {
         _AngleCounter += 0.01f;
         _ScaleCounter += 0.01f;
 
-        _Angle = 0.5f * sin(_AngleCounter);
-        _Scale = _ScaleCounter < 0.33f ? _ScaleCounter * 3.0f :  1.0f + 0.1f * sin(_ScaleCounter);
-   
+        //_Angle = 0.5f * sin(_AngleCounter);
+
+        _Angle = 0.5f * sin(_AngleCounter) + 45.0f * 3.14f / 180;
+
+        _Scale = _ScaleCounter < 0.33f ? _ScaleCounter * 3.0f : 2.0f + 0.1f * sin(_ScaleCounter);
+
         if( --_LifeTime <= 0 )
 		    _Alive = false;
 

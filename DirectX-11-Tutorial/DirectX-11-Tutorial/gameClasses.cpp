@@ -2,10 +2,11 @@
 #include "gameClasses.h"
 
 // Инициализируем статические переменные в глобальной области
-bool Monster :: _freezeEffect    = false;
-int  Bullet  :: _scrWidth        = 0;
-int  Bullet  :: _scrHeight       = 0;
-bool Bullet  :: _PiercingBullets = false;
+bool Monster :: _freezeEffect = false;
+int  Bullet  :: _scrWidth     = 0;
+int  Bullet  :: _scrHeight    = 0;
+UINT Bullet  :: _bulletsType  = 2;
+bool Bullet  :: _piercing     = false;
 
 ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейства объектов gameObjectBase
 // ------------------------------------------------------------------------------------------------------------------------
@@ -64,65 +65,72 @@ int Player::Move(cfRef x, cfRef y, void *Param)
         for (unsigned int effect = 0; effect < Bonus::Effects::_totalEffectsQty; effect++) {
 
             // Уменьшаем оставшееся время эффекта на каждом новом кадре
-            if( timeRemaining > 0 ) {
+            if( timeRemaining ) {
 
-                timeRemaining--;
+                if( timeRemaining > 1 ) {
 
-                // Когда до истечения эффекта остается 20% от его базовой длительности, можем сделать плавный выход из него:
+                    timeRemaining--;
 
-                if( timeRemaining < finalPart ) {
+                    // Когда до истечения эффекта остается 20% от его базовой длительности, можем сделать плавный выход из него:
 
-                    switch( effect ) {
+                    if( timeRemaining < finalPart ) {
 
+                        switch( effect )
+                        {
+                            case Bonus::Effects::SLOW:
+                            {
+                                // Плавно переинициализируем таймер со значения (appTimerInterval * SLOW_EFFECT_FACTOR) до (appTimerInterval * 1)
+                                float factor = (SLOW_EFFECT_FACTOR - 1);
+
+                                factor *= float(timeRemaining) / (finalPart);  // [1 ... 0];
+
+                                appTimer->reInitialize(appTimerInterval + appTimerInterval * factor);
+                            }
+                            break;
+                        }
+                    }
+
+                }
+                else {
+        
+                    // Отключаем эффекты, когда время их действия истекло
+                    switch( effect )
+                    {
                         case Bonus::Effects::SLOW:
                         {
-                            // Плавно переинициализируем таймер от (appTimerInterval * SLOW_EFFECT_FACTOR) до (appTimerInterval * 1)
-                            float factor = (SLOW_EFFECT_FACTOR - 1);
+                            appTimer->reInitialize(appTimerInterval);
+                        }
+                        break;
 
-                            factor *= float(timeRemaining) / (finalPart);  // [1 ... 0];
+                        case Bonus::Effects::FREEZE:
+                        {
+                            Monster::setFreeze(false);
+                        }
+                        break;
 
-                            appTimer->reInitialize(appTimerInterval + appTimerInterval * factor);
+                        case Bonus::Effects::HEAL:
+                        {
+                            // Здесь ничего отключать не нужно
+                        }
+                        break;
+
+                        case Bonus::Effects::SHIELD:
+                        {
+                            _Shielded = false;
+                        }
+                        break;
+
+                        case Bonus::Effects::FIRE_BULLETS:
+                        {
+                            Bullet::setBulletsType(0);      // set to notmal
+                            Bullet::setPiercing(false);     // set to not piercing
+                            // надо потом тут сделать вместо фолс - статический метод, который возвращал бы значение статического поля basePiercing (чтобы не отключить пирсинг у гауссовой пушки)
                         }
                         break;
                     }
+
+                    timeRemaining = 0;
                 }
-
-            }
-            else {
-        
-                // Отключаем эффекты, когда время их действия истекло
-                switch( effect ) {
-
-                    case Bonus::Effects::SLOW:
-                    {
-                        appTimer->reInitialize(appTimerInterval);
-                    }
-                    break;
-
-                    case Bonus::Effects::FREEZE:
-                    {
-                        Monster::setFreeze(false);
-                    }
-                    break;
-
-                    case Bonus::Effects::HEAL:
-                    {
-                        // Здесь ничего отключать не нужно
-                    }
-                    break;
-
-                    case Bonus::Effects::SHIELD:
-                    {
-                        _Shielded = false;
-                    }
-                    break;
-
-                    case Bonus::Effects::PIERCING:
-                    {
-                        Bullet::setPiercing(false);
-                    }
-                    break;
-                }        
             }
         }
     }
@@ -142,19 +150,25 @@ void Player::setEffect(const unsigned int &effect)
 {
     #define ThisEffectLength EffectsCounters[effect]
 
+    // Некоторые бонусы могут длиться время, отличное от дефолтного. Например, SLOW. Поэтому пересчитаем время в случае надобности.
+    float effectLength = EFFECT_DEFAULT_LENGTH + 1;
+
     // Получили бонус
     if( effect < BonusEffects::Effects::_totalEffectsQty ) {
+
+        if( effect == BonusEffects::Effects::SLOW)
+            effectLength /= SLOW_EFFECT_FACTOR;
 
         // Если эффект уже действует, просто продлеваем его длительность
         if( ThisEffectLength > 0 ) {
 
-            ThisEffectLength += EFFECT_DEFAULT_LENGTH;
+            ThisEffectLength += effectLength;
 
         }
         else {
 
-            // Если эффект еще не действует, устанавливаем ему длительность по умолчанию и вызываем соответствующий метод
-            ThisEffectLength = EFFECT_DEFAULT_LENGTH;
+            // Если эффект еще не действует, устанавливаем ему длительность и вызываем соответствующий метод
+            ThisEffectLength = effectLength;
 
             switch( effect )
             {
@@ -182,9 +196,10 @@ void Player::setEffect(const unsigned int &effect)
                 }
                 break;
 
-                case Bonus::Effects::PIERCING:
+                case Bonus::Effects::FIRE_BULLETS:
                 {
-                    Bullet::setPiercing(true);
+                    Bullet::setBulletsType(1);      // set to fire bullets
+                    Bullet::setPiercing(true);      // set to piercing bullets
                 }
                 break;
             }
@@ -446,8 +461,8 @@ void Bullet::threadMove(std::vector< std::list<gameObjectBase*>* > *VEC)
 
                     (*iter)->setAlive(false);			// монстр убит
 
-                    // Если включен бонус Проникающие Пули, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-                    _PiercingBullets ? _Health-- : _Health = 0;
+                    // Если включен бонус Огненные Пули, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+                    Bullet::getPiercing() ? _Health-- : _Health = 0;
 
                     // Если время жизни пули истекло, то пуля истрачена:
 					if( !_Health ) {

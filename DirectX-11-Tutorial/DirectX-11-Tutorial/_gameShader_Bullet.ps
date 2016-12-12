@@ -19,19 +19,147 @@ struct PixelInputType
 // Pixel Shader
 float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 {
-    float4 textureColor;
+    switch( input.trailInfo.z )
+    {
+        // Рисуем обычную пулю
+        case 0.0f:
+        {
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
 
-    // Рисуем след от пули
-    if( input.trailInfo.z == 1.0f ) {
+            return textureColor * float4(1.0f, 1.0f, 0.0f, 1.0f) * 2;
+        }
+        break;
 
-		if(input.tex.y < 0.25f || input.tex.y > 0.75f)
-			return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
+        // Рисуем огненную пулю
+        case 1.0f:
+        {
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+            return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
+        }
+        break;
 
-		return float4(1.0f, 0.75f, 0.5f, saturate(1.0f - input.tex.x - 0.2f)/2.0f);
-	}
+        // Рисуем ионную пулю
+        case 2.0f:
+        {
+            float dx = 2* input.tex.x - 1;
+            float dy = 2* input.tex.y - 1;
+            float hyp = (dx * dx + dy * dy);
+            return float4(1, 1, 1, 1 - hyp) ;
 
-    // Рисуем пулю
-    textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+            //return float4(0,0,0,0);
+            return float4(1.0f, 1.0f, 1.0f, saturate(textureColor.w));
+            //return float4(1.0f, 1.0f, 1.0f, step(0.5f, textureColor.w));
+            //return float4(1.0f, 1.0f, 1.0f, ((textureColor.w / input.tex.x) * 0.1f));
 
-    return textureColor * float4(1.0f, 1.0f, 0.0f, 1.0f) * 2;
+            return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((0.5f - input.tex.x/2) - (1.0f - input.tex.y)) );
+        }
+        break;
+
+        // Рисуем след от обычной пули
+        case 100.0f:
+        {
+		    if(input.tex.y < 0.25f || input.tex.y > 0.75f)
+			    return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
+
+		    return float4(1.0f, 0.75f, 0.5f, saturate(1.0f - input.tex.x - 0.2f)/2.0f);
+        }
+        break;
+
+        // Рисуем след от огненной пули
+        case 101.0f:
+        {
+            float G = input.tex.y >= 0.5f ? ( input.tex.y - 0.5) : ((0.5f - input.tex.y));
+
+            if(input.tex.y < 0.5f)
+                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (1.0f - input.tex.y)) );
+            else
+                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (input.tex.y)) );
+        }
+        break;
+
+        // Рисуем след от ионной пули
+        case 102.0f:
+        {
+            float aaa = 5.0;
+
+            float bbb = input.tex.x < 0.25f ? 0.1f : 0.0f;
+
+            if(input.tex.y < 0.5f)
+                return aaa * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y) - bbb) );
+            else
+                return aaa * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y) - bbb) );
+
+
+            float dx = 2* input.tex.x - 1;
+            float dy = 2* input.tex.y - 1;
+            float hyp = (dx * dx + dy * dy);
+
+
+            return float4(1, 1, 1, 1 - hyp);
+
+            float CircleRadiusInPixel = 13.0;
+            float BorderWidthInPixel  = 1.5;
+
+            float4 circleColor = float4(1, 0, 0, 1);
+            float4 otherColor  = float4(1, 0, 0, 0);
+/*
+            if(abs(hyp - 0.95) * CircleRadiusInPixel > BorderWidthInPixel*0.5) {
+
+                //return float4(1, 0, 0, 0.5);
+
+                //return float4(1, 1, 1, abs(hyp - 1) * CircleRadiusInPixel - BorderWidthInPixel*0.5);
+
+                float nonBorder = saturate( (hyp-.95) * CircleRadiusInPixel / BorderWidthInPixel*0.5 );
+
+                nonBorder = pow( nonBorder, 2.0f );
+
+                float4 outColor = lerp( otherColor, circleColor, nonBorder );
+
+                return pow( outColor, 1.0f / 2.2f ) * 5; // gamma correction
+            }
+            else
+                return float4(1, 1, 1, 0);
+*/
+
+            float nonBorder = saturate( (hyp-.8) * CircleRadiusInPixel / BorderWidthInPixel*0.5 );
+
+            nonBorder = pow( nonBorder, 2.0f );
+
+            float4 outColor = lerp( otherColor, circleColor, nonBorder );
+
+            return outColor;
+
+            return pow( outColor, 1.0f / 2.2f ) * 0.85; // gamma correction
+
+
+            input.tex.x -= 0.1;
+
+            if(input.tex.x < 0.1) {
+
+                float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+                return float4(1, 1, 0, saturate(textureColor.w * 5));
+            }
+
+
+            if(input.tex.y < 0.5f)
+                return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y)) );
+            else
+                return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
+
+            if( input.tex.x < 0.1f )
+                return float4(0.0f, 0.0f, 1.0f, 1.0f);
+            else
+                return float4(1.0f, 0.0f, 0.0f, 1.0f);
+
+            if(input.tex.y < 0.5f)
+                return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y)) );
+            else
+                return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
+        }
+        break;
+
+        default:
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
+    }
 }

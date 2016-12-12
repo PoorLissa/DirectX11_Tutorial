@@ -1,8 +1,6 @@
 #include "stdafx.h"
 #include "__graphicsClass.h"
 
-#define NUM 500
-
 ThreadPool *thPool; // указатель на пул потоков
 
 // Вспомогательная структура для хранения списка монстров и всей сопутствующей инфы
@@ -24,13 +22,15 @@ struct BonusList {
     InstancedSprite     *spriteInst;
 } bonusList1;
 
+// Вспомогательная структура для хранения списка оружия и всей сопутствующей инфы
+struct WeaponList {
+    std::list<gameObjectBase*> objList;
+    unsigned int         listSize;
+    InstancedSprite     *spriteInst;
+} weaponList1;
+
 std::list<gameObjectBase*> bulletList;
 unsigned int bulletListSize = 0;
-
-InstancedSprite *m_PlayerBitmapIns1;
-InstancedSprite *m_PlayerBitmapIns2;
-InstancedSprite *m_BulletBitmapIns;
-gameObjectBase  *m_Player;
 
 HighPrecisionTimer gameTimer;
 char buf[100];
@@ -55,6 +55,7 @@ GraphicsClass::GraphicsClass()
     sprIns1            = 0;
     sprIns2            = 0;
     sprIns3            = 0;
+    sprIns4            = 0;
     m_PlayerBitmapIns1 = 0;
     m_PlayerBitmapIns2 = 0;
     m_BulletBitmapIns  = 0;
@@ -231,13 +232,15 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
         sprIns1 = new InstancedSprite(scrWidth, scrHeight);            if (!sprIns1)            return false;
         sprIns2 = new InstancedSprite(scrWidth, scrHeight);            if (!sprIns2)            return false;
         sprIns3 = new InstancedSprite(scrWidth, scrHeight);            if (!sprIns3)            return false;
+        sprIns4 = new InstancedSprite(scrWidth, scrHeight);            if (!sprIns4)            return false;
         m_PlayerBitmapIns1 = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns1) return false;
         m_PlayerBitmapIns2 = new InstancedSprite(scrWidth, scrHeight); if (!m_PlayerBitmapIns2) return false;
         m_BulletBitmapIns  = new InstancedSprite(scrWidth, scrHeight); if (!m_BulletBitmapIns)  return false;
 
         srand(unsigned int(time(0)));
 
-//#if 0
+
+
         // Монстры, список 1
         {
             // Текстурный атлас, 10 кадров 200x310
@@ -249,19 +252,22 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             monsterList1.spriteInst    = sprIns1;
             monsterList1.rotationAngle = -90.0f;
 
-            for (int i = 0; i < NUM; i++) {
+            for (int i = 0; i < MONSTERS_QTY; i++) {
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
+                speed = 0.01f;
+
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 monsterList1.objList.push_back(new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9));
                 monsterList1.listSize++;
             }
         }
-//#else
+
+
         // Монстры, список 2
         {
             // Массив текстур, 8 штук
@@ -283,19 +289,27 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             monsterList2.spriteInst    = sprIns2;
             monsterList2.rotationAngle = 0.0f;
 
-            for (int i = 0; i < NUM; i++) {
+            for (int i = 0; i < MONSTERS_QTY; i++) {
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
+                speed = 0.01f;
+
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 monsterList2.objList.push_back(new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8));
                 monsterList2.listSize++;
             }
         }
-//#endif
+
+
+        // Общий вектор списков с монстрами
+        VEC.push_back(&monsterList1);
+        VEC.push_back(&monsterList2);
+
+
         // Бонусы
         {
             // Массив текстур, 1 шт
@@ -325,10 +339,31 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
         }
 
 
+        // Оружие
+        {
+            // Массив текстур, 3 штук
+		    WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/bonus_weapon_Pistol.png",
+							    L"../DirectX-11-Tutorial/data/bonus_weapon_Rifle.png",
+							    L"../DirectX-11-Tutorial/data/bonus_weapon_Shotgun.png"
+		    };
 
-        // Общий вектор списков с монстрами
-        VEC.push_back(&monsterList1);
-        VEC.push_back(&monsterList2);
+            unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
+
+            result = sprIns4->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
+            CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object.");
+
+            weaponList1.spriteInst = sprIns4;
+            weaponList1.listSize   = 0;
+
+            for (int i = 0; i < 3; i++) {
+                int        x = 50 + rand() % (scrWidth  - 100);
+                int        y = 50 + rand() % (scrHeight - 100);
+
+                // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
+                weaponList1.objList.push_back(new Weapon(x, y, BonusWeapons::Weapons(i)));
+                weaponList1.listSize++;
+            }
+        }
 
 
         // Игрок
@@ -345,11 +380,11 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
         }
 
 
-
         // Пули
         {
             Bullet::setScrSize(screenWidth, screenHeight);
-            WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
+            //WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
+            WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128_blurred.png" };
             result = m_BulletBitmapIns->Initialize(m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
             CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
             bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0));    // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
@@ -451,6 +486,7 @@ void GraphicsClass::Shutdown()
     SAFE_SHUTDOWN(sprIns1);
     SAFE_SHUTDOWN(sprIns2);
     SAFE_SHUTDOWN(sprIns3);
+    SAFE_SHUTDOWN(sprIns4);
 
 	// Release the Text object:
     SAFE_SHUTDOWN(m_TextOut);
@@ -728,7 +764,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 #define BulletObj (*iter)
 
 #if defined singleShot
-                static char weaponDelay = 5;
+                static char weaponDelay = 10;
 #else
                 static char weaponDelay = 1;
 #endif
@@ -748,7 +784,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                             //bulletList.push_back(new Bullet(playerPosX, playerPosY, mouseX, mouseY, 30.0));
                             bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                     mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                        30.0f + rand()%10 * 0.1f ) );
+                                                        2.0f + rand()%10 * 0.1f ) );
                             bulletListSize++;
                             weaponReady = 0;
                         }
@@ -899,6 +935,37 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 }
             }
 
+            // Weapons
+            {
+                #define WeaponObj (*iter) 
+                if( weaponList1.listSize ) {
+
+                    iter = weaponList1.objList.begin();
+                    end  = weaponList1.objList.end();
+
+                    while (iter != end) {
+
+                        if( WeaponObj->isAlive() ) {
+
+                            WeaponObj->Move(0, 0, m_Player);
+
+                        }
+                        else {
+
+                            delete WeaponObj;
+                            iter = weaponList1.objList.erase(iter);
+                            weaponList1.listSize--;
+                            continue;
+                        }
+
+                        ++iter;
+                    }
+
+                    if( !weaponList1.spriteInst->initializeInstances(m_d3d->GetDevice(), &weaponList1.objList, &weaponList1.listSize) )
+                        return false;
+                }
+            }
+
         } // if-onTimer
 
 
@@ -978,15 +1045,29 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
         // Bonuses
         if( bonusList1.listSize > 0 )
         {
-            if( !sprIns3->Render(m_d3d->GetDeviceContext()) )
+            if( !bonusList1.spriteInst->Render(m_d3d->GetDeviceContext()) )
                 return false;
 
             if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
-                    sprIns3->GetVertexCount(), sprIns3->GetInstanceCount(),
+                    bonusList1.spriteInst->GetVertexCount(), bonusList1.spriteInst->GetInstanceCount(),
                         matrixWorldZ * matrixTranslation * matrixScaling,
-                            matrixView, matrixOrthographic, sprIns3->GetTextureArray(), 0, 0, 0) )
+                            matrixView, matrixOrthographic, bonusList1.spriteInst->GetTextureArray(), 0, 0, 0) )
             return false;        
         }
+
+        // Weapons
+        if( weaponList1.listSize > 0 )
+        {
+            if( !sprIns4->Render(m_d3d->GetDeviceContext()) )
+                return false;
+
+            if( !m_TextureShaderIns->Render(m_d3d->GetDeviceContext(),
+                    weaponList1.spriteInst->GetVertexCount(), weaponList1.spriteInst->GetInstanceCount(),
+                        matrixWorldZ * matrixTranslation * matrixScaling,
+                            matrixView, matrixOrthographic, weaponList1.spriteInst->GetTextureArray(), 0, 0, 0) )
+            return false;        
+        }
+
     }
 
 

@@ -5,9 +5,14 @@
 // Let us put our global defines here
 // ------------------------------------------------------------------------------------------------------------------------
 
+#define MONSTERS_QTY             1
+
+#define fullScreen
+#undef  fullScreen
+
 #define appTimerInterval         20             // Главный таймер приложения генерит событие onTimer по прошествии этого интервала в миллисекундах
-#define EFFECT_DEFAULT_LENGTH    100            // Длительность (в тактах приложения) бонусных эффектов
-#define SLOW_EFFECT_FACTOR       5              // Коэффициент замедления для бонуса SLOW
+#define EFFECT_DEFAULT_LENGTH    600            // Длительность (в тактах приложения) бонусных эффектов
+#define SLOW_EFFECT_FACTOR       3              // Коэффициент замедления для бонуса SLOW
 
 #define PLAYER_DEFAULT_HEALTH    100            // Начальное здоровье Игрока
 #define MONSTER_DEFAULT_HEALTH   100            // Дефолтное здоровье монстров

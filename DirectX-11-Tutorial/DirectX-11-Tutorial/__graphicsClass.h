@@ -32,9 +32,6 @@
 
 
 // ---------------------------------------------------------------------------------------
-#define fullScreen
-#undef  fullScreen
-
 #if defined fullScreen
 const bool FULL_SCREEN    = true;
 const int  windowedWidth  = 0;
@@ -113,6 +110,12 @@ class GraphicsClass {
     InstancedSprite         *sprIns1;           // Инстанцированные спрайты с анимацией
     InstancedSprite         *sprIns2;
     InstancedSprite         *sprIns3;
+    InstancedSprite         *sprIns4;
+
+    InstancedSprite         *m_PlayerBitmapIns1;
+    InstancedSprite         *m_PlayerBitmapIns2;
+    InstancedSprite         *m_BulletBitmapIns;
+    gameObjectBase          *m_Player;
 };
 
 #endif

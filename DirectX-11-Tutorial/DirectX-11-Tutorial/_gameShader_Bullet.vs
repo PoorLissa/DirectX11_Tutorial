@@ -23,7 +23,7 @@ struct VertexInputType
     float4 position         : POSITION;
     float2 tex              : TEXCOORD0;
     float4 instancePosition : TEXCOORD1;    // xy = позиция, z = поворот на заданный угол, w = масштаб
-    float3 trailInfo        : TEXCOORD2;    // xy = нулевая позиция, z = признак пули (0 = пуля, 1 = след от пули)
+    float3 trailInfo        : TEXCOORD2;    // xy = нулевая позиция, z = признак пули (0 = пуля, 1 = след от пули, 2 = огненная пуля)
 };
 
 struct PixelInputType
@@ -44,28 +44,72 @@ PixelInputType TextureVertexShader(VertexInputType input)
     output.position.z = 1.0f;
 
     // Это размер спрайта пули. Нужно будет его потом передать сюда в качестве параметра
-    int texsize = 10;
-    float dist;
+    static int texsize = 10;
+    float dist = 0.0f, dX = 0.0f, dY = 0.0f;
 
-    // из каждой второй инстанции пуль делаем шлейф для пули
-    if(input.trailInfo.z == 1.0) {
-    
-        float dX = (input.instancePosition.x - input.trailInfo.x);
-        float dY = (input.instancePosition.y - input.trailInfo.y);
-        dist = sqrt(dX*dX + dY*dY);
+    // в случае пуль этот параметр указывает на тип пули / шлейфа
+    switch( input.trailInfo.z )
+    {
+        // Обычная пуля: немного сжимаем её
+        case 0.0f:
+            input.position.x *= 1.0f;
+            input.position.y *= 0.5f;
+        break;
 
-        // масштабирование текстуры
-        input.position.x *= dist / texsize;
-        input.position.y *= 0.3;
+        // огненная пуля
+        case 1.0f:
+            input.position.x *= 2.0f;
+            input.position.y *= 2.0f;
+        break;
 
-        input.position.x += texsize;
+        // ионная пуля
+        case 2.0f:
+            input.position.x *= 5.0f;
+            input.position.y *= 5.0f;
+        break;
+
+        // шлейф обычной пули
+        case 100.0f:
+            dX = (input.instancePosition.x - input.trailInfo.x);
+            dY = (input.instancePosition.y - input.trailInfo.y);
+            dist = sqrt(dX*dX + dY*dY);
+
+            // масштабирование текстуры
+            input.position.x *= dist / texsize;
+            input.position.y *= 0.3f;
+
+            input.position.x += texsize;
+        break;
+
+        // шлейф огненной пули
+        case 101.0f:
+            dX = (input.instancePosition.x - input.trailInfo.x);
+            dY = (input.instancePosition.y - input.trailInfo.y);
+            dist = sqrt(dX*dX + dY*dY);
+
+            // масштабирование текстуры
+            input.position.x *= dist / texsize;
+            input.position.y *= 2.0f;
+
+            input.position.x += 1.0f;
+        break;
+
+        // шлейф ионной пули
+        case 102.0f:
+
+            dX = (input.instancePosition.x - input.trailInfo.x);
+            dY = (input.instancePosition.y - input.trailInfo.y);
+            dist = sqrt(dX*dX + dY*dY);
+
+            // масштабирование текстуры
+            //input.position.x *= aaa;
+
+            input.position.x *= dist / texsize;
+            input.position.y *= 5.0f;
+        break;
     }
-    else {
-        // Немного сжимаем пулю
-        input.position.x *= 1.0;
-        input.position.y *= 0.5;
-		//input.position.y *= 5.0;
-    }
+
+
 
     // Вращаем на угол
     float Angle = input.instancePosition.z, Sin, Cos;
@@ -80,9 +124,9 @@ PixelInputType TextureVertexShader(VertexInputType input)
     output.position.y += input.instancePosition.y;
 
     // смещаем хвост на половину длины, чтобы он шел как раз от пули до нулевой точки
-    if( input.trailInfo.z == 1.0 ) {
-        output.position.x += (dist/2) * Cos;
-        output.position.y += (dist/2) * Sin;
+    if( input.trailInfo.z > 99.0f ) {
+        output.position.x += (dist * 0.5f) * Cos;
+        output.position.y += (dist * 0.5f) * Sin;
     }
 
     // Добавляем матричные преобразования для всей сцены
