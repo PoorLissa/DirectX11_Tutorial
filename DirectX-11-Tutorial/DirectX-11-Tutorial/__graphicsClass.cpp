@@ -38,6 +38,7 @@ char buf[100];
 
 
 
+// Начальная инициализация полей класса
 GraphicsClass::GraphicsClass()
 {
 	m_d3d			   = 0;
@@ -378,7 +379,9 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
 		    m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1, appTimer);
             ((Player*)m_Player)->resetBulletsType();
-            ((Player*)m_Player)->setEffect(100);
+            ((Player*)m_Player)->setEffect(Weapon::BonusWeapons::PISTOL);
+//            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::PIERCING);
+            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::ION);
         }
 
 
@@ -783,39 +786,11 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
             {
                 #define BulletObj (*iter)
 
-                // Если нажата левая кнопка мыши, добавляем в очередь новые пули
+                // Если нажата левая кнопка мыши, добавляем в очередь новые пули в соответствии с типом оружия и прочими эффектами
                 if ( Keys->lmbDown ) {
 
-                    if( !player->getWeaponBurst() ) {
-
-                        if( player->isWeaponReady() ) {
-
-                            int size1 = 20;
-                            int size2 = size1/2;
-
-                            bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
-                                                    mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                        player->getBulletSpeed() + rand()%10 * 0.1f, player->getBulletsType() ) );
-                            bulletListSize++;
-                        }
-
-                    }
-                    else {
-
-                        if( player->isWeaponReady() ) {
-
-                            int size1 = 100;
-                            int size2 = size1/2;
-                            int num = 10;
-                            for (int i = 0; i < num; i++) {
-                                bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
-                                                        mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                            player->getBulletSpeed() + rand()%10 * 0.1f, player->getBulletsType() ) );
-                                bulletListSize++;
-                            }
-                        }
-
-                    }
+                    if( player->isWeaponReady() )
+                        player->spawnBullet_Normal(mouseX, mouseY, &bulletList, bulletListSize);
                 }
 
                 // Просчитываем движение всех пуль

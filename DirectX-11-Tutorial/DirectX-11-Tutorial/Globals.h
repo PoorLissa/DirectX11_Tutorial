@@ -2,15 +2,15 @@
 #ifndef _GLOBAL_DEFINES_H_
 #define _GLOBAL_DEFINES_H_
 
-// Let us put our global defines here
+// Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             1000
+#define MONSTERS_QTY             1
 
 #define fullScreen
 #undef  fullScreen
 
-#define appTimerInterval         20             // Главный таймер приложения генерит событие onTimer по прошествии этого интервала в миллисекундах
+#define appTimerInterval         20             // Интервал в миллисекундах, по истечении которого главный таймер приложения генерит событие onTimer
 #define EFFECT_DEFAULT_LENGTH    600            // Длительность (в тактах приложения) бонусных эффектов
 #define SLOW_EFFECT_FACTOR       3              // Коэффициент замедления для бонуса SLOW
 

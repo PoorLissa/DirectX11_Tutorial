@@ -9,6 +9,13 @@
 #define ciRef  const int   &
 #define cuiRef const unsigned int &
 
+// Предварительно объявляем классы
+class Player;
+class Bullet;
+class Monster;
+class Bonus;
+class Weapon;
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -52,8 +59,11 @@ class gameObjectBase {
     inline static void setThreadPool(ThreadPool *thPool) { _thPool = thPool; }
 
     // --- Виртуальные методы, уникальные для каждого класса-потомка ---
-    virtual void Move(cfRef = 0, cfRef = 0, void* = 0) = 0;     // метод для перемещения объекта, вызывается в общем цикле
-    inline virtual cuiRef getAnimPhase() const         = 0;     // метод для получения текущей фазы анимации объекта
+
+    // метод для обработки объекта в пределах одного фрейма, вызывается в общем цикле. через void* может принимать на вход любые требуемые параметры
+    virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr) = 0;
+    // метод для получения текущей фазы анимации объекта
+    inline virtual cuiRef getAnimPhase() const = 0;
 
  protected:
     bool            _Alive;
@@ -111,31 +121,34 @@ class Player : public gameObjectBase {
 
    ~Player() {}
 
-    enum BulletsType { NORMAL, ION, FREEZE, FIRE, PIERCING };
+    enum BulletsType { NORMAL, PIERCING, FIRE, ION, ION_EXPLOSION, FREEZE, _lastType };
 
     virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr);
 
     virtual inline cuiRef getAnimPhase() const { return 0; }
 
-    inline void setDirectionL(const bool &l) { _Left  = l; }
-    inline void setDirectionR(const bool &r) { _Right = r; }
-    inline void setDirectionU(const bool &u) { _Up    = u; }
-    inline void setDirectionD(const bool &d) { _Down  = d; }
+    inline void setDirectionL(const bool &dir) { _Left  = dir; }
+    inline void setDirectionR(const bool &dir) { _Right = dir; }
+    inline void setDirectionU(const bool &dir) { _Up    = dir; }
+    inline void setDirectionD(const bool &dir) { _Down  = dir; }
 
     void setEffect(const unsigned int &);
 
-    inline void setShieldedMode    (const bool &mode)        { _isShielded   = mode;         }
+    inline void setShieldedMode    (const bool &mode)        { _Shielded     = mode;         }
     inline void setBulletsType_On  (const BulletsType &mode) { _bulletsType |=  (1 << mode); }
     inline void setBulletsType_Off (const BulletsType &mode) { _bulletsType &= ~(1 << mode); }
     inline void resetBulletsType   ()                        { _bulletsType  = 0;            }
     inline unsigned short getBulletsType() const             {          return _bulletsType; }
-    inline const bool& isShielded() const                    {           return _isShielded; }
+    inline const bool& isShielded() const                    {             return _Shielded; }
 
     inline const UINT& getWeaponDelay() const                {          return _weaponDelay; }
     inline const UINT& getBulletSpeed() const                {    return _weaponBulletSpeed; }
-    inline const UINT& getWeaponBurst() const                {    return _weaponBurstMode;   }
+    inline const UINT& getWeaponBurst() const                {    return _weaponBurstQty;    }
 
     inline const bool& isWeaponReady()                       { if( !(_weaponReady % _weaponDelay) ) { _weaponReady = 0; return true; } return false; }
+
+    inline void spawnBullet_Normal   (const int &, const int &, std::list<gameObjectBase*> *, unsigned int &);
+    inline void spawnBullet_FourSides(std::list<gameObjectBase*> *, unsigned int &);
 
   private:
     bool    _Left, _Right, _Up, _Down;
@@ -146,11 +159,12 @@ class Player : public gameObjectBase {
     unsigned int EffectsCounters[BonusEffects::Effects::_totalEffectsQty];      // Массив счетчиков длительности эффектов
 
     // Бонусные эффекты
-    bool _isShielded;
+    bool _Shielded;
+
     // Эффекты пуль. Устанавливаются на игрока (навсегда или до отмены) и при генерации пуль устанавливаются на каждую пулю в отдельности
     unsigned short _bulletsType, _bulletsType_old;
 
-    unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstMode, _weaponReady;
+    unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstQty, _weaponReady, _weaponBulletSpread;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -169,11 +183,11 @@ class Monster : public gameObjectBase {
 	{}
    ~Monster() {}
 
-    virtual void Move(cfRef x, cfRef y, void *Param);
+    virtual void Move(cfRef, cfRef, void *);
 
 	virtual inline cuiRef getAnimPhase() const { return animPhase; }
 
-    static inline void setFreeze(const bool &Freeze) { _freezeEffect = Freeze;  }   // Bonus - Заморозка монстров
+    static inline void setFreeze(const bool &mode) { _freezeEffect = mode;  }   // Bonus - Заморозка монстров
 
  private:
 	 int            animInterval0, animInterval1;
@@ -205,23 +219,25 @@ class Bullet : public gameObjectBase {
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
-    virtual void Move(cfRef, cfRef, void *);
+    virtual void Move(cfRef, cfRef, void *Param) {
+        _thPool->runAsync(&Bullet::threadMove, this, Param);
+    }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
     inline const unsigned int& getBulletType()                          { return _bulletType; }
     inline       void          setPiercing(const bool &mode)            {   _piercing = mode; }
     inline const bool        & isPiercing()                             {   return _piercing; }
 
- private:
-
+ protected:
     // пересечение отрезка с окружностью
     // http://www.cyberforum.ru/cpp-beginners/thread853799.html
     bool commonSectionCircle(float, float, float, float, const int &, const int &, const float &);
 
+ private:
     // Потоковый просчет попаданий пули в монстров
     void threadMove(void *);
 
- private:
+ protected:
     float   _X0, _Y0;               // изначальная точка, из которой пуля летит
     float   _dX, _dY;               // смещения по x и по y для нахождения новой позиции пули
 
@@ -243,6 +259,27 @@ class Bullet : public gameObjectBase {
 
 
 
+// Класс игрового объекта - Ионная пуля
+// Унаследовали свой отдельный класс, т.к. у И.П. немного другой просчет движения, и не хочется городить условия в базовом методе Bullet::Move()
+class BulletIon : public Bullet {
+
+ public:
+    BulletIon(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef speed)
+        : Bullet(x, y, scale, x_to, y_to, speed, Player::BulletsType::ION)
+    {}
+   ~BulletIon() {}
+
+    virtual void Move(cfRef, cfRef, void *Param) {
+        _thPool->runAsync(&BulletIon::threadMove, this, Param);
+    }
+
+ private:
+    void threadMove(void *);
+};
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
 // Класс игрового объекта - Бонус
 class Bonus : public gameObjectBase, public BonusEffects {
 
@@ -258,7 +295,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
    ~Bonus() {}
 
     // Для бонуса рассчитываем оставшееся время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual inline void Move(cfRef x, cfRef y, void *Param) {
+    virtual void Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
@@ -312,7 +349,7 @@ class Weapon : public gameObjectBase, public BonusWeapons {
    ~Weapon() {}
 
     // Для бонуса-оружия рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual inline void Move(cfRef x, cfRef y, void *Param) {
+    virtual void Move(cfRef x, cfRef y, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
@@ -353,5 +390,83 @@ class Weapon : public gameObjectBase, public BonusWeapons {
 // ------------------------------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------------------------------
+
+void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<gameObjectBase*> *bulletList, unsigned int &bulletListSize)
+{
+    // приводим расстояние от стрелка до точки прицеливания к условному расстоянию в 500px, для которого и применяем рассеяние пуль
+
+    short dx     = _X - mouseX;
+    short dy     = _Y - mouseY;
+    short dist   = sqrt(dx*dx + dy*dy);
+    short Spread = dist * _weaponBulletSpread * 0.02;   // чтобы не свести Spread к нулю, делим не на 500, а на 50, и уже ниже делим итоговое значение еще на 10
+    short halfSpread = Spread * 0.5f;
+
+    // Тип создаваемой пули проверяем при помощи операции &, т.к. у Игрока может быть несколько эффектов сразу
+    // В конструктор пули же передаем конкретное значение эффекта
+
+    if( _bulletsType & 1 << Player::BulletsType::ION )
+    {
+        for (unsigned int i = 0; i < _weaponBurstQty; i++)
+            bulletList->push_back( new BulletIon(_X, _Y, 1.0f,
+                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                    _weaponBulletSpeed) );
+
+        bulletListSize += _weaponBurstQty;
+
+        if( _bulletsType & 1 << Player::BulletsType::FIRE ) {
+            for (unsigned int i = 0; i < _weaponBurstQty; i++)
+                bulletList->push_back( new Bullet(_X, _Y, 1.0f,
+                    mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                        _weaponBulletSpeed*2, Player::BulletsType::FIRE) );
+
+            bulletListSize += _weaponBurstQty;
+        }
+
+        return;
+    }
+
+    if( _bulletsType & 1 << Player::BulletsType::FIRE )
+    {
+        for (unsigned int i = 0; i < _weaponBurstQty; i++)
+            bulletList->push_back( new Bullet(_X, _Y, 1.0f,
+                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                    _weaponBulletSpeed, Player::BulletsType::FIRE) );
+
+        bulletListSize += _weaponBurstQty;
+
+        return;
+    }
+
+    if( _bulletsType & 1 << Player::BulletsType::PIERCING )
+    {
+        for (unsigned int i = 0; i < _weaponBurstQty; i++)
+            bulletList->push_back( new Bullet(_X, _Y, 1.0f,
+                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                    _weaponBulletSpeed, Player::BulletsType::FIRE) );
+
+        bulletListSize += _weaponBurstQty;
+
+        return;
+    }
+
+    for (unsigned int i = 0; i < _weaponBurstQty; i++)
+        bulletList->push_back( new Bullet(_X, _Y, 1.0f,
+            mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                _weaponBulletSpeed, Player::BulletsType::NORMAL) );
+
+    bulletListSize += _weaponBurstQty;
+
+    return;
+}
+
+void Player::spawnBullet_FourSides(std::list<gameObjectBase*> *bulletList, unsigned int &bulletListSize)
+{
+    bulletList->push_back( new Bullet(_X, _Y, 1.0f, _X + 100, _Y, _weaponBulletSpeed, _bulletsType ) );
+    bulletList->push_back( new Bullet(_X, _Y, 1.0f, _X - 100, _Y, _weaponBulletSpeed, _bulletsType ) );
+    bulletList->push_back( new Bullet(_X, _Y, 1.0f, _X, _Y + 100, _weaponBulletSpeed, _bulletsType ) );
+    bulletList->push_back( new Bullet(_X, _Y, 1.0f, _X, _Y - 100, _weaponBulletSpeed, _bulletsType ) );
+
+    bulletListSize += 4;
+}
 
 #endif
