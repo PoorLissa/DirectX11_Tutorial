@@ -795,7 +795,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                             bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                     mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                        5.0f + rand()%10 * 0.1f, player->getBulletsType() ) );
+                                                        player->getBulletSpeed() + rand()%10 * 0.1f, player->getBulletsType() ) );
                             bulletListSize++;
                         }
 
@@ -806,11 +806,11 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                             int size1 = 100;
                             int size2 = size1/2;
-                            int num = 5;
+                            int num = 10;
                             for (int i = 0; i < num; i++) {
                                 bulletList.push_back( new Bullet(playerPosX, playerPosY, 1.0f,
                                                         mouseX + rand()%size1 - size2, mouseY + rand()%size1 - size2,
-                                                            10.0f + rand()%10 * 0.1f, player->getBulletsType() ) );
+                                                            player->getBulletSpeed() + rand()%10 * 0.1f, player->getBulletsType() ) );
                                 bulletListSize++;
                             }
                         }

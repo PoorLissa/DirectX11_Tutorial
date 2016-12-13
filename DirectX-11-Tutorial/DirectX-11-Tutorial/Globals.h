@@ -5,7 +5,7 @@
 // Let us put our global defines here
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             3
+#define MONSTERS_QTY             1000
 
 #define fullScreen
 #undef  fullScreen
@@ -21,13 +21,10 @@
 #define BONUS_DROP_CHANCE        1000           // Величина, обратная шансу выпадения бонуса из монстра
 #define WEAPON_DROP_CHANCE       10000          // Величина, обратная шансу выпадения оружия из монстра
 
-#define useThread                               // Нужно ли использовать потоки (закомментить #undef, чтобы не исользовать потоки)
+#define useThread                               // Нужно ли использовать потоки
 //#undef  useThread
 
-#define singleShot                              // don't use single shot bullets
-//#undef  singleShot
-
-#define useSorting
-//#undef  useSorting
+#define useSorting                              // судя по всему, сортировка скорее замедляет, чем убыстряет просчет
+#undef  useSorting
 
 #endif

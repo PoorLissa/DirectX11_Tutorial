@@ -111,7 +111,7 @@ class Player : public gameObjectBase {
 
    ~Player() {}
 
-   enum BulletsType { NORMAL, ION, FREEZE, FIRE, PIERCING };
+    enum BulletsType { NORMAL, ION, FREEZE, FIRE, PIERCING };
 
     virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr);
 
@@ -135,15 +135,7 @@ class Player : public gameObjectBase {
     inline const UINT& getBulletSpeed() const                {    return _weaponBulletSpeed; }
     inline const UINT& getWeaponBurst() const                {    return _weaponBurstMode;   }
 
-    inline const bool& isWeaponReady() {
-
-        if( !(_weaponReady % _weaponDelay) ) {
-            _weaponReady = 0;
-            return true;
-        }
-
-        return false;
-    }
+    inline const bool& isWeaponReady()                       { if( !(_weaponReady % _weaponDelay) ) { _weaponReady = 0; return true; } return false; }
 
   private:
     bool    _Left, _Right, _Up, _Down;
@@ -218,7 +210,7 @@ class Bullet : public gameObjectBase {
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
     inline const unsigned int& getBulletType()                          { return _bulletType; }
     inline       void          setPiercing(const bool &mode)            {   _piercing = mode; }
-    inline const bool        & getPiercing()                            {   return _piercing; }
+    inline const bool        & isPiercing()                             {   return _piercing; }
 
  private:
 

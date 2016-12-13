@@ -206,7 +206,6 @@ void Player::setEffect(const unsigned int &effect)
 
                     setBulletsType_On(Player::BulletsType::FIRE);
                     setBulletsType_On(Player::BulletsType::PIERCING);
-                    int aaa = 1;
                 }
                 break;
             }
@@ -221,10 +220,21 @@ void Player::setEffect(const unsigned int &effect)
             case BonusWeapons::Weapons::PISTOL:
             {
                 this->resetBulletsType();
+
                 _weaponDelay       = 50;
                 _weaponReady       = _weaponDelay;
                 _weaponBulletSpeed = 10;
                 _weaponBurstMode   = 0;
+
+                //setBulletsType_Off(Player::BulletsType::PIERCING);
+                
+/*
+                _weaponDelay       = 1;
+                _weaponReady       = _weaponDelay;
+                _weaponBulletSpeed = 50;
+                _weaponBurstMode   = 1;
+*/
+
             }
             break;
 
@@ -234,6 +244,8 @@ void Player::setEffect(const unsigned int &effect)
                 _weaponReady       = _weaponDelay;
                 _weaponBulletSpeed = 30;
                 _weaponBurstMode   = 0;
+
+                setBulletsType_Off(Player::BulletsType::PIERCING);
             }
             break;
 
@@ -243,6 +255,8 @@ void Player::setEffect(const unsigned int &effect)
                 _weaponReady       = _weaponDelay;
                 _weaponBulletSpeed = 30;
                 _weaponBurstMode   = 1;
+
+                setBulletsType_Off(Player::BulletsType::PIERCING);
             }
             break;
         }
@@ -498,7 +512,7 @@ void Bullet::threadMove(void *Param)
                     (*iter)->setAlive(false);			// монстр убит
 
                     // Если включен бонус Огненные Пули, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-                    Bullet::getPiercing() ? _Health-- : _Health = 0;
+                    isPiercing() ? _Health-- : _Health = 0;
 
                     // Если время жизни пули истекло, то пуля истрачена:
 					if( !_Health ) {
