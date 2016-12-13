@@ -345,7 +345,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             // Массив текстур, 3 штук
 		    WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/bonus_weapon_Pistol.png",
 							    L"../DirectX-11-Tutorial/data/bonus_weapon_Rifle.png",
-							    L"../DirectX-11-Tutorial/data/bonus_weapon_Shotgun.png"
+							    L"../DirectX-11-Tutorial/data/bonus_weapon_Shotgun.png",
+                                L"../DirectX-11-Tutorial/data/bonus_weapon_Ion_gun1.png"
 		    };
 
             unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);
@@ -381,7 +382,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             ((Player*)m_Player)->resetBulletsType();
             ((Player*)m_Player)->setEffect(Weapon::BonusWeapons::PISTOL);
 //            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::PIERCING);
-            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::ION);
+//            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::ION);
         }
 
 

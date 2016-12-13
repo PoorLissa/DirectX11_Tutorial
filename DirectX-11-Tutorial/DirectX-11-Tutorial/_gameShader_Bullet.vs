@@ -54,13 +54,13 @@ PixelInputType TextureVertexShader(VertexInputType input)
     {
         // Обычная пуля: немного сжимаем её
         case 0.0f:
-        case 2.0f:
+        case 1.0f:
             input.position.x *= 1.0f;
             input.position.y *= 0.5f;
         break;
 
         // огненная пуля
-        case 24.0f:
+        case 2.0f:
             input.position.x *= 2.0f;
             input.position.y *= 2.0f;
         break;
@@ -85,6 +85,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // шлейф обычной пули
         case 100.0f:
+        case 101.0f:
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
             dist = sqrt(dX*dX + dY*dY);
@@ -97,7 +98,7 @@ PixelInputType TextureVertexShader(VertexInputType input)
         break;
 
         // шлейф огненной пули
-        case 124.0f:
+        case 102.0f:
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
             dist = sqrt(dX*dX + dY*dY);

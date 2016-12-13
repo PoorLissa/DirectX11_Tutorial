@@ -21,9 +21,9 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 {
     switch( input.trailInfo.z )
     {
-        // Рисуем обычную пулю
+        // Рисуем обычную пулю или Piercing пулю
         case 0.0f:
-        case 2.0f:
+        case 1.0f:
         {
             float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
 
@@ -32,7 +32,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         break;
 
         // Рисуем огненную пулю
-        case 24.0f:
+        case 2.0f:
         {
             float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
             return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
@@ -78,7 +78,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
                 if((0.99 - hyp) * CircleRadiusInPixel > BorderWidthInPixel*0.1)
                     return float4(0.1, 0.5, 0.3, 0.3 - hyp/4) * 3.0;
                 else
-                    return float4(1, 0, 0, 0);
+                    return float4(0, 0, 0, 0);
         }
         break;
 
@@ -103,6 +103,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 
         // Рисуем след от обычной пули
         case 100.0f:
+        case 101.0f:
         {
 		    if(input.tex.y < 0.25f || input.tex.y > 0.75f)
 			    return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
@@ -112,7 +113,7 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         break;
 
         // Рисуем след от огненной пули
-        case 124.0f:
+        case 102.0f:
         {
             float G = input.tex.y >= 0.5f ? ( input.tex.y - 0.5) : ((0.5f - input.tex.y));
 

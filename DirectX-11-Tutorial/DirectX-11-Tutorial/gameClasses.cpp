@@ -204,10 +204,10 @@ void Player::setEffect(const unsigned int &effect)
                     if( _bulletsType_old == 12345 )
                         _bulletsType_old = _bulletsType;
 
+                    setBulletsType_Off(Player::BulletsType::NORMAL);
+                    //setBulletsType_Off(Player::BulletsType::ION);
                     setBulletsType_On (Player::BulletsType::FIRE);
                     setBulletsType_On (Player::BulletsType::PIERCING);
-                    setBulletsType_Off(Player::BulletsType::NORMAL);
-                    setBulletsType_Off(Player::BulletsType::ION);
                 }
                 break;
             }
@@ -254,6 +254,19 @@ void Player::setEffect(const unsigned int &effect)
 
                 setBulletsType_On (Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
+                setBulletsType_Off(Player::BulletsType::PIERCING);
+            }
+            break;
+
+            case BonusWeapons::Weapons::ION_GUN:
+            {
+                _weaponDelay        = 50;
+                _weaponBulletSpeed  = 7;
+                _weaponBurstQty     = 1;
+                _weaponBulletSpread = 5;
+
+                setBulletsType_On (Player::BulletsType::ION);
+                setBulletsType_Off(Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
             }
             break;
@@ -354,7 +367,8 @@ Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef spee
     _piercing = bulletType & 1 << Player::BulletsType::PIERCING;
 
     // смещаем пулю так, чтобы она летела не от центра Игрока, а из среза ствола его пушки
-    static const int gunRadius = 35*2;
+    //static const int gunRadius = 35*2;
+    static const int gunRadius = 20;
     _X0 = _X = _X - gunRadius * cos(_Angle);
     _Y0 = _Y = _Y + gunRadius * sin(_Angle);
 }

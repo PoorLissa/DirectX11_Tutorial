@@ -98,7 +98,7 @@ class BonusEffects {
 class BonusWeapons {
  public:
     // PISTOL должен всегда быть самым первым, от него считаются номера
-    static enum Weapons { PISTOL = 100, RIFLE, SHOTGUN, _lastWeapon, _totalWeaponsQty = _lastWeapon - PISTOL };
+    static enum Weapons { PISTOL = 100, RIFLE, SHOTGUN, ION_GUN, _lastWeapon, _totalWeaponsQty = _lastWeapon - PISTOL };
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -406,21 +406,21 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
 
     if( _bulletsType & 1 << Player::BulletsType::ION )
     {
+        if( _bulletsType & 1 << Player::BulletsType::FIRE ) {
+            for (unsigned int i = 0; i < _weaponBurstQty; i++)
+                bulletList->push_back( new Bullet(_X, _Y, 1.0f,
+                    mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                        _weaponBulletSpeed*5, Player::BulletsType::FIRE) );
+
+            bulletListSize += _weaponBurstQty;
+        }
+
         for (unsigned int i = 0; i < _weaponBurstQty; i++)
             bulletList->push_back( new BulletIon(_X, _Y, 1.0f,
                 mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
                     _weaponBulletSpeed) );
 
         bulletListSize += _weaponBurstQty;
-
-        if( _bulletsType & 1 << Player::BulletsType::FIRE ) {
-            for (unsigned int i = 0; i < _weaponBurstQty; i++)
-                bulletList->push_back( new Bullet(_X, _Y, 1.0f,
-                    mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
-                        _weaponBulletSpeed*2, Player::BulletsType::FIRE) );
-
-            bulletListSize += _weaponBurstQty;
-        }
 
         return;
     }
@@ -442,7 +442,7 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
         for (unsigned int i = 0; i < _weaponBurstQty; i++)
             bulletList->push_back( new Bullet(_X, _Y, 1.0f,
                 mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
-                    _weaponBulletSpeed, Player::BulletsType::FIRE) );
+                    _weaponBulletSpeed, Player::BulletsType::PIERCING) );
 
         bulletListSize += _weaponBurstQty;
 
