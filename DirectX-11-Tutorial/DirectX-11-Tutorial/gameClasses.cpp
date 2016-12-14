@@ -286,19 +286,16 @@ void Player::setEffect(const unsigned int &effect)
 // Перемещение Монстра
 void Monster::Move(cfRef x, cfRef y, void *Param)
 {
+    //_thPool->runAsync(...);
+
     if( !_freezeEffect ) {
 
 	    float dX = x - _X;
         float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-#if 0
-        dX = div_Speed_by_Dist * dX * 0.1f;
-        dY = div_Speed_by_Dist * dY * 0.1f;
-#else
         dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
         dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
-#endif
 
         _X += dX;
         _Y += dY;

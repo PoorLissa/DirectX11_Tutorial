@@ -34,6 +34,9 @@ unsigned int bulletListSize = 0;
 
 HighPrecisionTimer gameTimer;
 char buf[100];
+
+BulletHelper bltHelper(2, 2, thPool);
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -260,11 +263,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                speed = 0.01f;
+                //speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 monsterList1.objList.push_back(new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9));
                 monsterList1.listSize++;
+
+                bltHelper.Push(monsterList1.objList.back());
             }
         }
 
@@ -297,11 +302,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                speed = 0.01f;
+                //speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 monsterList2.objList.push_back(new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8));
                 monsterList2.listSize++;
+
+                bltHelper.Push(monsterList2.objList.back());
             }
         }
 
@@ -851,6 +858,11 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                         if( MonsterObj->isAlive() ) {
 
                             MonsterObj->Move(playerPosX, playerPosY);
+// lalal
+
+// http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
+
+                            bltHelper.Push(MonsterObj);
 
                         }
                         else {
@@ -882,6 +894,8 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                                 monsterList->objList.push_back(new Monster(x, y, scale, monsterList->rotationAngle, speed, interval, 9));
                                 monsterList->listSize++;
+
+                                bltHelper.Push(monsterList->objList.back());
                             }
 #endif
                             continue;
@@ -892,6 +906,18 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                     if( !monsterList->spriteInst->initializeInstances(m_d3d->GetDevice(), &monsterList->objList, &monsterList->listSize) )
                         return false;
+                }
+
+                {
+                    gameTimer.Frame();
+
+                    char str[100] = "-=-=-=-=-=- >>> Monsters time with BulletHelper:  ";
+                    char num_string[32];
+
+                    sprintf_s(num_string, "%f", gameTimer.GetTime());
+                    strcat_s(str, 100, num_string);
+
+                    logMsg(str);
                 }
             }
 
