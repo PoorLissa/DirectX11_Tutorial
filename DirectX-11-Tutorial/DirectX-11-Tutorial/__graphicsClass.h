@@ -75,7 +75,7 @@ class GraphicsClass {
 	void Shutdown();
 	bool Frame(const int &, const int &, const float &);
 
-	void logMsg(char *);
+	inline void logMsg(const std::string &, char * = "___msgLog.log");
 
     bool Render(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
 

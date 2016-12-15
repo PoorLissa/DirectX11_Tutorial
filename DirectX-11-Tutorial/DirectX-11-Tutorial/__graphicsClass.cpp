@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "__graphicsClass.h"
 
+#define doLogMessages
+
 ThreadPool *thPool; // указатель на пул потоков
 
 // Вспомогательная структура для хранения списка монстров и всей сопутствующей инфы
@@ -35,7 +37,15 @@ unsigned int bulletListSize = 0;
 HighPrecisionTimer gameTimer;
 char buf[100];
 
-BulletHelper bltHelper(2, 2, thPool);
+// глобальный стринг, чтобы писать в него сообщения на протяжении одной итерации и потом в конце итерации выводить его в файл ровно 1 раз
+std::string strMsg;
+
+//BulletHelper bltHelper(2, 2);
+
+#define olegMaxX 800
+#define olegMaxY 600
+
+std::vector<gameObjectBase*> olegArray[olegMaxX][olegMaxY];
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -86,13 +96,13 @@ GraphicsClass::~GraphicsClass()
 
 
 
-void GraphicsClass::logMsg(char *str) {
+void GraphicsClass::logMsg(const std::string &str, char *fileName) {
 
 	FILE *f = NULL;
 
-	fopen_s(&f, "___msgLog.log", "a");
+	fopen_s(&f, fileName, "a");
 	if (f != NULL) {
-		fputs(str, f);
+		fputs(str.c_str(), f);
 		fputs("\n", f);
 		fclose(f);
 	}
@@ -109,6 +119,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
     thPool = new ThreadPool(50);
     gameObjectBase::setThreadPool(thPool);
+    //bltHelper.setThreadPool(thPool);
 
 	// Запомним размеры текущего экрана
 	scrWidth      = screenWidth;
@@ -256,7 +267,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
             monsterList1.spriteInst    = sprIns1;
             monsterList1.rotationAngle = -90.0f;
 
-            for (int i = 0; i < MONSTERS_QTY; i++) {
+            for (unsigned int i = 0; i < MONSTERS_QTY; i++) {
                 int        x = 50 + rand() % (scrWidth  - 100);
                 int        y = 50 + rand() % (scrHeight - 100);
                 float  speed = (rand() % 250 + 10) * 0.1f;
@@ -266,10 +277,12 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 //speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
-                monsterList1.objList.push_back(new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9));
+                Monster * monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
+                monsterList1.objList.push_back(monster);
                 monsterList1.listSize++;
 
-                bltHelper.Push(monsterList1.objList.back());
+                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                    (olegArray[x][y]).push_back(monster);
             }
         }
 
@@ -305,10 +318,12 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 //speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-                monsterList2.objList.push_back(new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8));
+                Monster *monster = new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8);
+                monsterList2.objList.push_back(monster);
                 monsterList2.listSize++;
 
-                bltHelper.Push(monsterList2.objList.back());
+                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                    (olegArray[x][y]).push_back(monster);
             }
         }
 
@@ -437,22 +452,19 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
 	// --- log videocard info ---
 	{
-		char cardInfo[256] = "Video Card info: ";
 		char cardName[128];
-		char intBuff[32];
 		int  cardMemory = -1;
 		m_d3d->GetVideoCardInfo(cardName, cardMemory);
 
-		strcat_s(cardInfo, 256, cardName);
+        std::string str = "Video Card info: ";
+        str += cardName;
 
-		if (cardMemory >= 0) {
-			_itoa_s(cardMemory, intBuff, 10);
-			strcat_s(cardInfo, 256, " with ");
-			strcat_s(cardInfo, 128, intBuff);
-			strcat_s(cardInfo, 256, " MBytes of Memory");
-		}
+		if (cardMemory >= 0)
+            str += " with " + std::to_string(cardMemory) + " MBytes of Memory";
 
-		logMsg(cardInfo);
+        str += "\n\n";
+
+		logMsg(str);
 	}
 
 	return true;
@@ -555,6 +567,9 @@ bool GraphicsClass::Frame(const int &fps, const int &cpu, const float &frameTime
 bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, const bool &onTimer)
 {
 	bool result;
+#if defined doLogMessages
+    strMsg = "";
+#endif
 
 #if 1
 		//m_Camera->SetPosition(0.0f, 0.0f, -20.0f + 15 * sin(10 * zoom));
@@ -600,6 +615,11 @@ bool GraphicsClass::Render(const float &rotation, const float &zoom, const int &
 	// --- Present the rendered scene to the screen ---
     // -------------------------------------------------------------------------------------------------------------------------------------------------------------------
 	m_d3d->EndScene();
+
+#if defined doLogMessages
+    if( strMsg != "" )
+        logMsg(strMsg);
+#endif
 
 	return true;
 }
@@ -655,7 +675,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 		if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap_Bgr->GetIndexCount(),
 				matrixWorldZ * matrixTranslation * matrixScaling ,
 					matrixView, matrixOrthographic, m_Bitmap_Bgr->GetTexture()) )
-			return false;
+        return false;
 	}
 
 	// Вращающееся дерево - просто для красоты!
@@ -670,7 +690,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 		if ( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Bitmap_Tree->GetIndexCount(),
 				matrixWorldZ * matrixTranslation * matrixScaling,
 					matrixView, matrixOrthographic, m_Bitmap_Tree->GetTexture()) )
-			return false;
+		return false;
 	}
 
 	// Рендерим курсор
@@ -681,7 +701,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 		m_d3d->GetWorldMatrix(matrixWorldX);
 		if( !m_TextureShader->Render(m_d3d->GetDeviceContext(), m_Cursor->GetIndexCount(),
 				matrixWorldX, matrixView, matrixOrthographic, m_Cursor->GetTexture()) )
-			return false;
+		return false;
 	}
 
 
@@ -739,15 +759,13 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
         if( onTimer ) {
 
             {
+#if defined doLogMessages
                 gameTimer.Frame();
 
-                char str[100] = "time passed:  ";
-                char num_string[32];
-
-                sprintf_s(num_string, "%f", gameTimer.GetTime());
-                strcat_s(str, 100, num_string);
-
-                logMsg(str);
+                strMsg += "time passed: ";
+                strMsg += std::to_string(gameTimer.GetTime());
+                strMsg += "\n";
+#endif
             }
 
 #if defined useSorting
@@ -808,7 +826,6 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 while (iter != end) {
 
                     if( BulletObj->isAlive() ) {
-                        //BulletObj->Move(0, 0, &monsterList1);     // 1 список 
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                         BulletObj->Move(0, 0, &VEC);                // вектор списков
                     }
@@ -827,19 +844,16 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                     return false;
 
                 {
+#if defined doLogMessages
                     gameTimer.Frame();
 
-                    char str[100] = "bullets time: ";
-                    char num_string[32];
+                    strMsg += "bullets time: ";
 
-                    sprintf_s(num_string, "%f", gameTimer.GetTime());
-                    strcat_s(str, 100, num_string);
-                    strcat_s(str, 100, "; bullets num: ");
-                    sprintf_s(num_string, "%d", bulletListSize);
-                    strcat_s(str, 100, num_string);
-                    strcat_s(str, 100, "\n");
-
-                    logMsg(str);
+                    strMsg += std::to_string(gameTimer.GetTime());
+                    strMsg += "; bullets num: ";
+                    strMsg += std::to_string(bulletListSize);
+                    strMsg += "\n";
+#endif
                 }
             }
 
@@ -857,13 +871,9 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         if( MonsterObj->isAlive() ) {
 
-                            MonsterObj->Move(playerPosX, playerPosY);
+                            MonsterObj->Move(playerPosX, playerPosY, olegArray);
 // lalal
-
 // http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
-
-                            bltHelper.Push(MonsterObj);
-
                         }
                         else {
 
@@ -892,10 +902,12 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 								float  scale = 0.5f + (rand() % 16) * 0.1f;
                                 int interval = 50 / speed;
 
-                                monsterList->objList.push_back(new Monster(x, y, scale, monsterList->rotationAngle, speed, interval, 9));
+                                Monster *monster = new Monster(x, y, scale, monsterList->rotationAngle, speed, interval, 9);
+                                monsterList->objList.push_back(monster);
                                 monsterList->listSize++;
 
-                                bltHelper.Push(monsterList->objList.back());
+                                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                                    (olegArray[x][y]).push_back(monster);
                             }
 #endif
                             continue;
@@ -903,21 +915,20 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         ++iter;
                     }
+                    thPool->waitForAll();   // Ждем, пока все потоки отработают до конца
 
                     if( !monsterList->spriteInst->initializeInstances(m_d3d->GetDevice(), &monsterList->objList, &monsterList->listSize) )
                         return false;
                 }
 
                 {
+#if defined doLogMessages
                     gameTimer.Frame();
 
-                    char str[100] = "-=-=-=-=-=- >>> Monsters time with BulletHelper:  ";
-                    char num_string[32];
-
-                    sprintf_s(num_string, "%f", gameTimer.GetTime());
-                    strcat_s(str, 100, num_string);
-
-                    logMsg(str);
+                    strMsg += "-=-=-=-=-=- >>> Monsters time with BulletHelper:  ";
+                    strMsg += std::to_string(gameTimer.GetTime());
+                    strMsg += "\n";
+#endif
                 }
             }
 

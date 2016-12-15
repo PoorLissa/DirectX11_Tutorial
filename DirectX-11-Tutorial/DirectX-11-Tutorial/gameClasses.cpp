@@ -286,9 +286,35 @@ void Player::setEffect(const unsigned int &effect)
 // Перемещение Монстра
 void Monster::Move(cfRef x, cfRef y, void *Param)
 {
-    //_thPool->runAsync(...);
-
+#if 0
+    _thPool->runAsync(&Monster::threadMove, this, x, y, Param);
+#else
     if( !_freezeEffect ) {
+
+        std::vector<gameObjectBase*> **olegArray = static_cast<std::vector<gameObjectBase*>**>(Param);
+
+        int currX = _X;
+        int currY = _Y;
+
+        if( currX >= 0 && currX <= 800 && currY >= 0 && currY <= 600 ) {
+
+            std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
+
+            for (int i = 0; i < vec->size(); i++) {
+
+                gameObjectBase *ptr = vec->at(i);
+
+                if( ptr == this ) {
+                
+                    vec->erase(vec->begin() + i);
+                    break;
+                }
+            }
+        }
+
+        asdasd
+
+        
 
 	    float dX = x - _X;
         float dY = y - _Y;
@@ -311,9 +337,44 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 			    animPhase = 0;
 	    }
     }
+#endif
+    return;
+}
+
+// тестовое, пытался использовать с буллет-хелпером, но не задалось
+void Monster::threadMove(cfRef x, cfRef y, void *Param)
+{
+    if( !_freezeEffect ) {
+
+        BulletHelper *bltHelper = static_cast<BulletHelper*>(Param);
+
+	    float dX = x - _X;
+        float dY = y - _Y;
+        float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
+
+        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
+        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
+
+        _X += dX;
+        _Y += dY;
+
+	    animInterval1--;
+
+	    if( animInterval1 < 0 ) {
+		    animInterval1 = animInterval0;
+
+		    animPhase++;
+
+		    if(animPhase > animQty)
+			    animPhase = 0;
+	    }
+
+        //bltHelper->threadMove(this);
+    }
 
     return;
 }
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 #define BULLET_BONUS_LIFE 0 // для гауссового оружия

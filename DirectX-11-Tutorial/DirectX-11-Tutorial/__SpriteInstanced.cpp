@@ -164,11 +164,11 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
     // очищаем m_instanceBuffer, иначе при каждой новой отрисовке теряем память
     SAFE_RELEASE(m_instanceBuffer);
 
-    // Create the instance buffer.
+    // Create the instance buffer
     HRESULT result = device->CreateBuffer(&instanceBufferDesc, &instanceData, &m_instanceBuffer);
     CHECK_FAILED(result);
 
-    // Release the instance array now that the instance buffer has been created and loaded.
+    // Release the instance array now that the instance buffer has been created and loaded
     SAFE_DELETE_ARRAY(instances);
 
     return true;

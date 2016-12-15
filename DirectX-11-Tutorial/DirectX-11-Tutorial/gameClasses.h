@@ -185,6 +185,8 @@ class Monster : public gameObjectBase {
 
     virtual void Move(cfRef, cfRef, void *);
 
+    void threadMove(cfRef x, cfRef y, void *Param);
+
 	virtual inline cuiRef getAnimPhase() const { return animPhase; }
 
     static inline void setFreeze(const bool &mode) { _freezeEffect = mode;  }   // Bonus - Заморозка монстров
@@ -588,9 +590,7 @@ class BulletHelper {
 class BulletHelper {
 
  public:
-    BulletHelper(unsigned int numX, unsigned int numY, ThreadPool *Pool) {
-
-        _thPool = Pool;
+    BulletHelper(unsigned int numX, unsigned int numY) {
 
         numX = 2;
         numY = 2;
@@ -606,7 +606,11 @@ class BulletHelper {
        }
     }
 
-    // кладем наш объект в соответствующий вектор и возвращаем номер вектора
+    void setThreadPool(ThreadPool *thPool) {
+        _thPool = thPool;
+    }
+
+    // кладем наш объект в соответствующий вектор
     void Push(gameObjectBase* obj) {
 
         unsigned int Obj = (int)obj;
@@ -679,11 +683,9 @@ class BulletHelper {
 	    }
     }
 
- private:
+    // https://habrahabr.ru/post/182610/
     void threadMove(void *Param) {
     
-https://habrahabr.ru/post/182610/
-
         gameObjectBase* obj = static_cast<gameObjectBase*>(Param);
 
         unsigned int Obj = (int)obj;
@@ -709,23 +711,133 @@ https://habrahabr.ru/post/182610/
 
         if( oldMap != currentMap ) {
 
-            if( oldMap >= 0 )
-                MAPS.at(oldMap)->erase(Obj);
+            if( oldMap >= 0 ) {
 
-            (*MAPS.at(currentMap))[Obj] = 0;
-            Map[Obj] = currentMap;
+                mapLock[oldMap].lock();
+
+                    MAPS.at(oldMap)->erase(Obj);
+
+                mapLock[oldMap].unlock();
+            }
+
+            mapLock[currentMap].lock();
+
+                (*MAPS.at(currentMap))[Obj] = 1;
+                Map[Obj] = currentMap;
+
+            mapLock[currentMap].unlock();
         }
 
         return;
     }
 
  private:
+
+    std::mutex mapLock[4];
+
     ThreadPool *_thPool;
 
-    UINT _numX, _numY;                          // число разбиений экрана по горизонтали и по вертикали
-    //std::map<int, int>                Map;      // карта, в которой для каждого монстра хранится номер карты, в которой он находится в данный момент
+    UINT _numX, _numY;                                  // число разбиений экрана по горизонтали и по вертикали
+    //std::map<int, int>                Map;            // карта, в которой для каждого монстра хранится номер карты, в которой он находится в данный момент
     std::unordered_map<int, int>                Map;
-    std::vector< std::unordered_map<int, int>*> MAPS;     // вектор карт монстров
+    std::vector< std::unordered_map<int, int>*> MAPS;   // вектор карт монстров
+};
+
+
+class ListedList {
+
+ public:
+    ListedList(unsigned int numX, unsigned int numY) : _numX(numX), _numY(numY) {
+        _numX = 2;
+        _numY = 2;
+
+        for (int i = 0; i < _numX * _numY; i++)
+            _VEC.push_back(new std::list<gameObjectBase*>);
+    }
+   ~ListedList() {
+        for (int i = 0; i < _numX * _numY; i++)
+            delete(_VEC[i]);
+   }
+
+    void setThreadPool(ThreadPool *thPool) {
+        _thPool = thPool;
+    }
+
+    inline unsigned int getVecNo_withCoords(const int &x, const int &y) {
+    
+        if( x > 400 )
+            if (y > 300)
+                return 3;
+            else
+                return 1;
+        else
+            if( y > 300 )
+                return 2;
+            else
+                return 0;
+    }
+
+    void runBullet(Bullet *bullet) {
+    
+    /*
+        bullet->coords->getVecNo_withCoords
+
+        get close lying lists
+
+        _thPool->runAsync(...) {
+
+            only for these lists
+
+        }
+
+    */
+    }
+
+    void MoveAll() {
+    
+        /*
+            for every list:
+
+                _thPool->runAsync(...) {
+
+                    for every monster in the list: {
+                        Monster->Move();
+
+                        if( getVecNo_withCoords(const int &x, const int &y) != currentVecNo )
+                            monster -> erase from this list,
+                            AddObject(monster); <--- add to another list
+                    }
+                }
+                    
+        */
+    }
+
+    // кладем наш объект в соответствующий список
+    void AddObject(gameObjectBase* obj) {
+
+        unsigned int Obj = (int)obj;
+
+        int x = obj->getPosX();
+        int y = obj->getPosY();
+
+        // Проверяем, хранится ли такой элемент уже в Map-е. Если он еще не хранится, Map.count возвращает 0.
+        // Если объект уже хранится, value будет содержать номер списка, в котором находится объект
+        int currentVec = getVecNo_withCoords(x, y);
+
+        // Спроецируем экранную позицию объекта на карту наших векторов и найдем, в каком векторе сейчас находится элемент.
+        // Если его предыдущая позиция отличается от текущей, удалим объект из его старого вектора и добавим его в новый вектор.
+        // Заменим значение для текущего объекта в Map-е.
+        ( *_VEC.at(currentVec) ).push_back(obj);
+        //_Map[Obj] = currentVec;
+
+        return;
+    }
+
+private:
+    //std::unordered_map<int, int>               _Map;
+    std::vector<std::list<gameObjectBase*>*>   _VEC;
+    UINT                                       _numX, _numY;    // число разбиений экрана по горизонтали и по вертикали
+    ThreadPool                                *_thPool;
 };
 
 
