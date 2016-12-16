@@ -871,7 +871,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         if( MonsterObj->isAlive() ) {
 
-                            MonsterObj->Move(playerPosX, playerPosY, olegArray);
+                            MonsterObj->Move(playerPosX, playerPosY, olegArray[0]);
 // lalal
 // http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
                         }

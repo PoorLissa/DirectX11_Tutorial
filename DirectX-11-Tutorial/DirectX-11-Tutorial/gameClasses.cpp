@@ -291,11 +291,16 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 #else
     if( !_freezeEffect ) {
 
-        std::vector<gameObjectBase*> **olegArray = static_cast<std::vector<gameObjectBase*>**>(Param);
+        //std::vector<gameObjectBase*> **olegArray = static_cast<std::vector<gameObjectBase*>**>(Param);
+
+        double *a = (double (*))(Param);
+
+
 
         int currX = _X;
         int currY = _Y;
 
+        // если монстр находится в пределах видимости, ищем в олегомассиве по координатам монстра указатель на него и удаляем, т.к. собираемся передвинуться на другое место
         if( currX >= 0 && currX <= 800 && currY >= 0 && currY <= 600 ) {
 
             std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
@@ -311,10 +316,6 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
                 }
             }
         }
-
-        asdasd
-
-        
 
 	    float dX = x - _X;
         float dY = y - _Y;
@@ -336,6 +337,16 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 		    if(animPhase > animQty)
 			    animPhase = 0;
 	    }
+
+        // записываем новое местоположение монстра в олегомассив
+        currX = _X;
+        currY = _Y;
+
+        if( currX >= 0 && currX <= 800 && currY >= 0 && currY <= 600 ) {
+
+            std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
+            vec->push_back(this);
+        }
     }
 #endif
     return;
