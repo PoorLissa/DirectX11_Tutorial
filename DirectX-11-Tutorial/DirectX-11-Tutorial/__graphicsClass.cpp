@@ -40,12 +40,7 @@ char buf[100];
 // глобальный стринг, чтобы писать в него сообщения на протяжении одной итерации и потом в конце итерации выводить его в файл ровно 1 раз
 std::string strMsg;
 
-//BulletHelper bltHelper(2, 2);
-
-#define olegMaxX 800
-#define olegMaxY 600
-
-std::vector<gameObjectBase*> olegArray[olegMaxX][olegMaxY];
+olegType** olegArray = nullptr;
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -77,6 +72,10 @@ GraphicsClass::GraphicsClass()
     thPool             = 0;
 
     msg = "...";
+
+    olegArray = new olegType* [olegMaxX];
+    for (int i = 0; i < olegMaxX; i++)
+        olegArray[i] = new olegType[olegMaxY];
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -91,6 +90,101 @@ GraphicsClass::GraphicsClass(const GraphicsClass &other)
 
 GraphicsClass::~GraphicsClass()
 {
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// Free the resources
+void GraphicsClass::Shutdown()
+{
+    // Clean up the screen
+    m_d3d->BeginScene(0.0f, 0.0f, 0.0f, 1.0f);
+
+        m_d3d->TurnZBufferOff();
+
+        msg = "Bye-bye... Shutting down.";
+        m_TextOut->SetText(msg, m_d3d->GetDeviceContext());
+        m_TextOut->Render(m_d3d->GetDeviceContext(), matrixWorldX, matrixOrthographic);
+
+        m_d3d->TurnZBufferOn();
+
+    m_d3d->EndScene();
+
+    // Игрок
+    if (m_Player)
+        SAFE_DELETE(m_Player);
+
+    // Список пуль
+    if( bulletList.size() > 0 ) {
+        std::list<gameObjectBase*>::iterator iter = bulletList.begin(), end = bulletList.end();
+        while (iter != end) {
+            SAFE_DELETE(*iter);
+            ++iter;
+        }
+    }
+
+    // Список списков монстров
+    if( VEC.size() ) {
+    
+        for (unsigned int i = 0; i < VEC.size(); i++) {
+
+            std::list<gameObjectBase*> *list = &(VEC.at(i)->objList);
+
+            if( list && list->size() ) {
+            
+                std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
+                while (iter != end) {
+                    SAFE_DELETE(*iter);
+                    ++iter;
+                }
+            }
+        }
+    }
+
+    SAFE_SHUTDOWN(m_PlayerBitmapIns1);
+    SAFE_SHUTDOWN(m_PlayerBitmapIns2);
+    SAFE_SHUTDOWN(m_BulletBitmapIns);
+    SAFE_SHUTDOWN(sprIns1);
+    SAFE_SHUTDOWN(sprIns2);
+    SAFE_SHUTDOWN(sprIns3);
+    SAFE_SHUTDOWN(sprIns4);
+
+	// Release the Text object:
+    SAFE_SHUTDOWN(m_TextOut);
+
+	// Release the Bitmap objects:
+    SAFE_SHUTDOWN(m_Bitmap_Bgr);
+	SAFE_SHUTDOWN(m_Bitmap_Tree);
+    SAFE_SHUTDOWN(m_BitmapIns);
+    SAFE_SHUTDOWN(m_Cursor);
+
+    // Release the light object:
+    SAFE_DELETE(m_Light);
+
+    // Release the Shader objects:
+    //SAFE_SHUTDOWN(m_ColorShader);
+    SAFE_SHUTDOWN(m_TextureShader);
+    SAFE_SHUTDOWN(m_TextureShaderIns);
+    SAFE_SHUTDOWN(m_LightShader);
+    SAFE_SHUTDOWN(m_BulletShader);
+
+	// Release the model object:
+    SAFE_SHUTDOWN(m_Model);
+
+	// Release the camera object:
+    SAFE_DELETE(m_Camera);
+
+    SAFE_DELETE(thPool);
+
+    // Release d3d object:
+    SAFE_SHUTDOWN(m_d3d);
+
+    for(int i = 0; i < olegMaxX; i++)
+        delete [] olegArray[i];
+    delete [] olegArray;
+
+	return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -274,14 +368,15 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                //speed = 0.01f;
+                speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
-                Monster * monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
+                Monster *monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
+
                 monsterList1.objList.push_back(monster);
                 monsterList1.listSize++;
 
-                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                if (x >= 0 && x < olegMaxX && y >= 0 && y < olegMaxY)
                     (olegArray[x][y]).push_back(monster);
             }
         }
@@ -315,14 +410,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                //speed = 0.01f;
+                speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 Monster *monster = new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8);
                 monsterList2.objList.push_back(monster);
                 monsterList2.listSize++;
 
-                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                if (x >= 0 && x < olegMaxX && y >= 0 && y < olegMaxY)
                     (olegArray[x][y]).push_back(monster);
             }
         }
@@ -468,83 +563,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 	}
 
 	return true;
-}
-// ------------------------------------------------------------------------------------------------------------------------
-
-
-
-void GraphicsClass::Shutdown()
-{
-    // Игрок
-    if (m_Player)
-        SAFE_DELETE(m_Player);
-
-    // Список пуль
-    if( bulletList.size() > 0 ) {
-        std::list<gameObjectBase*>::iterator iter = bulletList.begin(), end = bulletList.end();
-        while (iter != end) {
-            SAFE_DELETE(*iter);
-            ++iter;
-        }
-    }
-
-    // Список списков монстров
-    if( VEC.size() ) {
-    
-        for (unsigned int i = 0; i < VEC.size(); i++) {
-
-            std::list<gameObjectBase*> *list = &(VEC.at(i)->objList);
-
-            if( list && list->size() ) {
-            
-                std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
-                while (iter != end) {
-                    SAFE_DELETE(*iter);
-                    ++iter;
-                }
-            }
-        }
-    }
-
-    SAFE_SHUTDOWN(m_PlayerBitmapIns1);
-    SAFE_SHUTDOWN(m_PlayerBitmapIns2);
-    SAFE_SHUTDOWN(m_BulletBitmapIns);
-    SAFE_SHUTDOWN(sprIns1);
-    SAFE_SHUTDOWN(sprIns2);
-    SAFE_SHUTDOWN(sprIns3);
-    SAFE_SHUTDOWN(sprIns4);
-
-	// Release the Text object:
-    SAFE_SHUTDOWN(m_TextOut);
-
-	// Release the Bitmap objects:
-    SAFE_SHUTDOWN(m_Bitmap_Bgr);
-	SAFE_SHUTDOWN(m_Bitmap_Tree);
-    SAFE_SHUTDOWN(m_BitmapIns);
-    SAFE_SHUTDOWN(m_Cursor);
-
-    // Release the light object:
-    SAFE_DELETE(m_Light);
-
-    // Release the Shader objects:
-    //SAFE_SHUTDOWN(m_ColorShader);
-    SAFE_SHUTDOWN(m_TextureShader);
-    SAFE_SHUTDOWN(m_TextureShaderIns);
-    SAFE_SHUTDOWN(m_LightShader);
-    SAFE_SHUTDOWN(m_BulletShader);
-
-	// Release the model object:
-    SAFE_SHUTDOWN(m_Model);
-
-	// Release the camera object:
-    SAFE_DELETE(m_Camera);
-
-    SAFE_DELETE(thPool);
-
-    // Release d3d object:
-    SAFE_SHUTDOWN(m_d3d);
-
-	return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -826,8 +844,12 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                 while (iter != end) {
 
                     if( BulletObj->isAlive() ) {
+
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
-                        BulletObj->Move(0, 0, &VEC);                // вектор списков
+                        //BulletObj->Move(0, 0, &VEC);                // вектор списков
+                        BulletObj->Move(0, 0, olegArray);                // олего-массив
+
+                        // no threads yet!!! 
                     }
                     else {
                         delete BulletObj;
@@ -871,7 +893,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         if( MonsterObj->isAlive() ) {
 
-                            MonsterObj->Move(playerPosX, playerPosY, olegArray[0]);
+                            MonsterObj->Move(playerPosX, playerPosY, olegArray);
 // lalal
 // http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
                         }
@@ -906,7 +928,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                                 monsterList->objList.push_back(monster);
                                 monsterList->listSize++;
 
-                                if (x >= 0 && x <= olegMaxX && y >= 0 && y <= olegMaxY)
+                                if (x >= 0 && x < olegMaxX && y >= 0 && y < olegMaxY)
                                     (olegArray[x][y]).push_back(monster);
                             }
 #endif

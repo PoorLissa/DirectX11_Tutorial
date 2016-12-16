@@ -10,11 +10,17 @@
 #define cuiRef const unsigned int &
 
 // Предварительно объявляем классы
+class gameObjectBase;
 class Player;
 class Bullet;
 class Monster;
 class Bonus;
 class Weapon;
+
+#define olegMaxX 800
+#define olegMaxY 600
+//static std::vector<gameObjectBase*>* olegArray[olegMaxX][olegMaxY];
+typedef std::vector<gameObjectBase*> olegType;
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -222,7 +228,8 @@ class Bullet : public gameObjectBase {
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
     virtual void Move(cfRef, cfRef, void *Param) {
-        _thPool->runAsync(&Bullet::threadMove, this, Param);
+        //_thPool->runAsync(&Bullet::threadMove_VECT, this, Param);
+        threadMove_Oleg(Param);
     }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
@@ -237,7 +244,8 @@ class Bullet : public gameObjectBase {
 
  private:
     // Потоковый просчет попаданий пули в монстров
-    void threadMove(void *);
+    void threadMove_VECT(void *);
+    void threadMove_Oleg(void *);
 
  protected:
     float   _X0, _Y0;               // изначальная точка, из которой пуля летит
@@ -839,6 +847,5 @@ private:
     UINT                                       _numX, _numY;    // число разбиений экрана по горизонтали и по вертикали
     ThreadPool                                *_thPool;
 };
-
 
 #endif

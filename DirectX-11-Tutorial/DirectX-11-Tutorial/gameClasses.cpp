@@ -7,6 +7,7 @@ int  Bullet  :: _scrWidth     = 0;
 int  Bullet  :: _scrHeight    = 0;
 
 ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейства объектов gameObjectBase
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -222,7 +223,8 @@ void Player::setEffect(const unsigned int &effect)
             case BonusWeapons::Weapons::PISTOL:
             {
                 _weaponDelay        = 50;
-                _weaponBulletSpeed  = 10;
+                //_weaponBulletSpeed  = 10;
+                _weaponBulletSpeed  = 2;
                 _weaponBurstQty     = 1;
                 _weaponBulletSpread = 10;
 
@@ -291,17 +293,14 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 #else
     if( !_freezeEffect ) {
 
-        //std::vector<gameObjectBase*> **olegArray = static_cast<std::vector<gameObjectBase*>**>(Param);
-
-        double *a = (double (*))(Param);
-
-
-
         int currX = _X;
         int currY = _Y;
 
-        // если монстр находится в пределах видимости, ищем в олегомассиве по координатам монстра указатель на него и удаляем, т.к. собираемся передвинуться на другое место
-        if( currX >= 0 && currX <= 800 && currY >= 0 && currY <= 600 ) {
+        olegType **olegArray = static_cast<olegType**>(Param);
+
+        // если монстр находится в пределах видимости, ищем в олегомассиве по координатам монстра указатель на него и удаляем,
+        // т.к. собираемся передвинуться на другое место
+        if( currX >= 0 && currX < 800 && currY >= 0 && currY < 600 ) {
 
             std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
 
@@ -342,7 +341,7 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
         currX = _X;
         currY = _Y;
 
-        if( currX >= 0 && currX <= 800 && currY >= 0 && currY <= 600 ) {
+        if( currX >= 0 && currX < 800 && currY >= 0 && currY < 600 ) {
 
             std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
             vec->push_back(this);
@@ -393,7 +392,7 @@ void Monster::threadMove(cfRef x, cfRef y, void *Param)
 // Конструктор для Пули
 Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef speed, UINT bulletType)
 				: gameObjectBase(x, y, scale, 0.0f, speed, BULLET_DEFAULT_HEALTH + BULLET_BONUS_LIFE),
-                    _squareSide(100),
+                    _squareSide(20),
                     _bulletType(bulletType)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
@@ -448,7 +447,7 @@ Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef spee
 // Просчет движения пуль и попадания их в монстров (потоковая версия)
 // На вход получаем вектор списков с монстрами. Рассчитываем столкновения пуль с монстрами, и кто из них умирает.
 // Координаты пули передаются только для совместимости с сигнатурой базового метода и нигде не используются
-void Bullet::threadMove(void *Param)
+void Bullet::threadMove_VECT(void *Param)
 {
     float Rad = 20.0f;
 
@@ -547,6 +546,86 @@ void Bullet::threadMove(void *Param)
         this->_Alive = false;   // пуля ушла в молоко
         return;
     }
+
+    return;
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+void Bullet::threadMove_Oleg(void *Param)
+{
+    float Rad = 20.0f;
+
+    olegType **olegArray = static_cast<olegType **>(Param);
+
+    if( _dX > 0 ) {
+        _squareX0 = int(_X) - 2;
+        _squareX1 = int(_X + _dX + _squareSide);
+    }
+    else {
+        _squareX1 = int(_X) + 2;
+        _squareX0 = int(_X + _dX - _squareSide);
+    }
+
+    if( _dY > 0 ) {
+        _squareY0 = int(_Y) - 2;
+        _squareY1 = int(_Y + _dY + _squareSide);
+    }
+    else {
+        _squareY1 = int(_Y) + 2;
+        _squareY0 = int(_Y + _dY - _squareSide);
+    }
+
+    if( _squareX0 >= 0 && _squareX1 < olegMaxX && _squareY0 >= 0 && _squareY1 < olegMaxY )
+//lalala
+    // пройдем по всем ячейкам олегомассива, которые находятся в прямоугольнике вокруг пули и проверим попадания в монстров
+    for (int i = _squareX0; i < _squareX1; i++) {
+    
+        for (int j = _squareY0; j < _squareY1; j++) {
+
+            std::vector<gameObjectBase*> *vec = &olegArray[i][j];
+
+            for (int monster = 0; monster < vec->size(); monster++) {
+            
+                _monsterX = vec->at(monster)->getPosX();
+                _monsterY = vec->at(monster)->getPosY();
+
+                float dx = _X - _monsterX;
+                float dy = _Y - _monsterY;
+                float dist = sqrt(dx*dx + dy*dy);
+
+                if( dist < Rad || commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
+
+                    vec->at(monster)->setAlive(false);  // монстр убит
+
+                    // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+
+                    _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
+
+                    // Если время жизни пули истекло, то пуля истрачена:
+					if( !_Health ) {
+
+						this->_Alive = false;
+
+						_dX = _dY = 0.0;            // Останавливаем пулю
+						_X = (float)_monsterX;      // Переносим пулю в центр монстра
+						_Y = (float)_monsterY;
+
+						return;
+					}
+                }
+            }
+        }
+    }
+
+    // big if
+
+    _X += _dX;
+    _Y += _dY;
+
+    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight )
+        this->_Alive = false;   // пуля ушла в молоко
 
     return;
 }

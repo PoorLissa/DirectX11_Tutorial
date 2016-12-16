@@ -29,8 +29,6 @@
 #include "__textureShaderClassInstancing.h"
 #include "gameShader_Bullet.h"
 
-
-
 // ---------------------------------------------------------------------------------------
 #if defined fullScreen
 const bool FULL_SCREEN    = true;
