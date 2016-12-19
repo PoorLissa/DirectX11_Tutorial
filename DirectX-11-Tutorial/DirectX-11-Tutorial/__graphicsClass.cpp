@@ -42,6 +42,8 @@ std::string strMsg;
 
 olegType** olegArray = nullptr;
 
+extern gameCells GameCells;
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -847,7 +849,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                         //BulletObj->Move(0, 0, &VEC);                // вектор списков
-                        BulletObj->Move(0, 0, olegArray);                // олего-массив
+                        BulletObj->Move(0, 0, olegArray);             // олего-массив
 
                         // no threads yet!!! 
                     }

@@ -19,9 +19,87 @@ class Weapon;
 
 #define olegMaxX 800
 #define olegMaxY 600
-//static std::vector<gameObjectBase*>* olegArray[olegMaxX][olegMaxY];
+
 typedef std::vector<gameObjectBase*> olegType;
 
+struct OlegType {
+    std::vector<gameObjectBase*> cellList;      // вектор, в котором будут отмечаться монстры, зашедшие в ячейку
+    std::mutex                   cellMutex;     // мьютекс для блокирования вектора cellList на запись/удаление
+    unsigned int                 cellId;        // уникальный id для ячеек
+};
+
+class gameCells {
+
+ public:
+    gameCells() {
+
+        if( Single ) {
+            exit(EXIT_FAILURE);
+        }
+        else {
+            // временные константы
+            _lowX = 0;
+            _lowY = 0;
+            _maxX = 800;
+            _maxY = 600;
+
+            _widthPixels  = abs(_maxX - _lowX);
+            _heightPixels = abs(_maxY - _lowY);
+
+            // потом нужно подобрать подходящий размер
+            _cellSide = 10;
+
+            _widthCells  = _widthPixels  / _cellSide;
+            _heightCells = _heightPixels / _cellSide;
+
+            VEC = new std::vector<OlegType>(_widthCells * _heightCells);
+
+            // раздадим всем ячейкам уникальные id
+            for (unsigned int i = 0; i < _widthCells * _heightCells; i++)
+                VEC->at(i).cellId = i;
+
+            Single = true;
+        }
+    }
+
+   ~gameCells() {
+        delete VEC;
+    }
+
+    // пересчитываем экранные координаты во внутрисеточный индекс и возвращаем соответствующий вектор
+    inline OlegType& operator() (const int posx, const int posy) {
+
+        unsigned short cellX = posx / _cellSide;
+        unsigned short cellY = posy / _cellSide;
+
+        return VEC->at( _widthCells * cellY + cellX );
+    }
+
+    // передаем по ссылке 2 координаты и записываем в них координаты ячейки в сетке
+    inline void getCellCoordinates(int &x, int &y) {
+        x = x / _cellSide;
+        y = y / _cellSide;
+    }
+
+    inline int getDist_inCells(const int &dist) {
+        return dist / _cellSide;
+    }
+
+ private:
+    gameCells(const gameCells &);
+    gameCells& operator=(gameCells);
+
+ private:
+    short _lowX, _lowY, _maxX, _maxY;               // координаты, для которых строится сетка
+    unsigned short _cellSide;                       // размер ячейки сетки
+    unsigned short _widthPixels, _heightPixels;     // размеры поля в пикселах
+    unsigned short _widthCells, _heightCells;       // размеры поля в ячейках
+
+    std::vector<OlegType> *VEC;
+
+    static bool Single;
+
+};
 // ------------------------------------------------------------------------------------------------------------------------
 
 

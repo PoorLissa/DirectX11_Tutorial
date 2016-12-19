@@ -2,11 +2,14 @@
 #include "gameClasses.h"
 
 // Инициализируем статические переменные в глобальной области
-bool Monster :: _freezeEffect = false;
-int  Bullet  :: _scrWidth     = 0;
-int  Bullet  :: _scrHeight    = 0;
+bool Monster   :: _freezeEffect = false;
+int  Bullet    :: _scrWidth     = 0;
+int  Bullet    :: _scrHeight    = 0;
+bool gameCells :: Single        = false;
 
 ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейства объектов gameObjectBase
+
+gameCells GameCells;
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -558,6 +561,25 @@ void Bullet::threadMove_Oleg(void *Param)
     float Rad = 20.0f;
 
     olegType **olegArray = static_cast<olegType **>(Param);
+/*
+    if( _dX > 0 ) {
+        _squareX0 = int(_X) - 2;
+        _squareX1 = int(_X + _dX + _squareSide);
+    }
+    else {
+        _squareX1 = int(_X) + 2;
+        _squareX0 = int(_X + _dX - _squareSide);
+    }
+
+    if( _dY > 0 ) {
+        _squareY0 = int(_Y) - 2;
+        _squareY1 = int(_Y + _dY + _squareSide);
+    }
+    else {
+        _squareY1 = int(_Y) + 2;
+        _squareY0 = int(_Y + _dY - _squareSide);
+    }
+*/
 
     if( _dX > 0 ) {
         _squareX0 = int(_X) - 2;
