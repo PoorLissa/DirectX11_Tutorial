@@ -83,6 +83,8 @@ class GraphicsClass {
     bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
     bool Render3d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
 
+    void threadMonsterMove(const unsigned int &, const unsigned int &, const unsigned int &);
+
  private:
 
     // ѕоскольку мы рендерим кадры 1 раз в 20 мс, то не будем каждый раз создавать переменные дл€ функции рендеринга, а зададим их один раз и навсегда:

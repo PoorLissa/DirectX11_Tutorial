@@ -215,7 +215,6 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
     thPool = new ThreadPool(50);
     gameObjectBase::setThreadPool(thPool);
-    //bltHelper.setThreadPool(thPool);
 
 	// Запомним размеры текущего экрана
 	scrWidth      = screenWidth;
@@ -370,7 +369,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                speed = 0.01f;
+                //speed *= 0.1f;
+                //speed = 0.01f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 Monster *monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
@@ -412,7 +412,8 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 				float  scale = 0.5f + (rand() % 16) * 0.1f;
                 int interval = int(50 / speed);
 
-                speed = 0.01f;
+                //speed *= 0.1f;
+                //speed = 1.0f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 Monster *monster = new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8);
@@ -849,7 +850,8 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                         //BulletObj->Move(0, 0, &VEC);                // вектор списков
-                        BulletObj->Move(0, 0, olegArray);             // олего-массив
+                        //BulletObj->Move(0, 0, olegArray);             // олего-массив
+                        BulletObj->Move(0, 0);
 
                         // no threads yet!!! 
                     }
@@ -882,11 +884,12 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
             }
 
             // --- Monsters ---
+/*
             {
                 #define MonsterObj (*iter)
                 MonsterList *monsterList;
                 for (unsigned int listNo = 0; listNo < VEC.size(); listNo++) {
-                
+
                     monsterList = VEC.at(listNo);
                     iter = monsterList->objList.begin();
                     end  = monsterList->objList.end();
@@ -895,9 +898,8 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         if( MonsterObj->isAlive() ) {
 
-                            MonsterObj->Move(playerPosX, playerPosY, olegArray);
-// lalal
-// http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
+                            MonsterObj->Move(playerPosX, playerPosY);
+
                         }
                         else {
 
@@ -939,6 +941,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
                         ++iter;
                     }
+
                     thPool->waitForAll();   // Ждем, пока все потоки отработают до конца
 
                     if( !monsterList->spriteInst->initializeInstances(m_d3d->GetDevice(), &monsterList->objList, &monsterList->listSize) )
@@ -949,7 +952,27 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 #if defined doLogMessages
                     gameTimer.Frame();
 
-                    strMsg += "-=-=-=-=-=- >>> Monsters time with BulletHelper:  ";
+                    strMsg += "-=-=-=-=-=- >>> Monsters time:  ";
+                    strMsg += std::to_string(gameTimer.GetTime());
+                    strMsg += "\n";
+#endif
+                }
+            }
+*/
+            // --- Monsters with threads ---
+            {
+                // запускаем обработку каждого вектора с монстрами в отдельном потоке
+                // так что, в принципе, чем больше будет отдельных векторов (в пределах разумного), тем быстрее все будет просчитываться
+                for (unsigned int listNo = 0; listNo < VEC.size(); listNo++)
+                    thPool->runAsync(&GraphicsClass::threadMonsterMove, this, listNo, playerPosX, playerPosY);
+
+                thPool->waitForAll();   // Ждем, пока все потоки отработают до конца
+
+                {
+#if defined doLogMessages
+                    gameTimer.Frame();
+
+                    strMsg += "-=-=-=-=-=- >>> Monsters time:  ";
                     strMsg += std::to_string(gameTimer.GetTime());
                     strMsg += "\n";
 #endif
@@ -958,7 +981,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
             // Bonuses
             {
-                #define BonusObj (*iter) 
+                #define BonusObj (*iter)
                 if( bonusList1.listSize ) {
 
                     iter = bonusList1.objList.begin();
@@ -989,7 +1012,7 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
 
             // Weapons
             {
-                #define WeaponObj (*iter) 
+                #define WeaponObj (*iter)
                 if( weaponList1.listSize ) {
 
                     iter = weaponList1.objList.begin();
@@ -1178,6 +1201,41 @@ void GraphicsClass::Sort(std::list<gameObjectBase*> *list)
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
+
+
+// Потоковое продвижение монстров
+void GraphicsClass::threadMonsterMove(const unsigned int &listNo, const unsigned int &playerPosX, const unsigned int &playerPosY)
+{
+    #define MonsterObj (*iter)
+    MonsterList *monsterList = VEC.at(listNo);
+
+    auto iter = monsterList->objList.begin();
+    auto end  = monsterList->objList.end();
+
+    while (iter != end) {
+
+        if( MonsterObj->isAlive() ) {
+
+            MonsterObj->Move(playerPosX, playerPosY);
+
+        }
+        else {
+
+            delete MonsterObj;
+            iter = monsterList->objList.erase(iter);
+            monsterList->listSize--;
+
+            continue;
+        }
+
+        ++iter;
+    }
+
+    if( !monsterList->spriteInst->initializeInstances(m_d3d->GetDevice(), &monsterList->objList, &monsterList->listSize) )
+        return;
+
+    return;
+}
 // ------------------------------------------------------------------------------------------------------------------------
 
 // ------------------------------------------------------------------------------------------------------------------------

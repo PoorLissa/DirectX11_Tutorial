@@ -291,9 +291,46 @@ void Player::setEffect(const unsigned int &effect)
 // Перемещение Монстра
 void Monster::Move(cfRef x, cfRef y, void *Param)
 {
+#if 1
+    if( !_freezeEffect ) {
+
+	    float dX = x - _X;
+        float dY = y - _Y;
+        float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
+
+        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
+        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
+
+        int oldX = _X;
+        int oldY = _Y;
+
+        _X += dX;
+        _Y += dY;
+
+	    animInterval1--;
+
+	    if( animInterval1 < 0 ) {
+		    animInterval1 = animInterval0;
+
+		    animPhase++;
+
+		    if(animPhase > animQty)
+			    animPhase = 0;
+	    }
+
+        // обновим список ячеек после перемещения монстра
+        //GameCells.UpdateGameCells2(this, oldX, oldY, _X, _Y, _radius);
+        GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y);
+    }
+
+    return;
+#endif
+
 #if 0
     _thPool->runAsync(&Monster::threadMove, this, x, y, Param);
-#else
+#endif
+
+#if 0
     if( !_freezeEffect ) {
 
         int currX = _X;
@@ -359,14 +396,15 @@ void Monster::threadMove(cfRef x, cfRef y, void *Param)
 {
     if( !_freezeEffect ) {
 
-        BulletHelper *bltHelper = static_cast<BulletHelper*>(Param);
-
 	    float dX = x - _X;
         float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
         dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
         dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
+
+        int oldX = _X;
+        int oldY = _Y;
 
         _X += dX;
         _Y += dY;
@@ -382,7 +420,9 @@ void Monster::threadMove(cfRef x, cfRef y, void *Param)
 			    animPhase = 0;
 	    }
 
-        //bltHelper->threadMove(this);
+        // обновим список ячеек после перемещения монстра
+        GameCells.UpdateGameCells2(this, oldX, oldY, _X, _Y, _radius);
+        //GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y);
     }
 
     return;
@@ -655,6 +695,91 @@ void Bullet::threadMove_Oleg(void *Param)
 
 
 
+// Потоковый просчет движения пули и попаданий при помощи ячеек
+void Bullet::threadMove_Cells()
+{
+    float Rad = 20.0f;
+    int   RadCells = GameCells.getDist_inCells(Rad);
+
+    int bulletX0 = _X,
+        bulletY0 = _Y,
+        bulletX1 = _X + _dX,
+        bulletY1 = _Y + _dY;
+
+    GameCells.getCellCoordinates(bulletX0, bulletY0);
+    GameCells.getCellCoordinates(bulletX1, bulletY1);
+
+    if( _dX > 0 ) {
+        _squareX0 = int(bulletX0) - RadCells;
+        _squareX1 = int(bulletX1) + RadCells;
+    }
+    else {
+        _squareX1 = int(bulletX0) + RadCells;
+        _squareX0 = int(bulletX1) - RadCells;
+    }
+
+    if( _dY > 0 ) {
+        _squareY0 = int(bulletY0) - RadCells;
+        _squareY1 = int(bulletY1) + RadCells;
+    }
+    else {
+        _squareY1 = int(bulletY0) + RadCells;
+        _squareY0 = int(bulletY1) - RadCells;
+    }
+
+
+
+    if ( bulletX > 0 && bulletX < 800 && bulletY > 0 && bulletY < 800 ) {
+
+        GameCells.getCellCoordinates(bulletX, bulletY);
+
+        std::vector<gameObjectBase*> *vec = &(GameCells(bulletX, bulletY).cellList);
+
+        for (int i = 0; i < vec->size(); i++) {
+    
+            int _monsterX = vec->at(i)->getPosX();
+            int _monsterY = vec->at(i)->getPosY();
+
+            float dx = _X - _monsterX;
+            float dy = _Y - _monsterY;
+            float dist = sqrt(dx*dx + dy*dy);
+
+            if( dist < Rad || commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
+
+                vec->at(i)->setAlive(false);  // монстр убит
+
+                // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+                _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
+
+                // Если время жизни пули истекло, то пуля истрачена:
+			    if( !_Health ) {
+
+			        this->_Alive = false;
+
+				    _dX = _dY = 0.0;            // Останавливаем пулю
+				    _X = (float)_monsterX;      // Переносим пулю в центр монстра
+				    _Y = (float)_monsterY;
+
+				    return;
+			    }
+            }
+        }
+    }
+
+    // ************************************************
+
+    _X += _dX;
+    _Y += _dY;
+
+    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight )
+        this->_Alive = false;   // пуля ушла в молоко
+
+    return;
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
 // Ионные пули просчитываем иначе, потому что у них есть а) радиус, б) взрыв при попадании
 void BulletIon::threadMove(void *Param)
 {
@@ -775,6 +900,235 @@ void BulletIon::threadMove(void *Param)
         _dX = _dY = 0.0;
         this->_Alive = false;   // пуля ушла в молоко
         return;
+    }
+
+    return;
+}
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// прописываем монстра в ячейки, которые он собою занимает
+// версия 1, использует вектор с id ячеек внутри монстра, работает так себе
+// заполняет все ячейки под квадратом монстра
+void gameCells::UpdateGameCells1(Monster *obj, std::vector<unsigned int> *monsterCellsVec, const int &currx, const int &curry, const int &rad)
+{
+#define UNUSED_CELL_VALUE 2e6
+/*
+    // получим сеточные координаты центра монстра, его радиус в попугаях (т.е. в ячейках) и координаты квадрата, описанного вокруг монстра
+
+    int Rad   = rad   * _cellSideInverted;
+    int currX = currx * _cellSideInverted;
+    int currY = curry * _cellSideInverted;
+
+    int minX = currX - Rad;
+    int minY = currY - Rad;
+    int maxX = currX + Rad;
+    int maxY = currY + Rad;
+
+    if( minX < _lowX ) minX = _lowX;
+    if( minY < _lowY ) minY = _lowY;
+    if( maxX > _maxX ) maxX = _maxX;
+    if( maxY > _maxY ) maxY = _maxY;
+
+    int  cellId;
+    bool found;
+    std::vector<gameObjectBase*> *vec;
+
+    // Проходим по айдишникам ячеек из вектора внутри монстра
+    for (unsigned int k = 0; k < monsterCellsVec->size(); k++) {
+
+        // Восстанавливаем координаты ячейки по её айдишнику
+        cellId = (*monsterCellsVec)[k];
+
+        // как только дойдем в цикле до неиспользуемого элемента (которые всегда помещаются в конец вектора), дальше можно не ходить
+        if( cellId == UNUSED_CELL_VALUE )
+            break;
+
+        int oldX  = cellId % _widthCells;
+        int oldY  = cellId / _widthCells;
+
+        // Теперь выписываемся из ячеек, из которых ушли
+        if( minX > oldX || maxX < oldX || minY > oldY || maxY < oldY ) {
+
+            // пройдем в цикле по вектору монстров, сохраненному в ячейке
+            vec = &( (*VEC)[cellId].cellList );
+            found = false;
+
+            for (int i = 0; i < vec->size(); i++) {
+            
+                // если найдем указатель на текущего монстра, удаляем его из ячейки
+                if( (*vec)[i] == obj ) {
+                    
+                    std::swap( (*vec)[i], vec->back());
+                    vec->pop_back();
+
+                    // в списке ячеек монстра: заменяем текущую ячейку на неиспользуемое значение и переносим ее в хвост
+                    (*monsterCellsVec)[i] = monsterCellsVec->back();
+                    monsterCellsVec->back() = UNUSED_CELL_VALUE;
+
+                    break;
+                }
+            }
+        }
+    }
+
+    // Проходим по всем ячейкам, на которые попадает монстр после перемещения и прописываемся в них (если еще не прописаны)
+    for (int i = minX; i < maxX; i++) {
+
+        for (int j = minY; j < maxY; j++) {
+
+            // Пробежимся по вектору монстров в каждой ячейке и проверим, есть ли в нем уже запись о таком монстре. Если нет, пропишемся
+            found = false;
+            vec   = &( (*this)(i, j).cellList );
+
+            for (int k = 0; k < vec->size(); k++) {
+            
+                if( (*vec)[k] == obj ) {
+                
+                    found = true;
+
+                   if( monsterCellsVec->size() )
+                    if( monsterCellsVec->back() == UNUSED_CELL_VALUE )
+                        monsterCellsVec->back() = getCellId_withCoords(i, j);
+                    else
+                        monsterCellsVec->push_back( getCellId_withCoords(i, j) );
+
+                    break;
+                }
+            }
+
+            if( !found )
+                vec->push_back(obj);
+        }
+    }
+*/
+#undef UNUSED_CELL_VALUE
+
+    return;
+}
+
+// прописываем монстра в ячейки, которые он собою занимает
+// версия 2, использует только координаты монстра ДО и ПОСЛЕ, работает пошуcтрее, чем версия 1
+// заполняет все ячейки под квадратом монстра
+void gameCells::UpdateGameCells2(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry, const int &rad)
+{
+/*
+    int Rad   = rad   * _cellSideInverted;
+    int oldX  = oldx  * _cellSideInverted;
+    int oldY  = oldy  * _cellSideInverted;
+    int currX = currx * _cellSideInverted;
+    int currY = curry * _cellSideInverted;
+
+    int minXold = oldX - Rad;
+    int minYold = oldY - Rad;
+    int maxXold = oldX + Rad;
+    int maxYold = oldY + Rad;
+
+    if( minXold < _lowX ) minXold = _lowX;
+    if( minYold < _lowY ) minYold = _lowY;
+    if( maxXold > _maxX ) maxXold = _maxX;
+    if( maxYold > _maxY ) maxYold = _maxY;
+
+    int minX = currX - Rad;
+    int minY = currY - Rad;
+    int maxX = currX + Rad;
+    int maxY = currY + Rad;
+
+    if( minX < _lowX ) minX = _lowX;
+    if( minY < _lowY ) minY = _lowY;
+    if( maxX > _maxX ) maxX = _maxX;
+    if( maxY > _maxY ) maxY = _maxY;
+
+    int  cellId;
+    bool found;
+    std::vector<gameObjectBase*> *vec;
+
+    // отпишемся от старых ячеек
+    for (int i = minXold; i < maxXold; i++) {
+        for (int j = minYold; j < maxYold; j++) {
+
+            cellId = getCellId_withCoords(i, j);
+
+            vec = &( (*VEC)[cellId].cellList );
+
+            (*VEC)[cellId].cellMutex.lock();
+
+                for (int k = 0; k < vec->size(); k++) {
+            
+                    if ((*vec)[k] == obj) {
+
+                        (*vec)[k] = vec->back();
+                        vec->pop_back();
+
+                        break;
+                    }
+                }
+
+            (*VEC)[cellId].cellMutex.unlock();
+        }
+    }
+
+    // пропишемся в новые ячейки
+    for (int i = minX; i < maxX; i++) {
+        for (int j = minY; j < maxY; j++) {
+
+            cellId = getCellId_withCoords(i, j);
+
+            (*VEC)[cellId].cellMutex.lock();
+
+                (*VEC)[cellId].cellList.push_back(obj);
+
+            (*VEC)[cellId].cellMutex.unlock();
+        }
+    }
+*/
+    return;
+}
+
+// прописываем монстра в ячейки, которые он собою занимает
+// версия 3, использует только координаты монстра ДО и ПОСЛЕ
+// заполняет ровно одну ячейку, в которой находится центра монстра
+void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry)
+{
+    int oldX  = oldx  * _cellSideInverted;
+    int oldY  = oldy  * _cellSideInverted;
+    int currX = currx * _cellSideInverted;
+    int currY = curry * _cellSideInverted;
+
+    // если монстр поменял свою ячейку, перепропишем его в новую ячейку и удалим из старой
+    if( oldX != currX || oldY != currY ) {
+
+        int  cellId;
+        std::vector<gameObjectBase*> *vec;
+
+        // отпишемся от старой ячейки
+        cellId = getCellId_withCoords(oldX, oldY);
+
+        vec = &( (*VEC)[cellId].cellList );
+
+        (*VEC)[cellId].cellMutex.lock();
+
+            for (int i = 0; i < vec->size(); i++)
+            
+                if ((*vec)[i] == obj) {
+
+                    (*vec)[i] = vec->back();
+                    vec->pop_back();
+
+                    break;
+                }
+
+        (*VEC)[cellId].cellMutex.unlock();
+
+        // пропишемся в новую ячейку
+        cellId = getCellId_withCoords(currX, currY);
+
+        (*VEC)[cellId].cellMutex.lock();
+
+            (*VEC)[cellId].cellList.push_back(obj);
+
+        (*VEC)[cellId].cellMutex.unlock();
     }
 
     return;

@@ -5,6 +5,7 @@
 http://webcache.googleusercontent.com/search?q=cache:bBEhvN9mQHcJ:gamedev.stackexchange.com/questions/33888/what-is-the-most-efficient-container-to-store-dynamic-game-objects-in+&cd=1&hl=ru&ct=clnk&gl=ru
 http://hghltd.yandex.net/yandbtm?fmode=inject&url=http%3A%2F%2Fxydan.livejournal.com%2F8595.html&tld=ru&lang=ru&la=1481239296&tm=1481789396&text=c%2B%2B%20thread%20вызов%20функций&l10n=ru&mime=html&sign=7011109c99f9d5b7748f348906663dd6&keyno=0
 
+
   crimsonland info
  ------------------
 
@@ -38,6 +39,7 @@ http://hghltd.yandex.net/yandbtm?fmode=inject&url=http%3A%2F%2Fxydan.livejournal
  - сделать ачивки, типа продержаться столько-то без ранений или без выстрела, и тогда какой-то бонус дается (экстра XP или HP или еще что)
  - у пуль сделать проверку на мин/макс координату, за пределами которой уже не просчитывать столкновение с монстрами, чтобы пуля могла улететь за пределы экрана, и чтобы ее хвост не пропадал так резко
  - сделать ускоритель просчета монстров по методу двумерного массива, как насоветовал олег
+ - избавиться от vector.at() в пользу vector[], т.к. последний несколько быстрее
 
  --- DONE -----------------------------------------------------------------------------------------------------------------------
  + при выстреле из ионного оружия + огненные пули: летит быстрая огненаня пуля, за ней летит обычаня ионная

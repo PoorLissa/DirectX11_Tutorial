@@ -48,15 +48,16 @@ class gameCells {
 
             // потом нужно подобрать подходящий размер
             _cellSide = 10;
+            _cellSideInverted = 1.0f / _cellSide;
 
-            _widthCells  = _widthPixels  / _cellSide;
-            _heightCells = _heightPixels / _cellSide;
+            _widthCells  = _widthPixels  * _cellSideInverted;
+            _heightCells = _heightPixels * _cellSideInverted;
 
             VEC = new std::vector<OlegType>(_widthCells * _heightCells);
 
             // раздадим всем ячейкам уникальные id
             for (unsigned int i = 0; i < _widthCells * _heightCells; i++)
-                VEC->at(i).cellId = i;
+                (*VEC)[i].cellId = i;
 
             Single = true;
         }
@@ -67,23 +68,28 @@ class gameCells {
     }
 
     // пересчитываем экранные координаты во внутрисеточный индекс и возвращаем соответствующий вектор
-    inline OlegType& operator() (const int posx, const int posy) {
-
-        unsigned short cellX = posx / _cellSide;
-        unsigned short cellY = posy / _cellSide;
-
-        return VEC->at( _widthCells * cellY + cellX );
+    inline OlegType& operator() (const int &posx, const int &posy) {
+        return (*VEC)[_widthCells * posy + posx];
     }
 
     // передаем по ссылке 2 координаты и записываем в них координаты ячейки в сетке
     inline void getCellCoordinates(int &x, int &y) {
-        x = x / _cellSide;
-        y = y / _cellSide;
+        x *= _cellSideInverted;
+        y *= _cellSideInverted;
     }
 
     inline int getDist_inCells(const int &dist) {
-        return dist / _cellSide;
+        return dist * _cellSideInverted;
     }
+
+    inline int getCellId_withCoords(const int &x, const int &y) {
+        return _widthCells * y + x;
+    }
+
+    // прописываем монстра в ячейки, которые он собою занимает
+    void UpdateGameCells1(Monster *, std::vector<unsigned int> *, const int &, const int &, const int &);
+    void UpdateGameCells2(Monster *, const int &, const int &, const int &, const int &, const int &);
+    void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &);
 
  private:
     gameCells(const gameCells &);
@@ -92,13 +98,13 @@ class gameCells {
  private:
     short _lowX, _lowY, _maxX, _maxY;               // координаты, для которых строится сетка
     unsigned short _cellSide;                       // размер ячейки сетки
+    float          _cellSideInverted;               // 1/_cellSide;
     unsigned short _widthPixels, _heightPixels;     // размеры поля в пикселах
-    unsigned short _widthCells, _heightCells;       // размеры поля в ячейках
+    unsigned short _widthCells,  _heightCells;      // размеры поля в ячейках
 
     std::vector<OlegType> *VEC;
 
     static bool Single;
-
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -111,6 +117,7 @@ class gameObjectBase {
     gameObjectBase(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef health) :
 		_X(x),
 		_Y(y),
+        _Alive(true),
 		_Angle(angle),
 		_Speed(speed),
 		_Scale(scale),
@@ -263,7 +270,8 @@ class Monster : public gameObjectBase {
             animInterval0(interval),
             animInterval1(interval),
             animQty(anim_Qty),
-            animPhase(0)
+            animPhase(0),
+            _radius(20)
 	{}
    ~Monster() {}
 
@@ -275,10 +283,13 @@ class Monster : public gameObjectBase {
 
     static inline void setFreeze(const bool &mode) { _freezeEffect = mode;  }   // Bonus - Заморозка монстров
 
+    void inline setCellId(unsigned int id) { _ownCellsVec.push_back(id); }
+
  private:
 	 int            animInterval0, animInterval1;
 	 unsigned int   animQty, animPhase;
-
+     unsigned int   _radius;
+     std::vector<unsigned int> _ownCellsVec;        // список ячеек, которые заняты этим монстром
      static bool    _freezeEffect;                  // Когда выставлена в true, все монстры замораживаются на месте
 };
 // ------------------------------------------------------------------------------------------------------------------------
@@ -307,7 +318,8 @@ class Bullet : public gameObjectBase {
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
     virtual void Move(cfRef, cfRef, void *Param) {
         //_thPool->runAsync(&Bullet::threadMove_VECT, this, Param);
-        threadMove_Oleg(Param);
+        //threadMove_Oleg(Param);
+        threadMove_Cells();
     }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
@@ -324,6 +336,7 @@ class Bullet : public gameObjectBase {
     // Потоковый просчет попаданий пули в монстров
     void threadMove_VECT(void *);
     void threadMove_Oleg(void *);
+    void threadMove_Cells();
 
  protected:
     float   _X0, _Y0;               // изначальная точка, из которой пуля летит
