@@ -17,11 +17,6 @@ class Monster;
 class Bonus;
 class Weapon;
 
-#define olegMaxX 800
-#define olegMaxY 600
-
-typedef std::vector<gameObjectBase*> olegType;
-
 struct OlegType {
     std::vector<gameObjectBase*> cellList;      // вектор, в котором будут отмечаться монстры, зашедшие в ячейку
     std::mutex                   cellMutex;     // мьютекс для блокирования вектора cellList на запись/удаление
@@ -86,9 +81,20 @@ class gameCells {
         return _widthCells * y + x;
     }
 
+    inline void checkCoordinates(int &x0, int &y0, int &x1, int &y1) {
+
+        static int _lowX_Cells = getDist_inCells(_lowX);
+        static int _lowY_Cells = getDist_inCells(_lowY);
+        static int _maxX_Cells = getDist_inCells(_maxX);
+        static int _maxY_Cells = getDist_inCells(_maxY);
+
+        if( x0 < _lowX_Cells ) x0 = _lowX_Cells;
+        if( y0 < _lowY_Cells ) y0 = _lowY_Cells;
+        if( x1 > _maxX_Cells ) x1 = _maxX_Cells - 1;
+        if( y1 > _maxY_Cells ) y1 = _maxY_Cells - 1;
+    }
+
     // прописываем монстра в ячейки, которые он собою занимает
-    void UpdateGameCells1(Monster *, std::vector<unsigned int> *, const int &, const int &, const int &);
-    void UpdateGameCells2(Monster *, const int &, const int &, const int &, const int &, const int &);
     void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &);
 
  private:
@@ -271,7 +277,8 @@ class Monster : public gameObjectBase {
             animInterval1(interval),
             animQty(anim_Qty),
             animPhase(0),
-            _radius(20)
+            _radius(20),
+            _Cell(2e6)
 	{}
    ~Monster() {}
 
@@ -283,14 +290,16 @@ class Monster : public gameObjectBase {
 
     static inline void setFreeze(const bool &mode) { _freezeEffect = mode;  }   // Bonus - Заморозка монстров
 
-    void inline setCellId(unsigned int id) { _ownCellsVec.push_back(id); }
+    inline const UINT& getCell  () const  { return _Cell;   }
+    inline void        setCell  (UINT &c) {    _Cell = c;   }
+    inline const UINT& getRadius() const  { return _radius; }
 
  private:
 	 int            animInterval0, animInterval1;
 	 unsigned int   animQty, animPhase;
      unsigned int   _radius;
-     std::vector<unsigned int> _ownCellsVec;        // список ячеек, которые заняты этим монстром
-     static bool    _freezeEffect;                  // Когда выставлена в true, все монстры замораживаются на месте
+     static bool    _freezeEffect;              // Когда выставлена в true, все монстры замораживаются на месте
+     unsigned int   _Cell;                      // номер занятой ячейки, чтобы при первой итерации заполнить ячейки. иначе монстры с низкой скоростью или стоячие - не убиваются
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -318,8 +327,8 @@ class Bullet : public gameObjectBase {
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
     virtual void Move(cfRef, cfRef, void *Param) {
         //_thPool->runAsync(&Bullet::threadMove_VECT, this, Param);
-        //threadMove_Oleg(Param);
-        threadMove_Cells();
+        //threadMove_Cells();
+        _thPool->runAsync(&Bullet::threadMove_Cells, this);
     }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
@@ -335,7 +344,6 @@ class Bullet : public gameObjectBase {
  private:
     // Потоковый просчет попаданий пули в монстров
     void threadMove_VECT(void *);
-    void threadMove_Oleg(void *);
     void threadMove_Cells();
 
  protected:
@@ -371,11 +379,13 @@ class BulletIon : public Bullet {
    ~BulletIon() {}
 
     virtual void Move(cfRef, cfRef, void *Param) {
-        _thPool->runAsync(&BulletIon::threadMove, this, Param);
+        //_thPool->runAsync(&BulletIon::threadMove1, this, Param);
+        _thPool->runAsync(&BulletIon::threadMove2, this);
     }
 
  private:
-    void threadMove(void *);
+    void threadMove1(void *);
+    void threadMove2();
 };
 // ------------------------------------------------------------------------------------------------------------------------
 

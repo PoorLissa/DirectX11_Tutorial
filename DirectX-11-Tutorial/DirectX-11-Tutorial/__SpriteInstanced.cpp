@@ -97,7 +97,11 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         return true;
     m_instanceCount = *listSize;
 
-
+/*
+    if( *listSize != 10 && *listSize != 5 && *listSize != 4 && *listSize != 3 ) {
+        int asd = 123;
+    }
+*/
     InstanceType			*instances;
     D3D11_BUFFER_DESC		 instanceBufferDesc;
     D3D11_SUBRESOURCE_DATA   instanceData;
@@ -120,8 +124,8 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
     int i = 0;
     std::list<gameObjectBase*>::iterator iter, end;
 
-	float halfWidth  = 0.5f * scrWidth;
-    float halfHeight = 0.5f * scrHeight;
+	static float halfWidth  = 0.5f * scrWidth;
+    static float halfHeight = 0.5f * scrHeight;
 
     for (iter = list->begin(), end = list->end(); iter != end; ++iter, ++i) {
 

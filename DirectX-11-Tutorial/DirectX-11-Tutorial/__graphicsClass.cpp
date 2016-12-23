@@ -40,8 +40,6 @@ char buf[100];
 // глобальный стринг, чтобы писать в него сообщения на протяжении одной итерации и потом в конце итерации выводить его в файл ровно 1 раз
 std::string strMsg;
 
-olegType** olegArray = nullptr;
-
 extern gameCells GameCells;
 
 // ------------------------------------------------------------------------------------------------------------------------
@@ -74,10 +72,6 @@ GraphicsClass::GraphicsClass()
     thPool             = 0;
 
     msg = "...";
-
-    olegArray = new olegType* [olegMaxX];
-    for (int i = 0; i < olegMaxX; i++)
-        olegArray[i] = new olegType[olegMaxY];
 }
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -181,10 +175,6 @@ void GraphicsClass::Shutdown()
 
     // Release d3d object:
     SAFE_SHUTDOWN(m_d3d);
-
-    for(int i = 0; i < olegMaxX; i++)
-        delete [] olegArray[i];
-    delete [] olegArray;
 
 	return;
 }
@@ -370,16 +360,14 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 int interval = int(50 / speed);
 
                 //speed *= 0.1f;
-                //speed = 0.01f;
+                speed = 1.0f;
+                //speed = 0.0f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
                 Monster *monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
 
                 monsterList1.objList.push_back(monster);
                 monsterList1.listSize++;
-
-                if (x >= 0 && x < olegMaxX && y >= 0 && y < olegMaxY)
-                    (olegArray[x][y]).push_back(monster);
             }
         }
 
@@ -413,15 +401,13 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 int interval = int(50 / speed);
 
                 //speed *= 0.1f;
-                //speed = 1.0f;
+                speed = 1.0f;
+                //speed = 0.0f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
                 Monster *monster = new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8);
                 monsterList2.objList.push_back(monster);
                 monsterList2.listSize++;
-
-                if (x >= 0 && x < olegMaxX && y >= 0 && y < olegMaxY)
-                    (olegArray[x][y]).push_back(monster);
             }
         }
 
@@ -849,11 +835,10 @@ bool GraphicsClass::Render2d(const float &rotation, const float &zoom, const int
                     if( BulletObj->isAlive() ) {
 
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
+                        // ??? - в новой реализации с ячейками, кажется, эта проблема ушла сама собой
                         //BulletObj->Move(0, 0, &VEC);                // вектор списков
-                        //BulletObj->Move(0, 0, olegArray);             // олего-массив
+                        //BulletObj->Move(0, 0, olegArray);           // олего-массив
                         BulletObj->Move(0, 0);
-
-                        // no threads yet!!! 
                     }
                     else {
                         delete BulletObj;

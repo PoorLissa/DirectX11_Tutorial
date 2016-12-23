@@ -226,14 +226,20 @@ void Player::setEffect(const unsigned int &effect)
             case BonusWeapons::Weapons::PISTOL:
             {
                 _weaponDelay        = 50;
-                //_weaponBulletSpeed  = 10;
-                _weaponBulletSpeed  = 2;
+                _weaponBulletSpeed  = 10;
                 _weaponBurstQty     = 1;
                 _weaponBulletSpread = 10;
 
                 setBulletsType_On (Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
+
+#if 0
+                _weaponDelay        = 1;
+                _weaponBulletSpeed  = 50;
+                _weaponBurstQty     = 10;
+                _weaponBulletSpread = 100;
+#endif
             }
             break;
 
@@ -289,9 +295,9 @@ void Player::setEffect(const unsigned int &effect)
 
 
 // Перемещение Монстра
+// Вызывается в потоке
 void Monster::Move(cfRef x, cfRef y, void *Param)
 {
-#if 1
     if( !_freezeEffect ) {
 
 	    float dX = x - _X;
@@ -319,115 +325,11 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 	    }
 
         // обновим список ячеек после перемещения монстра
-        //GameCells.UpdateGameCells2(this, oldX, oldY, _X, _Y, _radius);
         GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y);
     }
 
     return;
-#endif
-
-#if 0
-    _thPool->runAsync(&Monster::threadMove, this, x, y, Param);
-#endif
-
-#if 0
-    if( !_freezeEffect ) {
-
-        int currX = _X;
-        int currY = _Y;
-
-        olegType **olegArray = static_cast<olegType**>(Param);
-
-        // если монстр находится в пределах видимости, ищем в олегомассиве по координатам монстра указатель на него и удаляем,
-        // т.к. собираемся передвинуться на другое место
-        if( currX >= 0 && currX < 800 && currY >= 0 && currY < 600 ) {
-
-            std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
-
-            for (int i = 0; i < vec->size(); i++) {
-
-                gameObjectBase *ptr = vec->at(i);
-
-                if( ptr == this ) {
-                
-                    vec->erase(vec->begin() + i);
-                    break;
-                }
-            }
-        }
-
-	    float dX = x - _X;
-        float dY = y - _Y;
-        float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
-
-        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
-        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
-
-        _X += dX;
-        _Y += dY;
-
-	    animInterval1--;
-
-	    if( animInterval1 < 0 ) {
-		    animInterval1 = animInterval0;
-
-		    animPhase++;
-
-		    if(animPhase > animQty)
-			    animPhase = 0;
-	    }
-
-        // записываем новое местоположение монстра в олегомассив
-        currX = _X;
-        currY = _Y;
-
-        if( currX >= 0 && currX < 800 && currY >= 0 && currY < 600 ) {
-
-            std::vector<gameObjectBase*> *vec = &olegArray[currX][currY];
-            vec->push_back(this);
-        }
-    }
-#endif
-    return;
 }
-
-// тестовое, пытался использовать с буллет-хелпером, но не задалось
-void Monster::threadMove(cfRef x, cfRef y, void *Param)
-{
-    if( !_freezeEffect ) {
-
-	    float dX = x - _X;
-        float dY = y - _Y;
-        float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
-
-        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
-        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
-
-        int oldX = _X;
-        int oldY = _Y;
-
-        _X += dX;
-        _Y += dY;
-
-	    animInterval1--;
-
-	    if( animInterval1 < 0 ) {
-		    animInterval1 = animInterval0;
-
-		    animPhase++;
-
-		    if(animPhase > animQty)
-			    animPhase = 0;
-	    }
-
-        // обновим список ячеек после перемещения монстра
-        GameCells.UpdateGameCells2(this, oldX, oldY, _X, _Y, _radius);
-        //GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y);
-    }
-
-    return;
-}
-
 // ------------------------------------------------------------------------------------------------------------------------
 
 #define BULLET_BONUS_LIFE 0 // для гауссового оружия
@@ -596,119 +498,26 @@ void Bullet::threadMove_VECT(void *Param)
 
 
 
-void Bullet::threadMove_Oleg(void *Param)
-{
-    float Rad = 20.0f;
-
-    olegType **olegArray = static_cast<olegType **>(Param);
-/*
-    if( _dX > 0 ) {
-        _squareX0 = int(_X) - 2;
-        _squareX1 = int(_X + _dX + _squareSide);
-    }
-    else {
-        _squareX1 = int(_X) + 2;
-        _squareX0 = int(_X + _dX - _squareSide);
-    }
-
-    if( _dY > 0 ) {
-        _squareY0 = int(_Y) - 2;
-        _squareY1 = int(_Y + _dY + _squareSide);
-    }
-    else {
-        _squareY1 = int(_Y) + 2;
-        _squareY0 = int(_Y + _dY - _squareSide);
-    }
-*/
-
-    if( _dX > 0 ) {
-        _squareX0 = int(_X) - 2;
-        _squareX1 = int(_X + _dX + _squareSide);
-    }
-    else {
-        _squareX1 = int(_X) + 2;
-        _squareX0 = int(_X + _dX - _squareSide);
-    }
-
-    if( _dY > 0 ) {
-        _squareY0 = int(_Y) - 2;
-        _squareY1 = int(_Y + _dY + _squareSide);
-    }
-    else {
-        _squareY1 = int(_Y) + 2;
-        _squareY0 = int(_Y + _dY - _squareSide);
-    }
-
-    if( _squareX0 >= 0 && _squareX1 < olegMaxX && _squareY0 >= 0 && _squareY1 < olegMaxY )
-//lalala
-    // пройдем по всем ячейкам олегомассива, которые находятся в прямоугольнике вокруг пули и проверим попадания в монстров
-    for (int i = _squareX0; i < _squareX1; i++) {
-    
-        for (int j = _squareY0; j < _squareY1; j++) {
-
-            std::vector<gameObjectBase*> *vec = &olegArray[i][j];
-
-            for (int monster = 0; monster < vec->size(); monster++) {
-            
-                _monsterX = vec->at(monster)->getPosX();
-                _monsterY = vec->at(monster)->getPosY();
-
-                float dx = _X - _monsterX;
-                float dy = _Y - _monsterY;
-                float dist = sqrt(dx*dx + dy*dy);
-
-                if( dist < Rad || commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
-
-                    vec->at(monster)->setAlive(false);  // монстр убит
-
-                    // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-
-                    _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
-
-                    // Если время жизни пули истекло, то пуля истрачена:
-					if( !_Health ) {
-
-						this->_Alive = false;
-
-						_dX = _dY = 0.0;            // Останавливаем пулю
-						_X = (float)_monsterX;      // Переносим пулю в центр монстра
-						_Y = (float)_monsterY;
-
-						return;
-					}
-                }
-            }
-        }
-    }
-
-    // big if
-
-    _X += _dX;
-    _Y += _dY;
-
-    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight )
-        this->_Alive = false;   // пуля ушла в молоко
-
-    return;
-}
-// ------------------------------------------------------------------------------------------------------------------------
-
-
-
 // Потоковый просчет движения пули и попаданий при помощи ячеек
 void Bullet::threadMove_Cells()
 {
-    float Rad = 20.0f;
-    int   RadCells = GameCells.getDist_inCells(Rad);
+    float       Rad      = 20.0f;
+    int         RadCells = GameCells.getDist_inCells(Rad);
+    int        _monsterX, _monsterY, i, j, mon;
+    OlegType   *Cell;
+    std::vector<gameObjectBase*> *vec;
 
+    // берем координаты пули в начале и конце этой итерации
     int bulletX0 = _X,
         bulletY0 = _Y,
         bulletX1 = _X + _dX,
         bulletY1 = _Y + _dY;
 
+    // переводим координаты пули из общеэкранной в ячеечную систему координат
     GameCells.getCellCoordinates(bulletX0, bulletY0);
     GameCells.getCellCoordinates(bulletX1, bulletY1);
 
+    // расширяем прямоугольник вокруг вектора движения пули на величину радиуса монстра
     if( _dX > 0 ) {
         _squareX0 = int(bulletX0) - RadCells;
         _squareX1 = int(bulletX1) + RadCells;
@@ -727,46 +536,66 @@ void Bullet::threadMove_Cells()
         _squareY0 = int(bulletY1) - RadCells;
     }
 
+    // убедимся, что координаты квадрата не выходят за пределы сетки ячеек
+    GameCells.checkCoordinates(_squareX0, _squareY0, _squareX1, _squareY1);
 
-
-    if ( bulletX > 0 && bulletX < 800 && bulletY > 0 && bulletY < 800 ) {
-
-        GameCells.getCellCoordinates(bulletX, bulletY);
-
-        std::vector<gameObjectBase*> *vec = &(GameCells(bulletX, bulletY).cellList);
-
-        for (int i = 0; i < vec->size(); i++) {
+    // ??? - временная мера, не проверяем столкновение пуль/монстров за пределами экрана, т.к. там пока что нет ячеек
+    if( _squareX0 >= 0 && _squareX0 < 80 && _squareX1 >= 0 && _squareX1 < 80 && _squareY0 >= 0 && _squareY0 < 60 && _squareY1 >= 0 && _squareY1 < 60 )
+    {
+        // пробежимся по всем ячейкам из получившегося прямоугольника и для них проверим, с кем из монстров пересекается пуля
+        for (i = _squareX0; i < _squareX1; i++) {
     
-            int _monsterX = vec->at(i)->getPosX();
-            int _monsterY = vec->at(i)->getPosY();
+            for (j = _squareY0; j < _squareY1; j++) {
 
-            float dx = _X - _monsterX;
-            float dy = _Y - _monsterY;
-            float dist = sqrt(dx*dx + dy*dy);
+                // получаем указатель на ячейку и на вектор монстров, прописанный в ней
+                Cell = &( GameCells(i, j) );
+                vec  = &( Cell->cellList  );
 
-            if( dist < Rad || commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
+                // лочим мьютекс, чтобы никто другой не зашел в эту ячейку, пока мы здесь:
+                // если мы убьем монстра, то нужно удалить запись о нем из вектора, и если мы удалим ее, пока другой поток будет проходить через этот же вектор,
+                // получится очень нехорошо
+                Cell->cellMutex.lock();
 
-                vec->at(i)->setAlive(false);  // монстр убит
+                    for (mon = 0; mon < vec->size(); mon++) {
 
-                // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-                _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
+                        _monsterX = (*vec)[mon]->getPosX();
+                        _monsterY = (*vec)[mon]->getPosY();
 
-                // Если время жизни пули истекло, то пуля истрачена:
-			    if( !_Health ) {
+                        if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
 
-			        this->_Alive = false;
+                            (*vec)[mon]->setAlive(false);  // монстр убит
 
-				    _dX = _dY = 0.0;            // Останавливаем пулю
-				    _X = (float)_monsterX;      // Переносим пулю в центр монстра
-				    _Y = (float)_monsterY;
+                            // копируем последний элемент вектора в текущую позицию, а последний элемент удаляем
+                            if( (*vec)[mon] != (*vec).back() )
+                                (*vec)[mon] = (*vec).back();
+                            (*vec).pop_back();
 
-				    return;
-			    }
+                            // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+                            _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
+
+                            // Если время жизни пули истекло, то пуля истрачена:
+			                if( !_Health ) {
+
+			                    this->_Alive = false;
+
+				                _dX = _dY = 0.0;            // Останавливаем пулю
+				                _X = (float)_monsterX;      // Переносим пулю в центр монстра
+				                _Y = (float)_monsterY;
+
+                                // дублируем mutex.unlock, т.к. в противном случае он никогда не будет разлочен
+                                Cell->cellMutex.unlock();
+				                return;
+			                }
+                        }
+                    }
+
+                // разлочиваем мьютекс
+                Cell->cellMutex.unlock();
             }
         }
     }
 
-    // ************************************************
+    // ----------------------------------------------------------------
 
     _X += _dX;
     _Y += _dY;
@@ -781,7 +610,7 @@ void Bullet::threadMove_Cells()
 
 
 // Ионные пули просчитываем иначе, потому что у них есть а) радиус, б) взрыв при попадании
-void BulletIon::threadMove(void *Param)
+void BulletIon::threadMove1(void *Param)
 {
     float Rad = 20.0f;
 
@@ -908,198 +737,183 @@ void BulletIon::threadMove(void *Param)
 
 
 
-// прописываем монстра в ячейки, которые он собою занимает
-// версия 1, использует вектор с id ячеек внутри монстра, работает так себе
-// заполняет все ячейки под квадратом монстра
-void gameCells::UpdateGameCells1(Monster *obj, std::vector<unsigned int> *monsterCellsVec, const int &currx, const int &curry, const int &rad)
+void BulletIon::threadMove2()
 {
-#define UNUSED_CELL_VALUE 2e6
-/*
-    // получим сеточные координаты центра монстра, его радиус в попугаях (т.е. в ячейках) и координаты квадрата, описанного вокруг монстра
-
-    int Rad   = rad   * _cellSideInverted;
-    int currX = currx * _cellSideInverted;
-    int currY = curry * _cellSideInverted;
-
-    int minX = currX - Rad;
-    int minY = currY - Rad;
-    int maxX = currX + Rad;
-    int maxY = currY + Rad;
-
-    if( minX < _lowX ) minX = _lowX;
-    if( minY < _lowY ) minY = _lowY;
-    if( maxX > _maxX ) maxX = _maxX;
-    if( maxY > _maxY ) maxY = _maxY;
-
-    int  cellId;
-    bool found;
+    float       Rad      = 20.0f;
+    int         RadCells = GameCells.getDist_inCells(Rad);
+    int        _monsterX, _monsterY, i, j, mon;
+    OlegType   *Cell;
     std::vector<gameObjectBase*> *vec;
 
-    // Проходим по айдишникам ячеек из вектора внутри монстра
-    for (unsigned int k = 0; k < monsterCellsVec->size(); k++) {
+    // берем координаты пули в начале и конце этой итерации
+    int bulletX0 = _X,
+        bulletY0 = _Y,
+        bulletX1 = _X + _dX,
+        bulletY1 = _Y + _dY;
 
-        // Восстанавливаем координаты ячейки по её айдишнику
-        cellId = (*monsterCellsVec)[k];
+    // переводим координаты пули из общеэкранной в ячеечную систему координат
+    GameCells.getCellCoordinates(bulletX0, bulletY0);
+    GameCells.getCellCoordinates(bulletX1, bulletY1);
 
-        // как только дойдем в цикле до неиспользуемого элемента (которые всегда помещаются в конец вектора), дальше можно не ходить
-        if( cellId == UNUSED_CELL_VALUE )
-            break;
-
-        int oldX  = cellId % _widthCells;
-        int oldY  = cellId / _widthCells;
-
-        // Теперь выписываемся из ячеек, из которых ушли
-        if( minX > oldX || maxX < oldX || minY > oldY || maxY < oldY ) {
-
-            // пройдем в цикле по вектору монстров, сохраненному в ячейке
-            vec = &( (*VEC)[cellId].cellList );
-            found = false;
-
-            for (int i = 0; i < vec->size(); i++) {
-            
-                // если найдем указатель на текущего монстра, удаляем его из ячейки
-                if( (*vec)[i] == obj ) {
-                    
-                    std::swap( (*vec)[i], vec->back());
-                    vec->pop_back();
-
-                    // в списке ячеек монстра: заменяем текущую ячейку на неиспользуемое значение и переносим ее в хвост
-                    (*monsterCellsVec)[i] = monsterCellsVec->back();
-                    monsterCellsVec->back() = UNUSED_CELL_VALUE;
-
-                    break;
-                }
-            }
-        }
+    // просчитаем прямоугольник вокруг вектора движения пули
+    if( _dX > 0 ) {
+        _squareX0 = int(bulletX0);
+        _squareX1 = int(bulletX1);
+    }
+    else {
+        _squareX1 = int(bulletX0);
+        _squareX0 = int(bulletX1);
     }
 
-    // Проходим по всем ячейкам, на которые попадает монстр после перемещения и прописываемся в них (если еще не прописаны)
-    for (int i = minX; i < maxX; i++) {
-
-        for (int j = minY; j < maxY; j++) {
-
-            // Пробежимся по вектору монстров в каждой ячейке и проверим, есть ли в нем уже запись о таком монстре. Если нет, пропишемся
-            found = false;
-            vec   = &( (*this)(i, j).cellList );
-
-            for (int k = 0; k < vec->size(); k++) {
-            
-                if( (*vec)[k] == obj ) {
-                
-                    found = true;
-
-                   if( monsterCellsVec->size() )
-                    if( monsterCellsVec->back() == UNUSED_CELL_VALUE )
-                        monsterCellsVec->back() = getCellId_withCoords(i, j);
-                    else
-                        monsterCellsVec->push_back( getCellId_withCoords(i, j) );
-
-                    break;
-                }
-            }
-
-            if( !found )
-                vec->push_back(obj);
-        }
+    if( _dY > 0 ) {
+        _squareY0 = int(bulletY0);
+        _squareY1 = int(bulletY1);
     }
-*/
-#undef UNUSED_CELL_VALUE
+    else {
+        _squareY1 = int(bulletY0);
+        _squareY0 = int(bulletY1);
+    }
 
-    return;
-}
 
-// прописываем монстра в ячейки, которые он собою занимает
-// версия 2, использует только координаты монстра ДО и ПОСЛЕ, работает пошуcтрее, чем версия 1
-// заполняет все ячейки под квадратом монстра
-void gameCells::UpdateGameCells2(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry, const int &rad)
-{
-/*
-    int Rad   = rad   * _cellSideInverted;
-    int oldX  = oldx  * _cellSideInverted;
-    int oldY  = oldy  * _cellSideInverted;
-    int currX = currx * _cellSideInverted;
-    int currY = curry * _cellSideInverted;
 
-    int minXold = oldX - Rad;
-    int minYold = oldY - Rad;
-    int maxXold = oldX + Rad;
-    int maxYold = oldY + Rad;
+    // рассчитаем радиус ионного взрыва (при столкновении с монстром пуля превращается во взрыв)
+    if( _bulletType == Player::BulletsType::ION_EXPLOSION ) {
 
-    if( minXold < _lowX ) minXold = _lowX;
-    if( minYold < _lowY ) minYold = _lowY;
-    if( maxXold > _maxX ) maxXold = _maxX;
-    if( maxYold > _maxY ) maxYold = _maxY;
+        _Health++;
 
-    int minX = currX - Rad;
-    int minY = currY - Rad;
-    int maxX = currX + Rad;
-    int maxY = currY + Rad;
+        // 15 здесь - ограничивающий фактор для окружности взрыва, должен зависеть от типа оружия (типа, у винтовки больше, у минигана меньше)
+        // ??? - change 15 to method call
+        if( _Health <= 15 ) {   
+            _Scale   = _Health;         // визуальный радиус взрыва для шейдера
+            Rad      = _Health * 5;     // bullet sprite texture size / 2 (as in the _gameShader_Bullet.vs file)
+            RadCells = GameCells.getDist_inCells(Rad);
 
-    if( minX < _lowX ) minX = _lowX;
-    if( minY < _lowY ) minY = _lowY;
-    if( maxX > _maxX ) maxX = _maxX;
-    if( maxY > _maxY ) maxY = _maxY;
+            // для ионного взрыва рассчитываем свой собственный грубый квадрат
+            int SquareSize = RadCells + 1;
 
-    int  cellId;
-    bool found;
-    std::vector<gameObjectBase*> *vec;
+            _squareX0 -= SquareSize;
+            _squareX1 += SquareSize;
+            _squareY0 -= SquareSize;
+            _squareY1 += SquareSize;
+        }
+        else
+            this->_Alive = false;
+    }
+    else {
 
-    // отпишемся от старых ячеек
-    for (int i = minXold; i < maxXold; i++) {
-        for (int j = minYold; j < maxYold; j++) {
+        _squareX0 -= RadCells;
+        _squareX1 += RadCells;
+        _squareY0 -= RadCells;
+        _squareY1 += RadCells;
 
-            cellId = getCellId_withCoords(i, j);
+    }
 
-            vec = &( (*VEC)[cellId].cellList );
+    // убедимся, что координаты квадрата не выходят за пределы сетки ячеек
+    GameCells.checkCoordinates(_squareX0, _squareY0, _squareX1, _squareY1);
 
-            (*VEC)[cellId].cellMutex.lock();
 
-                for (int k = 0; k < vec->size(); k++) {
-            
-                    if ((*vec)[k] == obj) {
 
-                        (*vec)[k] = vec->back();
-                        vec->pop_back();
+    // ??? - временная мера, не проверяем столкновение пуль/монстров за пределами экрана, т.к. там пока что нет ячеек
+    if( _squareX0 >= 0 && _squareX0 < 80 && _squareX1 >= 0 && _squareX1 < 80 && _squareY0 >= 0 && _squareY0 < 60 && _squareY1 >= 0 && _squareY1 < 60 )
+    {
+        // пробежимся по всем ячейкам из получившегося прямоугольника и для них проверим, с кем из монстров пересекается пуля
+        for (i = _squareX0; i < _squareX1; i++) {
+    
+            for (j = _squareY0; j < _squareY1; j++) {
 
-                        break;
+                // получаем указатель на ячейку и на вектор монстров, прописанный в ней
+                Cell = &( GameCells(i, j) );
+                vec  = &( Cell->cellList  );
+
+                // лочим мьютекс, чтобы никто другой не зашел в эту ячейку, пока мы здесь:
+                Cell->cellMutex.lock();
+
+                    for (mon = 0; mon < vec->size(); mon++) {
+    
+                        _monsterX = (*vec)[mon]->getPosX();
+                        _monsterY = (*vec)[mon]->getPosY();
+
+                        switch( _bulletType )
+                        {
+                            // Для ионной пули (у которой есть радиус): считаем, что пуля попадает в монстра, если ее центральная линия пересекает окружность,
+                            // радиус которой равен сумме радиусов монстра и пули
+                            case Player::BulletsType::ION:
+                            {
+                                if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad + 25) )
+                                {
+                                    // При попадании: останавливаем пулю, переносим ее в центр монстра и изменяем ей тип на ION_EXPLOSION.
+                                    // Далее её здоровье будет расти (а с ним и радиус взрыва), пока не достигнет некоторой пороговой величины, после которой только смерть
+                                    _bulletType = Player::BulletsType::ION_EXPLOSION;
+                            
+					                _dX = _dY = 0.0f;
+					                _X = (float)_monsterX;
+					                _Y = (float)_monsterY;
+                                    _Health = 3;
+
+                                    Cell->cellMutex.unlock();
+                                    return;
+                                }
+                            }
+                            break;
+
+                            // Проверка для ионного взрыва. Всё наоборот - проверяем пересечение короткого отрезка, проходящего сквозь монстра, и окружности взрыва
+                            case Player::BulletsType::ION_EXPLOSION:
+                            {
+                                // Если монстра зацепит взрывом, прописываем ему дамаг (а пока что просто убиваем с одного удара)
+                                // Имеем ввиду, что радиус взрыва увеличивается на протяжении нескольких фреймов, поэтому дамаг прописываем небольшой:
+                                // те монстры, которые ближе к центру взрыва, пробудут под дамагом больше циклов и получат больший суммарный урон, чем те, что на периферии
+                                if( commonSectionCircle(_monsterX-10, _monsterY-10, _monsterX+10, _monsterY+10, _X, _Y, Rad) )
+                                    (*vec)[mon]->setAlive(false);
+
+                                // _если_ монстр убит, удаляем его из списка ячейки:
+
+                                // копируем последний элемент вектора в текущую позицию, а последний элемент удаляем
+                                if( (*vec)[mon] != (*vec).back() )
+                                    (*vec)[mon] = (*vec).back();
+                                (*vec).pop_back();
+                            }
+                            break;
+                        }
                     }
-                }
 
-            (*VEC)[cellId].cellMutex.unlock();
+                // разлочиваем мьютекс
+                Cell->cellMutex.unlock();
+            }
         }
     }
 
-    // пропишемся в новые ячейки
-    for (int i = minX; i < maxX; i++) {
-        for (int j = minY; j < maxY; j++) {
+    // Продвигаем пулю вперед, если ни в кого не попали
+    _X += _dX;
+    _Y += _dY;
 
-            cellId = getCellId_withCoords(i, j);
-
-            (*VEC)[cellId].cellMutex.lock();
-
-                (*VEC)[cellId].cellList.push_back(obj);
-
-            (*VEC)[cellId].cellMutex.unlock();
-        }
+    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
+        _dX = _dY = 0.0;
+        this->_Alive = false;   // пуля ушла в молоко
     }
-*/
+
     return;
 }
+// ------------------------------------------------------------------------------------------------------------------------
+
+
 
 // прописываем монстра в ячейки, которые он собою занимает
 // версия 3, использует только координаты монстра ДО и ПОСЛЕ
-// заполняет ровно одну ячейку, в которой находится центра монстра
+// заполняет ровно одну ячейку, в которой находится центр монстра
 void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry)
 {
-    int oldX  = oldx  * _cellSideInverted;
-    int oldY  = oldy  * _cellSideInverted;
-    int currX = currx * _cellSideInverted;
-    int currY = curry * _cellSideInverted;
+    #define unusedCellNo 2e6
+
+    int oldX      = oldx  * _cellSideInverted;
+    int oldY      = oldy  * _cellSideInverted;
+    int currX     = currx * _cellSideInverted;
+    int currY     = curry * _cellSideInverted;
+    UINT currCell = obj->getCell();
 
     // если монстр поменял свою ячейку, перепропишем его в новую ячейку и удалим из старой
-    if( oldX != currX || oldY != currY ) {
+    if( oldX != currX || oldY != currY || currCell == unusedCellNo ) {
 
-        int  cellId;
+        UINT cellId;
         std::vector<gameObjectBase*> *vec;
 
         // отпишемся от старой ячейки
@@ -1127,10 +941,12 @@ void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy,
         (*VEC)[cellId].cellMutex.lock();
 
             (*VEC)[cellId].cellList.push_back(obj);
+            obj->setCell(cellId);
 
         (*VEC)[cellId].cellMutex.unlock();
     }
 
+    #undef unusedCellNo
     return;
 }
 // ------------------------------------------------------------------------------------------------------------------------
