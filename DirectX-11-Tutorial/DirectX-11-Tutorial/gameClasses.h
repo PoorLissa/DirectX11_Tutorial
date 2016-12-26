@@ -454,6 +454,7 @@ class Weapon : public gameObjectBase, public BonusWeapons {
           BonusWeapons(),
             _LifeTime(5500),
             _Weapon(weapon),
+            _WeaponReduced(weapon - Weapons::PISTOL),
             _AngleCounter(rand()%10),
             _ScaleCounter(0)
 	{}
@@ -490,17 +491,18 @@ class Weapon : public gameObjectBase, public BonusWeapons {
     }
 
     // В качестве номера анимации просто отдаем номер эффекта и все время показываем одно и то же изображение
-    virtual inline cuiRef getAnimPhase() const { return _Weapon - Weapons::PISTOL; }
+    // Здесь пришлось ввести дополнительное поле, т.к. все заточено под (weapon - Weapons::PISTOL), а по ссылке нельзя вернуть вычисленное значение
+    virtual inline cuiRef getAnimPhase() const { return _WeaponReduced; }
 
  private:
 	 unsigned int _LifeTime;
-     unsigned int _Weapon;
+     unsigned int _Weapon, _WeaponReduced;
      float        _AngleCounter;
      float        _ScaleCounter;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
-// ------------------------------------------------------------------------------------------------------------------------
+
 
 void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<gameObjectBase*> *bulletList, unsigned int &bulletListSize)
 {

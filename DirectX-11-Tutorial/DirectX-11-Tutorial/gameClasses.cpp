@@ -234,18 +234,20 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
 
-#if 0
-                _weaponDelay        = 1;
-                _weaponBulletSpeed  = 50;
-                _weaponBurstQty     = 10;
-                _weaponBulletSpread = 100;
+#if 1
+                _weaponDelay        = 3;
+                _weaponBulletSpeed  = 30;
+                _weaponBurstQty     = 1;
+                _weaponBulletSpread = 50;
+
+                //setBulletsType_On (Player::BulletsType::ION);
 #endif
             }
             break;
 
             case BonusWeapons::Weapons::RIFLE:
             {
-                _weaponDelay        = 10;
+                _weaponDelay        = 5;
                 _weaponBulletSpeed  = 30;
                 _weaponBurstQty     = 1;
                 _weaponBulletSpread = 20;
@@ -612,126 +614,7 @@ void Bullet::threadMove_Cells()
 // Ионные пули просчитываем иначе, потому что у них есть а) радиус, б) взрыв при попадании
 void BulletIon::threadMove1(void *Param)
 {
-    float Rad = 20.0f;
-
-    std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
-
-	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монстром
-
-    if( _dX > 0 ) {
-        _squareX0 = int(_X);
-        _squareX1 = int(_X + _dX);
-    }
-    else {
-        _squareX1 = int(_X);
-        _squareX0 = int(_X + _dX);
-    }
-
-    if( _dY > 0 ) {
-        _squareY0 = int(_Y);
-        _squareY1 = int(_Y + _dY);
-    }
-    else {
-        _squareY1 = int(_Y);
-        _squareY0 = int(_Y + _dY);
-    }
-
-    // рассчитаем радиус ионного взрыва
-    if( _bulletType == Player::BulletsType::ION_EXPLOSION ) {
-
-        _Health++;
-
-        // 15 здесь - ограничивающий фактор для окружности взрыва, должен зависеть от типа оружия (типа, у винтовки больше, у минигана меньше)
-        if( _Health <= 15 ) {   
-            _Scale = _Health;
-            Rad    = _Health * 5;  // bullet sprite texture size / 2 (as in the _gameShader_Bullet.vs file)
-
-            // для ионного взрыва рассчитываем свой собственный грубый квадрат
-            int SquareSize = Rad + 10;
-
-            _squareX0 -= SquareSize;
-            _squareX1 += SquareSize;
-            _squareY0 -= SquareSize;
-            _squareY1 += SquareSize;
-        }
-        else
-            this->_Alive = false;
-
-    }
-    else {
-
-        _squareX0 -= _squareSide;
-        _squareX1 += _squareSide;
-        _squareY0 -= _squareSide;
-        _squareY1 += _squareSide;
-
-    }
-
-    for (unsigned int lst = 0; lst < VEC->size(); lst++) {
-        
-        std::list<gameObjectBase*> *list = VEC->at(lst);
-
-        // выбираем вектор с монстрами из вектора векторов
-        std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
-        while (iter != end) {
-
-            _monsterX = (int)(*iter)->getPosX();
-            _monsterY = (int)(*iter)->getPosY();
-
-            // сначала проверим, находится ли пуля в грубом приближении к монстру, чтобы не считать пересечение с окружностью для каждого монстра на карте
-            if( _squareX0 < _monsterX && _squareX1 > _monsterX && _squareY0 < _monsterY && _squareY1 > _monsterY )
-            {
-                switch( _bulletType )
-                {
-                    // Для ионной пули (у которой есть радиус): считаем, что пуля попадает в монстра, если ее центральная линия пересекает окружность,
-                    // радиус которой равен сумме радиусов монстра и пули
-                    case Player::BulletsType::ION:
-                    {
-                        if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad + 25) )
-                        {
-                            // При попадании: останавливаем пулю, переносим ее в центр монстра и изменяем ей тип на ION_EXPLOSION.
-                            // Далее её здоровье будет расти (а с ним и радиус взрыва), пока не достигнет некоторой пороговой величины, после которой только смерть
-                            _bulletType = Player::BulletsType::ION_EXPLOSION;
-                            
-					        _dX = _dY = 0.0;
-					        _X = (float)_monsterX;
-					        _Y = (float)_monsterY;
-                            _Health = 3;
-
-                            return;
-                        }
-                    }
-                    break;
-
-                    // Проверка для ионного взрыва. Всё наоборот - проверяем пересечение короткого отрезка, проходящего сквозь монстра, и окружности взрыва
-                    case Player::BulletsType::ION_EXPLOSION:
-                    {
-                        // Если монстра зацепит взрывом, прописываем ему дамаг (а пока что просто убиваем с одного удара)
-                        // Имеем ввиду, что радиус взрыва увеличивается на протяжении нескольких фреймов, поэтому дамаг прописываем небольшой:
-                        // те монстры, которые ближе к центру взрыва, пробудут под дамагом больше циклов и получат больший суммарный урон, чем те, что на периферии
-                        if( commonSectionCircle(_monsterX-10, _monsterY-10, _monsterX+10, _monsterY+10, _X, _Y, Rad) )
-                            (*iter)->setAlive(false);
-                    }
-                    break;
-                }
-
-            }
-
-            ++iter;
-        }
-    }
-
-    // Продвигаем пулю вперед, если ни в кого не попали
-    _X += _dX;
-    _Y += _dY;
-
-    if ( _X < -50 || _X > _scrWidth || _Y < -50 || _Y > _scrHeight ) {
-        _dX = _dY = 0.0;
-        this->_Alive = false;   // пуля ушла в молоко
-        return;
-    }
-
-    return;
+    //
 }
 // ------------------------------------------------------------------------------------------------------------------------
 

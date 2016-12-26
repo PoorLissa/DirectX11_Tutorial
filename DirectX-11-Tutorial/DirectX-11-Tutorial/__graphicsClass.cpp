@@ -182,12 +182,13 @@ void GraphicsClass::Shutdown()
 
 
 
-void GraphicsClass::logMsg(const std::string &str, char *fileName) {
+// ¬ывод строки в файл
+void GraphicsClass::logMsg(const std::string &str, bool doCleanFile, char *fileName) {
 
 	FILE *f = NULL;
 
-	fopen_s(&f, fileName, "a");
-	if (f != NULL) {
+	fopen_s(&f, fileName, doCleanFile ? "w" : "a");
+	if( f != NULL ) {
 		fputs(str.c_str(), f);
 		fputs("\n", f);
 		fclose(f);
@@ -360,7 +361,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 int interval = int(50 / speed);
 
                 //speed *= 0.1f;
-                speed = 1.0f;
+                //speed = 1.0f;
                 //speed = 0.0f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
@@ -401,7 +402,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
                 int interval = int(50 / speed);
 
                 //speed *= 0.1f;
-                speed = 1.0f;
+                //speed = 1.0f;
                 //speed = 0.0f;
 
                 // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
@@ -548,7 +549,7 @@ bool GraphicsClass::Initialize(int screenWidth, int screenHeight, HighPrecisionT
 
         str += "\n\n";
 
-		logMsg(str);
+		logMsg(str, true);  // пересоздаем файл в новой сессии
 	}
 
 	return true;

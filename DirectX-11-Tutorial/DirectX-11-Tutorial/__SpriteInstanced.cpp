@@ -97,11 +97,6 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
         return true;
     m_instanceCount = *listSize;
 
-/*
-    if( *listSize != 10 && *listSize != 5 && *listSize != 4 && *listSize != 3 ) {
-        int asd = 123;
-    }
-*/
     InstanceType			*instances;
     D3D11_BUFFER_DESC		 instanceBufferDesc;
     D3D11_SUBRESOURCE_DATA   instanceData;
@@ -138,7 +133,7 @@ bool InstancedSprite::initializeInstances(ID3D11Device *device, std::list<gameOb
 			float( (*iter)->getScale() )
         );
 
-        // Размеры кадра анимации (для текстурного атласа only) и номер анимации
+        // Размеры кадра анимации (размеры используются только для текстурного атласа) и номер анимации
         instances[i].animationInfo = D3DXVECTOR3(
             m_spriteSliceX,                         // ширина одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр
             m_spriteSliceY,                         // высота одного кадра --- ??? надо перенести в другой буфер, который берется один раз на кадр

@@ -5,7 +5,7 @@
 // Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             10
+#define MONSTERS_QTY             1
 
 #define fullScreen
 #undef  fullScreen
@@ -26,5 +26,19 @@
 
 #define useSorting                              // судя по всему, сортировка скорее замедляет, чем убыстряет просчет
 #undef  useSorting
+
+
+
+inline void logMsg(const std::string &str, bool doCleanFile = false, char *fileName = "___msgLog.log")
+{
+	FILE *f = NULL;
+
+	fopen_s(&f, fileName, doCleanFile ? "w" : "a");
+	if( f != NULL ) {
+		fputs(str.c_str(), f);
+		fputs("\n", f);
+		fclose(f);
+	}
+}
 
 #endif
