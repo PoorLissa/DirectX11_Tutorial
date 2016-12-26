@@ -160,10 +160,8 @@ bool SystemClass::Frame()
 		static float rotation = 0.0f;
 		static float zoom     = 0.0f;
 
-        keysPressed Keys;
-
 		// Update the rotation variable each time onTimer event happens
-		if (onTimer) {
+		if( onTimer ) {
 
 			rotation += (float)D3DX_PI * 0.01f;
 			zoom += 0.002f;

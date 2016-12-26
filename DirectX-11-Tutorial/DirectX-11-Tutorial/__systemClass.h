@@ -36,6 +36,7 @@ class SystemClass {
 
 	DirectInputClass *m_Input;
 	GraphicsClass	 *m_Graphics;
+    keysPressed       Keys;
 
 	// Timer, FPS and CPU usage objects
 	FpsClass			*m_Fps;

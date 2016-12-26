@@ -5,12 +5,11 @@
 bool Monster   :: _freezeEffect = false;
 int  Bullet    :: _scrWidth     = 0;
 int  Bullet    :: _scrHeight    = 0;
-bool gameCells :: Single        = false;
+bool gameCells :: _Single       = false;
 
 ThreadPool* gameObjectBase::_thPool = nullptr; // статический пул потоков семейства объектов gameObjectBase
 
 gameCells GameCells;
-
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -234,7 +233,7 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
 
-#if 1
+#if 0
                 _weaponDelay        = 3;
                 _weaponBulletSpeed  = 30;
                 _weaponBurstQty     = 1;
@@ -431,7 +430,7 @@ void Bullet::threadMove_VECT(void *Param)
 
     for (unsigned int lst = 0; lst < VEC->size(); lst++) {
         
-        std::list<gameObjectBase*> *list = VEC->at(lst);
+        std::list<gameObjectBase*> *list = (*VEC)[lst];
 
         // выбираем вектор с монстрами из вектора векторов
         std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
@@ -506,7 +505,7 @@ void Bullet::threadMove_Cells()
     float       Rad      = 20.0f;
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
-    OlegType   *Cell;
+    OlegCell   *Cell;
     std::vector<gameObjectBase*> *vec;
 
     // берем координаты пули в начале и конце этой итерации
@@ -575,7 +574,7 @@ void Bullet::threadMove_Cells()
                             // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
                             _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
 
-                            // Если время жизни пули истекло, то пуля истрачена:
+                            // Если время жизни пули тем или иным образом истекло, то пуля истрачена:
 			                if( !_Health ) {
 
 			                    this->_Alive = false;
@@ -612,20 +611,12 @@ void Bullet::threadMove_Cells()
 
 
 // Ионные пули просчитываем иначе, потому что у них есть а) радиус, б) взрыв при попадании
-void BulletIon::threadMove1(void *Param)
-{
-    //
-}
-// ------------------------------------------------------------------------------------------------------------------------
-
-
-
-void BulletIon::threadMove2()
+void BulletIon::threadMove()
 {
     float       Rad      = 20.0f;
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
-    OlegType   *Cell;
+    OlegCell   *Cell;
     std::vector<gameObjectBase*> *vec;
 
     // берем координаты пули в начале и конце этой итерации

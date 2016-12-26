@@ -17,7 +17,7 @@ class Monster;
 class Bonus;
 class Weapon;
 
-struct OlegType {
+struct OlegCell {
     std::vector<gameObjectBase*> cellList;      // вектор, в котором будут отмечаться монстры, зашедшие в ячейку
     std::mutex                   cellMutex;     // мьютекс для блокирования вектора cellList на запись/удаление
     unsigned int                 cellId;        // уникальный id для ячеек
@@ -28,7 +28,7 @@ class gameCells {
  public:
     gameCells() {
 
-        if( Single ) {
+        if( _Single ) {
             exit(EXIT_FAILURE);
         }
         else {
@@ -48,13 +48,13 @@ class gameCells {
             _widthCells  = _widthPixels  * _cellSideInverted;
             _heightCells = _heightPixels * _cellSideInverted;
 
-            VEC = new std::vector<OlegType>(_widthCells * _heightCells);
+            VEC = new std::vector<OlegCell>(_widthCells * _heightCells);
 
             // раздадим всем ячейкам уникальные id
             for (unsigned int i = 0; i < _widthCells * _heightCells; i++)
                 (*VEC)[i].cellId = i;
 
-            Single = true;
+            _Single = true;
         }
     }
 
@@ -63,7 +63,7 @@ class gameCells {
     }
 
     // пересчитываем экранные координаты во внутрисеточный индекс и возвращаем соответствующий вектор
-    inline OlegType& operator() (const int &posx, const int &posy) {
+    inline OlegCell& operator() (const int &posx, const int &posy) {
         return (*VEC)[_widthCells * posy + posx];
     }
 
@@ -98,6 +98,7 @@ class gameCells {
     void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &);
 
  private:
+    // запрещаем копирование и присваивание
     gameCells(const gameCells &);
     gameCells& operator=(gameCells);
 
@@ -107,10 +108,9 @@ class gameCells {
     float          _cellSideInverted;               // 1/_cellSide;
     unsigned short _widthPixels, _heightPixels;     // размеры поля в пикселах
     unsigned short _widthCells,  _heightCells;      // размеры поля в ячейках
+    static   bool  _Single;                         // нам нужен ровно 1 экземпляр класса, так что делаем из него простой синглтон
 
-    std::vector<OlegType> *VEC;
-
-    static bool Single;
+    std::vector<OlegCell> *VEC;
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -379,13 +379,11 @@ class BulletIon : public Bullet {
    ~BulletIon() {}
 
     virtual void Move(cfRef, cfRef, void *Param) {
-        //_thPool->runAsync(&BulletIon::threadMove1, this, Param);
-        _thPool->runAsync(&BulletIon::threadMove2, this);
+        _thPool->runAsync(&BulletIon::threadMove, this);
     }
 
  private:
-    void threadMove1(void *);
-    void threadMove2();
+    void threadMove();
 };
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -581,374 +579,5 @@ void Player::spawnBullet_FourSides(std::list<gameObjectBase*> *bulletList, unsig
 
     bulletListSize += 4;
 }
-
-#include <vector>
-#include <map>
-#include <utility>
-#include <string>
-#if 0
-class BulletHelper {
-
- public:
-    BulletHelper(unsigned int numX, unsigned int numY) {
-
-        numX = 2;
-        numY = 2;
-    
-        for (int i = 0; i < numX * numY; i++)
-            VEC.push_back(new std::vector<gameObjectBase*>());
-    }
-
-   ~BulletHelper() {
-   
-       if( VEC.size() ) {
-           for (int i = 0; i < VEC.size(); i++)
-               delete VEC[i];
-       }
-    }
-
-    // кладем наш объект в соответствующий вектор и возвращаем номер вектора
-    void Push(gameObjectBase* obj) {
-
-        int x = obj->getPosX();
-        int y = obj->getPosY();
-
-        // Проверяем, хранится ли такой элемент уже в Map-е. Если он еще не хранится, получаем 0.
-        // Если объект уже хранится, currentPair будет содержать: 1. Номер вектора, в котором находится объект, 2. Номер объекта в векторе
-        std::pair<int, int> currentPair(-1, -1);
-        int objFound = Map.count(obj);
-        int vecNo;
-
-        if( objFound )
-            currentPair = Map[obj];
-
-        if( x > 400 )
-            if (y > 300)
-                vecNo = 3;
-            else
-                vecNo = 1;
-        else
-            if( y > 300 )
-                vecNo = 2;
-            else
-                vecNo = 0;
-
-        // Спроецируем экранную позицию объекта на карту наших векторов и найдем, в каком векторе сейчас находится элемент.
-        // Если его предыдущая позиция отличается от текущей, удалим объект из его старого вектора и добавим его в новый вектор.
-        // Заменим значение для текущего объекта в Map-е.
-        if( currentPair.first != vecNo ) {
-
-            if(currentPair.first >= 0) {
-
-                std::vector<gameObjectBase*>::iterator
-                    iter = VEC.at(currentPair.first)->begin(),
-                    end  = VEC.at(currentPair.first)->end();
-
-                for ( ; iter != end; ++iter ) {
-                    if( *iter == obj ) {
-                        VEC.at(currentPair.first)->erase(iter);
-                        break;
-                    }
-                }
-            }
-
-            currentPair.first = vecNo;
-            VEC.at(vecNo)->push_back(obj);
-            currentPair.second = (VEC.at(vecNo))->size() - 1;
-            Map[obj] = currentPair;
-        }
-
-        return;
-    }
-
-    // Вернем указатель на вектор, содержащий все объекты, находящиеся в ячейке, на которую приходится указанная точка (x, y)
-    // В процессе обработки вектора мы должны самостоятельно удалить из него те объекты, которые мы решим отметить как погибшие
-    std::vector<gameObjectBase*>* getVec(int x, int y) {
-    
-        int X = x / (800 / _numX);
-        int Y = y / (600 / _numY);
-
-        X = X >= _numX ? _numX - 1 : X;
-        Y = Y >= _numY ? _numY - 1 : Y;
-
-        int num = X + Y * _numX;
-
-        return VEC[num];
-    }
-
-    void logMsg(std::string str) {
-
-	    FILE *f = NULL;
-
-	    fopen_s(&f, "___msgLog__Helper.log", "a");
-	    if (f != NULL) {
-		    fputs(str.c_str(), f);
-    		fputs("\n", f);
-	    	fclose(f);
-	    }
-    }
-
- private:
-    UINT _numX, _numY;                                      // число разбиений экрана по горизонтали и по вертикали
-    std::vector< std::vector<gameObjectBase*>*    > VEC;    // вектор векторов монстров
-    std::map<gameObjectBase*, std::pair<int, int> > Map;    // map, в котором для каждого монстра хранится номер вектора, в котором он находится в данный момент
-};
-#endif
-
-
-#include <unordered_map>
-
-class BulletHelper {
-
- public:
-    BulletHelper(unsigned int numX, unsigned int numY) {
-
-        numX = 2;
-        numY = 2;
-    
-        for (int i = 0; i < numX * numY; i++)
-            MAPS.push_back(new std::unordered_map<int, int>());
-    }
-
-   ~BulletHelper() {
-       if( MAPS.size() ) {
-           for (int i = 0; i < MAPS.size(); i++)
-               delete MAPS[i];
-       }
-    }
-
-    void setThreadPool(ThreadPool *thPool) {
-        _thPool = thPool;
-    }
-
-    // кладем наш объект в соответствующий вектор
-    void Push(gameObjectBase* obj) {
-
-        unsigned int Obj = (int)obj;
-
-        int x = obj->getPosX();
-        int y = obj->getPosY();
-
-        // Проверяем, хранится ли такой элемент уже в Map-е. Если он еще не хранится, Map.count возвращает 0.
-        // Если объект уже хранится, currentPair будет содержать: 1. Номер вектора, в котором находится объект, 2. Номер объекта в векторе
-        int oldMap = -1, currentMap = -1;
-
-        if( Map.count(Obj) )
-            oldMap = Map[Obj];
-
-        if( x > 400 )
-            if (y > 300)
-                currentMap = 3;
-            else
-                currentMap = 1;
-        else
-            if( y > 300 )
-                currentMap = 2;
-            else
-                currentMap = 0;
-
-        // Спроецируем экранную позицию объекта на карту наших векторов и найдем, в каком векторе сейчас находится элемент.
-        // Если его предыдущая позиция отличается от текущей, удалим объект из его старого вектора и добавим его в новый вектор.
-        // Заменим значение для текущего объекта в Map-е.
-        if( oldMap != currentMap ) {
-
-            if( oldMap >= 0 )
-                MAPS.at(oldMap)->erase(Obj);
-
-            (*MAPS.at(currentMap))[Obj] = 0;
-            Map[Obj] = currentMap;
-
-            //reinterpret_cast<gameObjectBase*>(Obj)->setAlive(false);
-        }
-
-        return;
-    }
-
-    void PushThreaded(gameObjectBase* obj) {
-
-        _thPool->runAsync(&BulletHelper::threadMove, this, obj);
-    }
-
-    // Вернем указатель на карту, содержащую все объекты, находящиеся в ячейке, на которую приходится указанная точка (x, y)
-    // В процессе внешней обработки карты мы должны самостоятельно удалить из нее те объекты, которые мы решим отметить как погибшие
-    std::unordered_map<int, int>* getMap(int x, int y) {
-    
-        int X = x / (800 / _numX);
-        int Y = y / (600 / _numY);
-
-        X = X >= _numX ? _numX - 1 : X;
-        Y = Y >= _numY ? _numY - 1 : Y;
-
-        return MAPS.at(X + Y * _numX);
-    }
-
-    void logMsg(std::string str) {
-
-	    FILE *f = NULL;
-
-	    fopen_s(&f, "___msgLog__Helper.log", "a");
-	    if (f != NULL) {
-		    fputs(str.c_str(), f);
-    		fputs("\n", f);
-	    	fclose(f);
-	    }
-    }
-
-    // https://habrahabr.ru/post/182610/
-    void threadMove(void *Param) {
-    
-        gameObjectBase* obj = static_cast<gameObjectBase*>(Param);
-
-        unsigned int Obj = (int)obj;
-
-        int x = obj->getPosX();
-        int y = obj->getPosY();
-
-        int oldMap = -1, currentMap = -1;
-
-        if( Map.count(Obj) )
-            oldMap = Map[Obj];
-
-        if( x > 400 )
-            if (y > 300)
-                currentMap = 3;
-            else
-                currentMap = 1;
-        else
-            if( y > 300 )
-                currentMap = 2;
-            else
-                currentMap = 0;
-
-        if( oldMap != currentMap ) {
-
-            if( oldMap >= 0 ) {
-
-                mapLock[oldMap].lock();
-
-                    MAPS.at(oldMap)->erase(Obj);
-
-                mapLock[oldMap].unlock();
-            }
-
-            mapLock[currentMap].lock();
-
-                (*MAPS.at(currentMap))[Obj] = 1;
-                Map[Obj] = currentMap;
-
-            mapLock[currentMap].unlock();
-        }
-
-        return;
-    }
-
- private:
-
-    std::mutex mapLock[4];
-
-    ThreadPool *_thPool;
-
-    UINT _numX, _numY;                                  // число разбиений экрана по горизонтали и по вертикали
-    //std::map<int, int>                Map;            // карта, в которой для каждого монстра хранится номер карты, в которой он находится в данный момент
-    std::unordered_map<int, int>                Map;
-    std::vector< std::unordered_map<int, int>*> MAPS;   // вектор карт монстров
-};
-
-
-class ListedList {
-
- public:
-    ListedList(unsigned int numX, unsigned int numY) : _numX(numX), _numY(numY) {
-        _numX = 2;
-        _numY = 2;
-
-        for (int i = 0; i < _numX * _numY; i++)
-            _VEC.push_back(new std::list<gameObjectBase*>);
-    }
-   ~ListedList() {
-        for (int i = 0; i < _numX * _numY; i++)
-            delete(_VEC[i]);
-   }
-
-    void setThreadPool(ThreadPool *thPool) {
-        _thPool = thPool;
-    }
-
-    inline unsigned int getVecNo_withCoords(const int &x, const int &y) {
-    
-        if( x > 400 )
-            if (y > 300)
-                return 3;
-            else
-                return 1;
-        else
-            if( y > 300 )
-                return 2;
-            else
-                return 0;
-    }
-
-    void runBullet(Bullet *bullet) {
-    
-    /*
-        bullet->coords->getVecNo_withCoords
-
-        get close lying lists
-
-        _thPool->runAsync(...) {
-
-            only for these lists
-
-        }
-
-    */
-    }
-
-    void MoveAll() {
-    
-        /*
-            for every list:
-
-                _thPool->runAsync(...) {
-
-                    for every monster in the list: {
-                        Monster->Move();
-
-                        if( getVecNo_withCoords(const int &x, const int &y) != currentVecNo )
-                            monster -> erase from this list,
-                            AddObject(monster); <--- add to another list
-                    }
-                }
-                    
-        */
-    }
-
-    // кладем наш объект в соответствующий список
-    void AddObject(gameObjectBase* obj) {
-
-        unsigned int Obj = (int)obj;
-
-        int x = obj->getPosX();
-        int y = obj->getPosY();
-
-        // Проверяем, хранится ли такой элемент уже в Map-е. Если он еще не хранится, Map.count возвращает 0.
-        // Если объект уже хранится, value будет содержать номер списка, в котором находится объект
-        int currentVec = getVecNo_withCoords(x, y);
-
-        // Спроецируем экранную позицию объекта на карту наших векторов и найдем, в каком векторе сейчас находится элемент.
-        // Если его предыдущая позиция отличается от текущей, удалим объект из его старого вектора и добавим его в новый вектор.
-        // Заменим значение для текущего объекта в Map-е.
-        ( *_VEC.at(currentVec) ).push_back(obj);
-        //_Map[Obj] = currentVec;
-
-        return;
-    }
-
-private:
-    //std::unordered_map<int, int>               _Map;
-    std::vector<std::list<gameObjectBase*>*>   _VEC;
-    UINT                                       _numX, _numY;    // число разбиений экрана по горизонтали и по вертикали
-    ThreadPool                                *_thPool;
-};
 
 #endif

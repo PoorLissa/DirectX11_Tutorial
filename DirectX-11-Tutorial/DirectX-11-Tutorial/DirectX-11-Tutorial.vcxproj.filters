@@ -101,6 +101,9 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp">
       <Filter>Source Files\Engine.cpp</Filter>
     </ClCompile>
+    <ClCompile Include="Game.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h">
@@ -188,6 +191,9 @@
       <Filter>Header Files\Engine.h</Filter>
     </ClInclude>
     <ClInclude Include="Globals.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Game.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

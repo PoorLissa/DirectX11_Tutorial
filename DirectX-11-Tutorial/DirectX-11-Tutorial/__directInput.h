@@ -30,6 +30,17 @@
 
 
 
+// Вспомогательная структура для передачи состояния клавиатуры и мыши
+struct keysPressed {
+    bool up;
+    bool down;
+    bool left;
+    bool right;
+    bool lmbDown;
+};
+
+
+
 class DirectInputClass {
  public:
 	DirectInputClass();

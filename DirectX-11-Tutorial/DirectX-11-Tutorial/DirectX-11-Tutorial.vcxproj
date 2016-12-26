@@ -87,6 +87,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Game.cpp" />
     <ClCompile Include="gameClasses.cpp" />
     <ClCompile Include="gameShader_Bullet.cpp" />
     <ClCompile Include="stdafx.cpp">
@@ -120,6 +121,7 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Game.h" />
     <ClInclude Include="gameClasses.h" />
     <ClInclude Include="gameShader_Bullet.h" />
     <ClInclude Include="Globals.h" />

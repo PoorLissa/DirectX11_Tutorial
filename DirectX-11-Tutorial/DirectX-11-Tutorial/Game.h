@@ -1,0 +1,117 @@
+// Класс, в который завернута вся логика игры
+
+#pragma once
+#ifndef _GAME_H_
+#define _GAME_H_
+
+#include "__d3dClass.h"
+#include "__bitmapClass.h"
+#include "__SpriteInstanced.h"
+#include "__directInput.h"
+#include "__graphicsClass.h"
+
+#include "gameShader_Bullet.h"
+
+#define doLogMessages
+
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// Вспомогательные структуры для хранения списков игровых объектов и всей сопутствующей инфы:
+
+// Монстры
+struct MonsterList {
+    std::list<gameObjectBase*> objList;
+    unsigned int         listSize;
+    float                rotationAngle;
+    InstancedSprite     *spriteInst;
+};
+
+// Бонусы
+struct BonusList {
+    std::list<gameObjectBase*> objList;
+    unsigned int         listSize;
+    float                rotationAngle;
+    InstancedSprite     *spriteInst;
+};
+
+// Оружие
+struct WeaponList {
+    std::list<gameObjectBase*> objList;
+    unsigned int         listSize;
+    InstancedSprite     *spriteInst;
+};
+// ------------------------------------------------------------------------------------------------------------------------
+
+
+
+// Предварительное объявление класса
+class GraphicsClass;
+
+
+
+class Game {
+
+ public:
+     Game();
+    ~Game();
+
+    bool Init(int, int, HighPrecisionTimer *, GraphicsClass *, HWND);
+    void Shutdown();
+
+    inline char* getMsg() { return msg; }
+
+    bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool &);
+
+ private:
+    void threadMonsterMove(const unsigned int &, const unsigned int &, const unsigned int &);
+
+ private:
+
+    // текстовое сообщение, которое можно вывести на экран
+    char                    *msg;
+    char                     chBuffer[100];
+
+    // Экранные размеры
+    int                      scrWidth, scrHeight, scrHalfWidth, scrHalfHeight, wndPosX, wndPosY;
+
+    // Указатель на GraphicsClass, в котором класс Game объявлен как дружественный.
+    // Таким образом мы сможем из класса игры рендерить объекты, не передавая в него миллион параметров
+    GraphicsClass           *m_Graphics;
+
+    HighPrecisionTimer       gameTimer;
+
+    bulletShader_Instancing *m_BulletShader;
+
+	BitmapClass			    *m_Bitmap_Bgr;
+    BitmapClass			    *m_Cursor;
+
+    InstancedSprite         *m_PlayerBitmapIns1;
+    InstancedSprite         *m_PlayerBitmapIns2;
+    InstancedSprite         *m_BulletBitmapIns;
+
+    // Инстанцированные спрайты с анимацией
+    InstancedSprite         *sprIns1;
+    InstancedSprite         *sprIns2;
+    InstancedSprite         *sprIns3;
+    InstancedSprite         *sprIns4;
+
+    // Списки игровых объектов
+    MonsterList              monsterList1, monsterList2;
+    BonusList                bonusList1;
+    WeaponList               weaponList1;
+
+    gameObjectBase          *m_Player;
+
+    std::list<gameObjectBase*> bulletList;
+    unsigned int bulletListSize = 0;
+
+    // Вектор, в котором содержатся все наши списки монстров. Передаем его в обработчик перемещения каждой пули для просчета стрельбы
+    std::vector< MonsterList* > VEC;
+
+    // указатель на пул потоков
+    ThreadPool *thPool;
+};
+
+#endif

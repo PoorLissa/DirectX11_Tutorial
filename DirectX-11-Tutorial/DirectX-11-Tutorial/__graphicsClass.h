@@ -27,7 +27,10 @@
 #include "__SpriteInstanced.h"
 #include "__bitmapClassInstancing.h"
 #include "__textureShaderClassInstancing.h"
-#include "gameShader_Bullet.h"
+
+#include <string>
+
+#include "Game.h"
 
 // ---------------------------------------------------------------------------------------
 #if defined fullScreen
@@ -45,24 +48,17 @@ const float SCREEN_DEPTH  = 1000.0f;
 const float SCREEN_NEAR   = 0.1f;
 // ---------------------------------------------------------------------------------------
 
-struct keysPressed {
-    bool up;
-    bool down;
-    bool left;
-    bool right;
-    bool lmbDown;
-};
 
-template <typename T>
-bool sortPredicate(const T * const &a, const T * const &b)
-{
-   return *a < *b;
-}
-// ---------------------------------------------------------------------------------------
+
+// ѕредварительное объ€вление дружественного класса
+class Game;
 
 
 
 class GraphicsClass {
+
+ // ќбъ€вл€ем класс Game как дружественный, чтобы просто передавать в него указатель на GraphicsClass и иметь возможность рендерить игровые объекты
+ friend class Game;
 
  public:
 	GraphicsClass();
@@ -76,8 +72,6 @@ class GraphicsClass {
 	inline void logMsg(const std::string &, bool = false, char * = "___msgLog.log");
 
     bool Render(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
-
-    void Sort(std::list<gameObjectBase*> *);
 
  private:
     bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
@@ -103,28 +97,12 @@ class GraphicsClass {
     TextureShaderClass_Instancing   *m_TextureShaderIns;
     TextureShaderClass_Instancing   *m_TextureShaderInsArr;
     LightShaderClass		        *m_LightShader;
-    bulletShader_Instancing         *m_BulletShader;
 //    ColorShaderClass		        *m_ColorShader;
 
     LightClass				*m_Light;
-
     BitmapClass			    *m_Bitmap_Tree;		// BitmapClass object
-	BitmapClass			    *m_Bitmap_Bgr;
-    BitmapClass			    *m_Cursor;
-
 	TextOutClass			*m_TextOut;         // TextClass object
-
 	BitmapClass_Instancing	*m_BitmapIns;
-
-    InstancedSprite         *sprIns1;           // »нстанцированные спрайты с анимацией
-    InstancedSprite         *sprIns2;
-    InstancedSprite         *sprIns3;
-    InstancedSprite         *sprIns4;
-
-    InstancedSprite         *m_PlayerBitmapIns1;
-    InstancedSprite         *m_PlayerBitmapIns2;
-    InstancedSprite         *m_BulletBitmapIns;
-    gameObjectBase          *m_Player;
 };
 
 #endif
