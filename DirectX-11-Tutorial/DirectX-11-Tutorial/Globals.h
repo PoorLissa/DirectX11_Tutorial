@@ -5,13 +5,13 @@
 // Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             20
+#define MONSTERS_QTY             10
 
 #define fullScreen
 #undef  fullScreen
 
 #define appTimerInterval         20             // Интервал в миллисекундах, по истечении которого главный таймер приложения генерит событие onTimer
-#define EFFECT_DEFAULT_LENGTH    600            // Длительность (в тактах приложения) бонусных эффектов
+#define EFFECT_DEFAULT_LENGTH    600            // Длительность бонусных эффектов (в тактах приложения)
 #define SLOW_EFFECT_FACTOR       3              // Коэффициент замедления для бонуса SLOW
 
 #define PLAYER_DEFAULT_HEALTH    100            // Начальное здоровье Игрока
@@ -24,8 +24,9 @@
 #define useThread                               // Нужно ли использовать потоки
 //#undef  useThread
 
-#define useSorting                              // судя по всему, сортировка скорее замедляет, чем убыстряет просчет
-#undef  useSorting
+
+
+// ------------------------------------------------------------------------------------------------------------------------
 
 
 
@@ -40,5 +41,6 @@ inline void logMsg(const std::string &str, bool doCleanFile = false, char *fileN
 		fclose(f);
 	}
 }
+// ------------------------------------------------------------------------------------------------------------------------
 
 #endif

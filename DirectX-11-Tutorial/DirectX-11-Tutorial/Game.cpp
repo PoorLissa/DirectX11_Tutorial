@@ -3,6 +3,8 @@
 
 // глобальный стринг, чтобы писать в него сообщения на протяжении одной итерации и потом в конце итерации выводить его в файл ровно 1 раз
 std::string strMsg;
+
+extern gameCells GameCells;
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -35,26 +37,30 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
 {
     bool result;
 
-    m_Graphics = m_Graph;
-
+    m_Graphics    = m_Graph;
 	scrWidth      = screenWidth;
 	scrHeight     = screenHeight;
-    scrHalfWidth  = screenWidth  * 0.5;
-    scrHalfHeight = screenHeight * 0.5;
-
-    wndPosX = 0;
-    wndPosY = 0;
+    scrHalfWidth  = screenWidth  / 2;
+    scrHalfHeight = screenHeight / 2;
+    bgrWidth      = screenWidth  * 1.5;
+    bgrHeight     = screenHeight * 1.5;
+    wndPosX       = 0;
+    wndPosY       = 0;
+    borderZone    = scrWidth / 4;
 
     // Игровой таймер. Пока что используется просто для замеров интервалов времени при расчетах, onTimer не используется
     gameTimer.Initialize(100);
 
-    // Пул потоков
+    // Пул потоков (и число рабочих потоков)
     thPool = new ThreadPool(50);
     gameObjectBase::setThreadPool(thPool);
 
+    // Инициализируем сетку ячеек
+    GameCells.Init(bgrWidth, bgrHeight);
+
     srand(unsigned int(time(0)));
 
-
+    // -------------------------------------------------
 
     // Шейдеры, специфичные для игры
     SAFE_CREATE(m_BulletShader, bulletShader_Instancing);
@@ -73,8 +79,7 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
 		// Create and initialize the bitmap objects:
         SAFE_CREATE(m_Bitmap_Bgr, BitmapClass);
 
-		//result = m_Bitmap_Bgr->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/bgr_1600.jpg", screenWidth*1.5, screenHeight*1.5);
-        result = m_Bitmap_Bgr->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/Bgr.png", 1600, 900);
+        result = m_Bitmap_Bgr->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, L"../DirectX-11-Tutorial/data/Bgr.png", bgrWidth, bgrHeight);
         CHECK_RESULT(hwnd, result, L"Could not initialize the bitmap object.");
 
         // Инстанцированные спрайты с поддержкой анимации
@@ -109,8 +114,8 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         monsterList1.rotationAngle = -90.0f;
 
         for (unsigned int i = 0; i < MONSTERS_QTY; i++) {
-            int        x = 50 + rand() % (scrWidth  - 100);
-            int        y = 50 + rand() % (scrHeight - 100);
+            int        x = 50 + rand() % (bgrWidth  - 100);
+            int        y = 50 + rand() % (bgrHeight - 100);
             float  speed = (rand() % 250 + 10) * 0.1f;
 			float  scale = 0.5f + (rand() % 16) * 0.1f;
             int interval = int(50 / speed);
@@ -149,8 +154,8 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         monsterList2.rotationAngle = 0.0f;
 
         for (int i = 0; i < MONSTERS_QTY; i++) {
-            int        x = 50 + rand() % (scrWidth  - 100);
-            int        y = 50 + rand() % (scrHeight - 100);
+            int        x = 50 + rand() % (bgrWidth  - 100);
+            int        y = 50 + rand() % (bgrHeight - 100);
             float  speed = (rand() % 250 + 10) * 0.1f;
 			float  scale = 0.5f + (rand() % 16) * 0.1f;
             int interval = int(50 / speed);
@@ -254,14 +259,14 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
 
     // Пули
     {
-        Bullet::setScrSize(screenWidth, screenHeight);
+        Bullet::setScrSize(bgrWidth, bgrHeight);
         //WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128.png" };
         WCHAR *frames2[] = { L"../DirectX-11-Tutorial/data/bullet-red-icon-128_blurred.png" };
         result = m_BulletBitmapIns->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
         CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
         // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
-        bulletList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0, 0));
-        bulletListSize++;
+        bulletList.objList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0, 0));
+        bulletList.listSize++;
     }
 
 
@@ -286,8 +291,9 @@ void Game::Shutdown()
         SAFE_DELETE(m_Player);
 
     // Список пуль
-    if( bulletList.size() > 0 ) {
-        std::list<gameObjectBase*>::iterator iter = bulletList.begin(), end = bulletList.end();
+    if( bulletList.listSize > 0 ) {
+        auto iter = bulletList.objList.begin(),
+              end = bulletList.objList.end();
         while (iter != end) {
             SAFE_DELETE(*iter);
             ++iter;
@@ -303,7 +309,8 @@ void Game::Shutdown()
 
             if( list && list->size() ) {
             
-                std::list<gameObjectBase*>::iterator iter = list->begin(), end = list->end();
+                auto iter = list->begin(),
+                      end = list->end();
                 while (iter != end) {
                     SAFE_DELETE(*iter);
                     ++iter;
@@ -336,11 +343,10 @@ void Game::Shutdown()
 // Просчитываем и рендерим игровые объекты
 bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX, const int &mouseY, const keysPressed *Keys, const bool & onTimer)
 {
-    ID3D11Device        *m_Device     = m_Graphics->m_d3d->GetDevice();
-    ID3D11DeviceContext *m_devContext = m_Graphics->m_d3d->GetDeviceContext();
+    static ID3D11Device        *m_Device     = m_Graphics->m_d3d->GetDevice();
+    static ID3D11DeviceContext *m_devContext = m_Graphics->m_d3d->GetDeviceContext();
 
-    static float aaa = 0.0f;
-    aaa += 0.01f;
+//    float ZoomFactor = 0.66f;
 
 	// Фон
 	{
@@ -364,7 +370,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
         return false;
 	}
 
-
+//    D3DXMatrixScaling(&m_Graphics->matrixScaling, ZoomFactor, ZoomFactor, 1.0f);
 
 	// Вращающееся дерево - просто для красоты!
 	{
@@ -421,35 +427,32 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                 // Получим текущие координаты игрока
                 playerPosX = m_Player->getPosX();
                 playerPosY = m_Player->getPosY();
+
 #if 1
                 // рассчитаем сдвиг окна относительно всего поля
                 {
-                    static int BorderDist = 200;
-                    static int BgrWidth   = scrWidth  * 1.5;
-                    static int BgrHeight  = scrHeight * 1.5;
+                    if( playerPosX > scrWidth - borderZone ) {
 
-                    if( playerPosX > scrWidth - BorderDist ) {
-
-                        if( BgrWidth - scrWidth + wndPosX > 1 ) {
+                        if( bgrWidth - scrWidth + wndPosX > 1 ) {
                             // если можем сместить экран вправо, смещаем его, а игрок остается на краю граничной зоны
-                            wndPosX += scrWidth - BorderDist - playerPosX;
-                            playerPosX = scrWidth - BorderDist;
+                            wndPosX += scrWidth - borderZone - playerPosX;
+                            playerPosX = scrWidth - borderZone;
                         }
                         else {
                             // если экран уже смещать некуда, замораживаем его на месте, а игроку позволяем дойти до края экрана
-                            wndPosX = scrWidth - BgrWidth;
+                            wndPosX = scrWidth - bgrWidth;
                             if( playerPosX > scrWidth - 25 ) {
                                 playerPosX = scrWidth - 25;
                             }
                         }
                     }
 
-                    if( playerPosX < BorderDist ) {
+                    if( playerPosX < borderZone ) {
 
                         if( wndPosX < 0 ) {
                             // если можем сместить экран влево, смещаем его, а игрок остается на краю зоны
-                            wndPosX += BorderDist - playerPosX;
-                            playerPosX = BorderDist;
+                            wndPosX += borderZone - playerPosX;
+                            playerPosX = borderZone;
                         }
                         else {
                             // если экран уже смещать некуда, замораживаем его на месте, а игроку позволяем дойти до края экрана
@@ -459,28 +462,28 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                         }
                     }
 
-                    if( playerPosY > scrHeight - BorderDist ) {
+                    if( playerPosY > scrHeight - borderZone ) {
 
-                        if( BgrHeight - scrHeight + wndPosY > 1 ) {
+                        if( bgrHeight - scrHeight + wndPosY > 1 ) {
                             // если можем сместить экран вниз, смещаем его, а игрок остается на краю зоны
-                            wndPosY += scrHeight - BorderDist - playerPosY;
-                            playerPosY = scrHeight - BorderDist;
+                            wndPosY += scrHeight - borderZone - playerPosY;
+                            playerPosY = scrHeight - borderZone;
 
                         }
                         else {
                             // если экран уже смещать некуда, замораживаем его на месте, а игроку позволяем дойти до края экрана
-                            wndPosY = scrHeight - BgrHeight;
+                            wndPosY = scrHeight - bgrHeight;
                             if( playerPosY > scrHeight - 25 )
                                 playerPosY = scrHeight - 25;
                         }
                     }
 
-                    if( playerPosY < BorderDist ) {
+                    if( playerPosY < borderZone ) {
 
                         if( wndPosY < 0 ) {
                             // если можем сместить экран влево, смещаем его, а игрок остается на краю зоны
-                            wndPosY += BorderDist - playerPosY;
-                            playerPosY = BorderDist;
+                            wndPosY += borderZone - playerPosY;
+                            playerPosY = borderZone;
                         }
                         else {
                             // если экран уже смещать некуда, замораживаем его на месте, а игроку позволяем дойти до края экрана
@@ -494,6 +497,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                     m_Player->setPosY(playerPosY);
                 }
 #endif
+
 
                 if (!m_PlayerBitmapIns1->initializeInstances(m_Device, m_Player))
                     return false;
@@ -509,13 +513,13 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                 if ( Keys->lmbDown ) {
 
                     if( player->isWeaponReady() )
-                        player->spawnBullet_Normal(mouseX, mouseY, &bulletList, bulletListSize);
+                        player->spawnBullet_Normal(mouseX, mouseY, &bulletList.objList, bulletList.listSize, wndPosX, wndPosY);
 
                 }
 
                 // Просчитываем движение всех пуль
-                iter = bulletList.begin();
-                end  = bulletList.end();
+                iter = bulletList.objList.begin();
+                end  = bulletList.objList.end();
 
                 while (iter != end) {
 
@@ -524,13 +528,13 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                         // ??? - в новой реализации с ячейками, кажется, эта проблема ушла сама собой
                         //BulletObj->Move(0, 0, &VEC);                // вектор списков
-                        BulletObj->Move(0, 0);
+                        BulletObj->Move(wndPosX, wndPosY);
                     }
                     else {
 
                         delete BulletObj;
-                        iter = bulletList.erase(iter);
-                        bulletListSize--;
+                        iter = bulletList.objList.erase(iter);
+                        bulletList.listSize--;
                         continue;
                     }
 
@@ -538,7 +542,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                 }
                 thPool->waitForAll();   // Ждем, пока все потоки отработают до конца
 
-                if (!m_BulletBitmapIns->initializeInstances(m_Device, &bulletList, &bulletListSize, true))
+                if (!m_BulletBitmapIns->initializeInstances(m_Device, &bulletList.objList, &bulletList.listSize, true))
                     return false;
 
                 {
@@ -549,7 +553,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                     strMsg += std::to_string(gameTimer.GetTime());
                     strMsg += "; bullets num: ";
-                    strMsg += std::to_string(bulletListSize);
+                    strMsg += std::to_string(bulletList.listSize);
                     strMsg += "\n";
 #endif
                 }
@@ -587,7 +591,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                         if( BonusObj->isAlive() ) {
 
-                            BonusObj->Move(0, 0, m_Player);
+                            BonusObj->Move(wndPosX, wndPosY, m_Player);
 
                         }
                         else {
@@ -618,7 +622,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                         if( WeaponObj->isAlive() ) {
 
-                            WeaponObj->Move(0, 0, m_Player);
+                            WeaponObj->Move(wndPosX, wndPosY, m_Player);
 
                         }
                         else {
@@ -644,6 +648,9 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
         // --- Активируем модели спрайтов в GPU и затем отрисовываем все инстанции ---
         // ---------------------------------------------------------------------------
 
+        D3DXMatrixTranslation(&m_Graphics->matrixTranslation, wndPosX, -wndPosY, 1.0f);
+//D3DXMatrixScaling(&m_Graphics->matrixScaling, ZoomFactor, ZoomFactor, 1.0f);
+
         // Monsters from all the lists
         {
             InstancedSprite *Sprite;
@@ -664,19 +671,18 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                     D3DXMatrixScaling(&matrixScaling, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f + 0.1*sin(rotation) + 0.1*zoom, 1.0f);
 #endif
 
-//D3DXMatrixTranslation(&m_Graphics->matrixTranslation, 0.0f + wndPosX, 0.0f - wndPosY, 1.0f);
-//D3DXMatrixScaling(&m_Graphics->matrixScaling, 0.5f, 0.5f, 1.0f);
-
                     // Render the sprites using the texture shader
                     if( !m_Graphics->m_TextureShaderIns->Render(m_devContext,
                             Sprite->GetVertexCount(), Sprite->GetInstanceCount(),
                                 m_Graphics->matrixWorldZ * m_Graphics->matrixTranslation * m_Graphics->matrixScaling,
                                     m_Graphics->matrixView, m_Graphics->matrixOrthographic,
-                                        Sprite->GetTextureArray(), 1, playerPosX - scrHalfWidth, scrHalfHeight - playerPosY) )
+                                        Sprite->GetTextureArray(), 1, playerPosX - scrHalfWidth - wndPosX, scrHalfHeight - playerPosY + wndPosY) )
                     return false;
                 }
             }
         }
+
+        m_Graphics->m_d3d->GetWorldMatrix(m_Graphics->matrixTranslation);
 
         // Player
         {
@@ -703,8 +709,11 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
             return false;
         }
 
+        // сдвигаем все игровые объекты в соответствии со сдвигом окна
+        D3DXMatrixTranslation(&m_Graphics->matrixTranslation, wndPosX, -wndPosY, 1.0f);
+
         // Bullets
-        if( bulletListSize > 0 )
+        if( bulletList.listSize > 0 )
         {
             if( !m_BulletBitmapIns->Render(m_devContext) )
                 return false;
@@ -715,7 +724,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                             m_Graphics->matrixView, m_Graphics->matrixOrthographic, m_BulletBitmapIns->GetTextureArray(), 0, 0, 0) )
             return false;
         }
-        _itoa_s(bulletListSize, chBuffer, 100, 10);
+        _itoa_s(bulletList.listSize, chBuffer, 100, 10);
         msg = chBuffer;
 
         // Bonuses
@@ -773,11 +782,12 @@ void Game::threadMonsterMove(const unsigned int &listNo, const unsigned int &pla
 
         if( MonsterObj->isAlive() ) {
 
-            MonsterObj->Move(playerPosX, playerPosY);
+            MonsterObj->Move(playerPosX - wndPosX, playerPosY - wndPosY);
 
         }
         else {
 
+            // ??? do we need to lock this part?
             delete MonsterObj;
             iter = monsterList->objList.erase(iter);
             monsterList->listSize--;

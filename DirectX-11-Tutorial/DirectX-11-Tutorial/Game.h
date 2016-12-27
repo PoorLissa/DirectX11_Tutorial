@@ -42,6 +42,12 @@ struct WeaponList {
     unsigned int         listSize;
     InstancedSprite     *spriteInst;
 };
+
+// ѕули
+struct BulletList {
+    std::list<gameObjectBase*> objList;
+    unsigned int        listSize;
+};
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -74,7 +80,11 @@ class Game {
     char                     chBuffer[100];
 
     // Ёкранные размеры
-    int                      scrWidth, scrHeight, scrHalfWidth, scrHalfHeight, wndPosX, wndPosY;
+    int                      scrWidth, scrHeight,           // размеры видимого окна
+                             scrHalfWidth, scrHalfHeight,   // половинные размеры видимого окна
+                             wndPosX, wndPosY,              // смещение видимого окна относительно нулевой координаты
+                             bgrWidth, bgrHeight;           // размеры всего игрового пол€ (в норме должны превышать размеры видимого окна)
+    int                      borderZone;                    // ширина зазора вдоль границ экрана, на которой начинаетс€ сдвиг экрана
 
     // ”казатель на GraphicsClass, в котором класс Game объ€влен как дружественный.
     // “аким образом мы сможем из класса игры рендерить объекты, не передава€ в него миллион параметров
@@ -101,11 +111,12 @@ class Game {
     MonsterList              monsterList1, monsterList2;
     BonusList                bonusList1;
     WeaponList               weaponList1;
+    BulletList               bulletList;
 
     gameObjectBase          *m_Player;
 
-    std::list<gameObjectBase*> bulletList;
-    unsigned int bulletListSize = 0;
+//    std::list<gameObjectBase*> bulletList;
+//    unsigned int bulletListSize = 0;
 
     // ¬ектор, в котором содержатс€ все наши списки монстров. ѕередаем его в обработчик перемещени€ каждой пули дл€ просчета стрельбы
     std::vector< MonsterList* > VEC;

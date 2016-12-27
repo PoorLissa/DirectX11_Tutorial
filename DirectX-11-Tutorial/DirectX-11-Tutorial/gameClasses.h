@@ -21,7 +21,6 @@ struct OlegCell {
     std::vector<gameObjectBase*> cellList;      // вектор, в котором будут отмечаться монстры, зашедшие в ячейку
     std::mutex                   cellMutex;     // мьютекс для блокирования вектора cellList на запись/удаление
     unsigned int                 cellId;        // уникальный id для ячеек
-    char ch;
 };
 
 class gameCells {
@@ -29,38 +28,41 @@ class gameCells {
  public:
     gameCells() {
 
-        if( _Single ) {
+        if( _Single )
             exit(EXIT_FAILURE);
-        }
-        else {
-            // временные константы
-            _lowX = 0;
-            _lowY = 0;
-            _maxX = 800;
-            _maxY = 600;
-
-            _widthPixels  = abs(_maxX - _lowX);
-            _heightPixels = abs(_maxY - _lowY);
-
-            // потом нужно подобрать подходящий размер
-            _cellSide = 10;
-            _cellSideInverted = 1.0f / _cellSide;
-
-            _widthCells  = _widthPixels  * _cellSideInverted;
-            _heightCells = _heightPixels * _cellSideInverted;
-
-            VEC = new std::vector<OlegCell>(_widthCells * _heightCells);
-
-            // раздадим всем ячейкам уникальные id
-            for (unsigned int i = 0; i < _widthCells * _heightCells; i++)
-                (*VEC)[i].cellId = i;
-
+        else
             _Single = true;
-        }
     }
 
    ~gameCells() {
         delete VEC;
+    }
+
+    void Init(int bgrWidth, int bgrHeight, int cellSide = 10) {
+
+        // временные константы
+        _lowX = 0;
+        _lowY = 0;
+        _maxX = bgrWidth;
+        _maxY = bgrHeight;
+
+        _widthPixels  = abs(_maxX - _lowX);
+        _heightPixels = abs(_maxY - _lowY);
+
+        // потом нужно подобрать подходящий размер
+        _cellSide = cellSide;
+        _cellSideInverted = 1.0f / _cellSide;
+
+        _widthCells  = _widthPixels  * _cellSideInverted;
+        _heightCells = _heightPixels * _cellSideInverted;
+
+        // создадим вектор с ячейками и раздадим всем ячейкам уникальные id
+        VEC = new std::vector<OlegCell>(_widthCells * _heightCells);
+
+        for (unsigned int i = 0; i < _widthCells * _heightCells; i++)
+            (*VEC)[i].cellId = i;   
+
+        return;
     }
 
     // пересчитываем экранные координаты во внутрисеточный индекс и возвращаем соответствующий вектор
@@ -82,6 +84,8 @@ class gameCells {
         return _widthCells * y + x;
     }
 
+    // проверяем, чтобы прямоугольник вокруг пули не выходил за пределы сетки ячеек
+    // если он вдруг выходит (пуля находится вплотную к краю сетки) - исправляем координаты так, чтобы он не выходил
     inline void checkCoordinates(int &x0, int &y0, int &x1, int &y1) {
 
         static int _lowX_Cells = getDist_inCells(_lowX);
@@ -96,7 +100,7 @@ class gameCells {
     }
 
     // прописываем монстра в ячейки, которые он собою занимает
-    void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &, float test);
+    void UpdateGameCells(Monster *, const int &, const int &, const int &, const int &, float test);
 
  private:
     // запрещаем копирование и присваивание
@@ -245,7 +249,7 @@ class Player : public gameObjectBase {
 
     inline const bool& isWeaponReady()                       { if( !(_weaponReady % _weaponDelay) ) { _weaponReady = 0; return true; } return false; }
 
-    inline void spawnBullet_Normal   (const int &, const int &, std::list<gameObjectBase*> *, unsigned int &);
+    inline void spawnBullet_Normal   (const int &, const int &, std::list<gameObjectBase*> *, unsigned int &, const int &, const int &);
     inline void spawnBullet_FourSides(std::list<gameObjectBase*> *, unsigned int &);
 
   private:
@@ -315,21 +319,20 @@ class Bullet : public gameObjectBase {
 
     // Метод для установки значений _scrWidth и _scrHeight, за пределами которых пули будут исчезать
     static void setScrSize(cuiRef width, cuiRef height) {
-        unsigned int addedSize = 50;
+        unsigned int addedSize = 100;
         _scrWidth  = width  + addedSize;
         _scrHeight = height + addedSize;
     }
 
-    virtual inline       cuiRef getAnimPhase() const { return   0; }
-            inline const float& getX0()        const { return _X0; }
-            inline const float& getY0()        const { return _Y0; }
+    virtual inline cuiRef getAnimPhase() const { return   0; }
+            inline cfRef  getX0()        const { return _X0; }
+            inline cfRef  getY0()        const { return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
     // возвращаем ноль, если столкновения не происходит, или счетчик анимации взрыва, если столкновение произошло
-    virtual void Move(cfRef, cfRef, void *Param) {
+    virtual void Move(cfRef wndPosX, cfRef wndPosY, void *Param) {
         //_thPool->runAsync(&Bullet::threadMove_VECT, this, Param);
-        //threadMove_Cells();
-        _thPool->runAsync(&Bullet::threadMove_Cells, this);
+        _thPool->runAsync(&Bullet::threadMove_Cells, this, wndPosX, wndPosY);
     }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
@@ -345,7 +348,7 @@ class Bullet : public gameObjectBase {
  private:
     // Потоковый просчет попаданий пули в монстров
     void threadMove_VECT(void *);
-    void threadMove_Cells();
+    void threadMove_Cells(cfRef, cfRef);
 
  protected:
     float   _X0, _Y0;               // изначальная точка, из которой пуля летит
@@ -397,7 +400,7 @@ class Bonus : public gameObjectBase, public BonusEffects {
 	Bonus(cfRef x, cfRef y, const Effects &effect)
 		: gameObjectBase(x, y, 1.0f, 0.0f, 0.0f, 1),
           BonusEffects(),
-            _LifeTime(500),
+            _LifeTime(1500),    // 500
             _Effect(effect),
             _AngleCounter(rand()%10),
             _ScaleCounter(0)
@@ -405,13 +408,13 @@ class Bonus : public gameObjectBase, public BonusEffects {
    ~Bonus() {}
 
     // Для бонуса рассчитываем оставшееся время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual void Move(cfRef x, cfRef y, void *Param) {
+    virtual void Move(cfRef wndPosX, cfRef wndPosY, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
         // Бонус взят (??? расстояние пока что выбрано методом научного тыка и считается не по окружности, а по квадрату)
         // При этом бонус умирает, а игрок получает новый эффект
-        if( abs(_X - player->getPosX()) < 33 && abs(_Y - player->getPosY()) < 33 ) {
+        if( abs(_X - player->getPosX() + wndPosX) < 33 && abs(_Y - player->getPosY() + wndPosY) < 30 ) {
 
             player->setEffect(_Effect);
             _Alive = false;
@@ -460,20 +463,20 @@ class Weapon : public gameObjectBase, public BonusWeapons {
    ~Weapon() {}
 
     // Для бонуса-оружия рассчитываем время жизни, поворот, масштаб и взаимодействие с Игроком
-    virtual void Move(cfRef x, cfRef y, void *Param) {
+    virtual void Move(cfRef wndPosX, cfRef wndPosY, void *Param) {
 
         Player *player = static_cast<Player*>(Param);
 
         // Бонус-оружие взят (??? расстояние пока что выбрано методом научного тыка и считается не по окружности, а по квадрату)
         // При этом бонус-оружие умирает, а игрок получает новую пушку
-        if( abs(_X - player->getPosX()) < 33 && abs(_Y - player->getPosY()) < 33 ) {
+        if( abs(_X - player->getPosX() + wndPosX) < 33 && abs(_Y - player->getPosY() + wndPosY) < 30 ) {
 
             player->setEffect(_Weapon);
             _Alive = false;
             return;
         }
 
-        // Немного шевелим бонусный спрайт
+        // Пошевеливаем бонусный спрайт
         _AngleCounter += 0.01f;
         _ScaleCounter += 0.01f;
 
@@ -503,7 +506,8 @@ class Weapon : public gameObjectBase, public BonusWeapons {
 
 
 
-void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<gameObjectBase*> *bulletList, unsigned int &bulletListSize)
+void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<gameObjectBase*> *bulletList, unsigned int &bulletListSize,
+                                    const int &wndPosX, const int &wndPosY)
 {
     // приводим расстояние от стрелка до точки прицеливания к условному расстоянию в 500px, для которого и применяем рассеяние пуль
 
@@ -520,16 +524,16 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
     {
         if( _bulletsType & 1 << Player::BulletsType::FIRE ) {
             for (unsigned int i = 0; i < _weaponBurstQty; i++)
-                bulletList->push_back( new Bullet(_X, _Y, 1.0f,
-                    mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+                bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
+                    mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                         _weaponBulletSpeed*5, Player::BulletsType::FIRE) );
 
             bulletListSize += _weaponBurstQty;
         }
 
         for (unsigned int i = 0; i < _weaponBurstQty; i++)
-            bulletList->push_back( new BulletIon(_X, _Y, 1.0f,
-                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+            bulletList->push_back( new BulletIon(_X - wndPosX, _Y - wndPosY, 1.0f,
+                mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                     _weaponBulletSpeed) );
 
         bulletListSize += _weaponBurstQty;
@@ -540,8 +544,8 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
     if( _bulletsType & 1 << Player::BulletsType::FIRE )
     {
         for (unsigned int i = 0; i < _weaponBurstQty; i++)
-            bulletList->push_back( new Bullet(_X, _Y, 1.0f,
-                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+            bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
+                mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                     _weaponBulletSpeed, Player::BulletsType::FIRE) );
 
         bulletListSize += _weaponBurstQty;
@@ -552,8 +556,8 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
     if( _bulletsType & 1 << Player::BulletsType::PIERCING )
     {
         for (unsigned int i = 0; i < _weaponBurstQty; i++)
-            bulletList->push_back( new Bullet(_X, _Y, 1.0f,
-                mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+            bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
+                mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                     _weaponBulletSpeed, Player::BulletsType::PIERCING) );
 
         bulletListSize += _weaponBurstQty;
@@ -562,8 +566,8 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
     }
 
     for (unsigned int i = 0; i < _weaponBurstQty; i++)
-        bulletList->push_back( new Bullet(_X, _Y, 1.0f,
-            mouseX + 0.1 * int(rand() % Spread - halfSpread), mouseY + 0.1 * int(rand() % Spread - halfSpread),
+        bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
+            mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                 _weaponBulletSpeed, Player::BulletsType::NORMAL) );
 
     bulletListSize += _weaponBurstQty;

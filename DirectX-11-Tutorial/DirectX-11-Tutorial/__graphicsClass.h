@@ -77,21 +77,19 @@ class GraphicsClass {
     bool Render2d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
     bool Render3d(const float &, const float &, const int &, const int &, const keysPressed *, const bool & = false);
 
-    void threadMonsterMove(const unsigned int &, const unsigned int &, const unsigned int &);
-
  private:
 
-    // Поскольку мы рендерим кадры 1 раз в 20 мс, то не будем каждый раз создавать переменные для функции рендеринга, а зададим их один раз и навсегда:
+    // Поскольку мы рендерим кадры 1 раз в 20 мс, то не будем каждый раз создавать переменные и матроицы для рендеринга, а зададим их один раз и навсегда:
     bool		 result;
 	D3DXMATRIX	 matrixView, matrixProjection, matrixWorldX, matrixWorldY, matrixWorldZ, matrixOrthographic, matrixTranslation, matrixScaling;
 
     int scrWidth, scrHeight, scrHalfWidth, scrHalfHeight;
 
-    char                    *msg;       // текстовое сообщение, которое можно вывести на экран
+    char                            *msg;                   // текстовое сообщение, которое можно вывести на экран
 
-    d3dClass				*m_d3d;
-    CameraClass			    *m_Camera;
-    ModelClass				*m_Model;
+    d3dClass				        *m_d3d;
+    CameraClass			            *m_Camera;
+    ModelClass				        *m_Model;
 
     TextureShaderClass		        *m_TextureShader;       // Классы для шейдеров
     TextureShaderClass_Instancing   *m_TextureShaderIns;
@@ -99,10 +97,10 @@ class GraphicsClass {
     LightShaderClass		        *m_LightShader;
 //    ColorShaderClass		        *m_ColorShader;
 
-    LightClass				*m_Light;
-    BitmapClass			    *m_Bitmap_Tree;		// BitmapClass object
-	TextOutClass			*m_TextOut;         // TextClass object
-	BitmapClass_Instancing	*m_BitmapIns;
+    LightClass				        *m_Light;
+    BitmapClass			            *m_Bitmap_Tree;		    // BitmapClass object
+	TextOutClass			        *m_TextOut;             // TextClass object
+	BitmapClass_Instancing	        *m_BitmapIns;
 };
 
 #endif
