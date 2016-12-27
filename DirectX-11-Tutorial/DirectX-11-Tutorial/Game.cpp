@@ -421,7 +421,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                 // Получим текущие координаты игрока
                 playerPosX = m_Player->getPosX();
                 playerPosY = m_Player->getPosY();
-
+#if 1
                 // рассчитаем сдвиг окна относительно всего поля
                 {
                     static int BorderDist = 200;
@@ -493,7 +493,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                     m_Player->setPosX(playerPosX);
                     m_Player->setPosY(playerPosY);
                 }
-
+#endif
 
                 if (!m_PlayerBitmapIns1->initializeInstances(m_Device, m_Player))
                     return false;

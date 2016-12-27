@@ -21,6 +21,7 @@ struct OlegCell {
     std::vector<gameObjectBase*> cellList;      // вектор, в котором будут отмечатьс€ монстры, зашедшие в €чейку
     std::mutex                   cellMutex;     // мьютекс дл€ блокировани€ вектора cellList на запись/удаление
     unsigned int                 cellId;        // уникальный id дл€ €чеек
+    char ch;
 };
 
 class gameCells {
@@ -95,7 +96,7 @@ class gameCells {
     }
 
     // прописываем монстра в €чейки, которые он собою занимает
-    void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &);
+    void UpdateGameCells3(Monster *, const int &, const int &, const int &, const int &, float test);
 
  private:
     // запрещаем копирование и присваивание

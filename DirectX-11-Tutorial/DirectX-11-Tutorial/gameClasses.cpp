@@ -1,6 +1,8 @@
 #include "stdafx.h"
 #include "gameClasses.h"
 
+#include <string>
+
 // »нициализируем статические переменные в глобальной области
 bool Monster   :: _freezeEffect = false;
 int  Bullet    :: _scrWidth     = 0;
@@ -305,8 +307,12 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
         float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-        dX = div_Speed_by_Dist * dX * 0.1f * float(rand() % 200) * 0.01f;
-        dY = div_Speed_by_Dist * dY * 0.1f * float(rand() % 200) * 0.01f;
+        // уберегаемс€ от бесконечности, если dX или dY стремитс€ к нулю
+        if( std::isinf(div_Speed_by_Dist) )
+            return;
+
+        dX = div_Speed_by_Dist * dX * 0.1f * (float(rand() % 200)+1) * 0.01f;
+        dY = div_Speed_by_Dist * dY * 0.1f * (float(rand() % 200)+1) * 0.01f;
 
         int oldX = _X;
         int oldY = _Y;
@@ -326,7 +332,7 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 	    }
 
         // обновим список €чеек после перемещени€ монстра
-        GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y);
+        GameCells.UpdateGameCells3(this, oldX, oldY, _X, _Y, _X);
     }
 
     return;
@@ -774,7 +780,7 @@ void BulletIon::threadMove()
 // прописываем монстра в €чейки, которые он собою занимает
 // верси€ 3, использует только координаты монстра ƒќ и ѕќ—Ћ≈
 // заполн€ет ровно одну €чейку, в которой находитс€ центр монстра
-void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry)
+void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry, float test)
 {
     #define unusedCellNo 2e6
 
@@ -808,6 +814,8 @@ void gameCells::UpdateGameCells3(Monster *obj, const int &oldx, const int &oldy,
                 }
 
         (*VEC)[cellId].cellMutex.unlock();
+
+
 
         // пропишемс€ в новую €чейку
         cellId = getCellId_withCoords(currX, currY);
