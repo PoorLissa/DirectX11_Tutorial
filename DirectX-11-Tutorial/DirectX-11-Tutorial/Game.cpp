@@ -4,7 +4,8 @@
 // глобальный стринг, чтобы писать в него сообщения на протяжении одной итерации и потом в конце итерации выводить его в файл ровно 1 раз
 std::string strMsg;
 
-extern gameCells GameCells;
+// глобальный объект - список всех ячеек поля для просчета попаданий пуль в монстров
+gameCells GameCells;
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -199,7 +200,7 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         bonusList1.rotationAngle = 0.0f;
 
         for (int i = 0; i < framesNum; i++) {
-            int       x = 50 + rand() % (scrWidth  - 100);
+            int       x = 50 + rand() % (scrWidth  - 100) + 300;
             int       y = 50 + rand() % (scrHeight - 100);
 
             bonusList1.objList.push_back(new Bonus(x, y, Bonus::Effects(i)));
@@ -583,6 +584,11 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
             {
                 #define BonusObj (*iter)
                 if( bonusList1.listSize ) {
+
+                    static BonusParams bParam;
+                    bParam.player = player;
+                    bParam.mouseX = mouseX;
+                    bParam.mouseY = mouseY;
 
                     iter = bonusList1.objList.begin();
                     end  = bonusList1.objList.end();

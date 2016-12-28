@@ -11,6 +11,12 @@
 #include "__graphicsClass.h"
 
 #include "gameShader_Bullet.h"
+#include "gameCells.h"
+
+#include "Bonus.h"
+#include "BonusWeapons.h"
+#include "Weapon.h"
+#include "Player.h"
 
 #define doLogMessages
 

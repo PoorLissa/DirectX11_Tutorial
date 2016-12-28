@@ -3,7 +3,8 @@
 #define _SPRITE_INSTANCED_H_
 
 #include "__bitmapClassInstancing.h"
-#include "gameClasses.h"
+#include "gameObjectBase.h"
+#include "Bullet.h"
 
 /* --------------------------------------------------------------------------------------------------------
     Класс инстанцированного спрайта.

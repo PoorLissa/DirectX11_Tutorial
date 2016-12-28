@@ -21,15 +21,18 @@
     <Filter Include="Header Files\Engine.h">
       <UniqueIdentifier>{831aa269-60c8-4113-85f3-0a45cff23c80}</UniqueIdentifier>
     </Filter>
+    <Filter Include="Header Files\Game Classes">
+      <UniqueIdentifier>{77367801-adc3-440a-9ef3-448fb7053358}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files\Game Classes">
+      <UniqueIdentifier>{553062e3-ea3d-477d-9213-61e0b5af5386}</UniqueIdentifier>
+    </Filter>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="gameShader_Bullet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
-    <ClCompile Include="gameClasses.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
@@ -104,15 +107,36 @@
     <ClCompile Include="Game.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="gameObjectBase.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="gameCells.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Player.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Monster.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Bullet.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Bullet_Ion.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Bonus.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
+    <ClCompile Include="Weapon.cpp">
+      <Filter>Source Files\Game Classes</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Helpers.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="gameShader_Bullet.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
-    <ClInclude Include="gameClasses.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="stdafx.h">
@@ -195,6 +219,36 @@
     </ClInclude>
     <ClInclude Include="Game.h">
       <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="gameObjectBase.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="gameCells.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Player.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="BonusEffects.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="BonusWeapons.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Monster.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Bullet.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Bullet_Ion.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Bonus.h">
+      <Filter>Header Files\Game Classes</Filter>
+    </ClInclude>
+    <ClInclude Include="Weapon.h">
+      <Filter>Header Files\Game Classes</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>

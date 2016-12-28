@@ -87,12 +87,19 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Bonus.cpp" />
+    <ClCompile Include="Bullet.cpp" />
+    <ClCompile Include="Bullet_Ion.cpp" />
     <ClCompile Include="Game.cpp" />
-    <ClCompile Include="gameClasses.cpp" />
+    <ClCompile Include="gameCells.cpp" />
+    <ClCompile Include="gameObjectBase.cpp" />
     <ClCompile Include="gameShader_Bullet.cpp" />
+    <ClCompile Include="Monster.cpp" />
+    <ClCompile Include="Player.cpp" />
     <ClCompile Include="stdafx.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Weapon.cpp" />
     <ClCompile Include="__SpriteInstanced.cpp" />
     <None Include="_gameShader_Bullet.vs">
       <FileType>CppCode</FileType>
@@ -121,12 +128,21 @@
     <ClCompile Include="__textureShaderClassInstancing.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Bonus.h" />
+    <ClInclude Include="BonusEffects.h" />
+    <ClInclude Include="BonusWeapons.h" />
+    <ClInclude Include="Bullet.h" />
+    <ClInclude Include="Bullet_Ion.h" />
     <ClInclude Include="Game.h" />
-    <ClInclude Include="gameClasses.h" />
+    <ClInclude Include="gameCells.h" />
+    <ClInclude Include="gameObjectBase.h" />
     <ClInclude Include="gameShader_Bullet.h" />
     <ClInclude Include="Globals.h" />
     <ClInclude Include="Helpers.h" />
+    <ClInclude Include="Monster.h" />
+    <ClInclude Include="Player.h" />
     <ClInclude Include="stdafx.h" />
+    <ClInclude Include="Weapon.h" />
     <ClInclude Include="__bitmapClass.h" />
     <ClInclude Include="__bitmapClassInstancing.h" />
     <ClInclude Include="__colorShaderClass.h" />
