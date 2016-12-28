@@ -74,6 +74,9 @@ void Bullet::threadMove_VECT(void *Param)
 {
     float Rad = 20.0f;
 
+    // координаты квадрата, описанного вокруг вектора смещения пули в одной итерации
+    int _squareX0, _squareY0, _squareX1, _squareY1, _monsterX, _monsterY;
+
     std::vector< std::list<gameObjectBase*>* > *VEC = static_cast< std::vector< std::list<gameObjectBase*>*>* >(Param);
 
 	// Сначала смотрим в первом приближении, находится ли пуля рядом с данным монстром
@@ -103,6 +106,7 @@ void Bullet::threadMove_VECT(void *Param)
     _squareX1 += _squareSide;
     _squareY0 -= _squareSide;
     _squareY1 += _squareSide;
+
 
 
     for (unsigned int lst = 0; lst < VEC->size(); lst++) {
@@ -168,6 +172,7 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
     float       Rad      = 20.0f;
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
+    int        _squareX0, _squareY0, _squareX1, _squareY1;      // координаты квадрата, описанного вокруг вектора смещения пули в одной итерации
     OlegCell   *Cell;
     std::vector<gameObjectBase*> *vec;
 
@@ -278,14 +283,14 @@ bool Bullet::commonSectionCircle(float x1, float y1, float x2, float y2, const i
     x2 -= xCirc;
     y2 -= yCirc;
 
-    dx = x2 - x1;
-    dy = y2 - y1;
+    float dx = x2 - x1;
+    float dy = y2 - y1;
 
     // составляем коэффициенты квадратного уравнения на пересечение прямой и окружности.
     // если на отрезке [0..1] есть отрицательные значения, значит отрезок пересекает окружность
-    a = dx*dx + dy*dy;
-    b = 2.0f * (x1*dx + y1*dy);
-    c = x1*x1 + y1*y1 - Rad*Rad;
+    float a = dx*dx + dy*dy;
+    float b = 2.0f * (x1*dx + y1*dy);
+    float c = x1*x1 + y1*y1 - Rad*Rad;
 
     // а теперь проверяем, есть ли на отрезке [0..1] решения
     if (-b < 0)

@@ -583,12 +583,14 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
             // Bonuses
             {
                 #define BonusObj (*iter)
+
                 if( bonusList1.listSize ) {
 
                     static BonusParams bParam;
+
                     bParam.player = player;
-                    bParam.mouseX = mouseX;
-                    bParam.mouseY = mouseY;
+                    bParam.mouseX = const_cast<int*>(&mouseX);
+                    bParam.mouseY = const_cast<int*>(&mouseY);
 
                     iter = bonusList1.objList.begin();
                     end  = bonusList1.objList.end();
@@ -597,7 +599,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                         if( BonusObj->isAlive() ) {
 
-                            BonusObj->Move(wndPosX, wndPosY, m_Player);
+                            BonusObj->Move(wndPosX, wndPosY, &bParam);
 
                         }
                         else {

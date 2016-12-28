@@ -3,7 +3,6 @@
 #define _PLAYER_H_
 
 #include "gameObjectBase.h"
-#include "Bonus.h"
 #include "BonusEffects.h"
 #include "BonusWeapons.h"
 #include "Bullet.h"
@@ -78,5 +77,7 @@ class Player : public gameObjectBase {
 
     unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstQty, _weaponReady, _weaponBulletSpread;
 };
+
+#include "Bonus.h"
 
 #endif

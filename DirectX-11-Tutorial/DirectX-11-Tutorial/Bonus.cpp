@@ -1,14 +1,11 @@
 #include "stdafx.h"
 #include "Bonus.h"
-#include "Player.h"
 
 
 
 // Для бонуса рассчитываем оставшееся время жизни, поворот, масштаб и взаимодействие с Игроком
 void Bonus::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
 {
-    //Player *player = static_cast<Player*>(Param);
-
     BonusParams *bpr = static_cast<BonusParams*>(Param);
 
     float playerX = bpr->player->getPosX();
@@ -17,23 +14,27 @@ void Bonus::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
     // Просчитываем действие эффекта Telekinetic: мышиного и гравитационного
     if( true ) {
     
-        // mouse
+        // Телекинез при помощи мыши
         {
-            int mouseX = bpr->mouseX;
-            int mouseY = bpr->mouseY;
+            if( abs(_X - *bpr->mouseX + wndPosX) < 30 && abs(_Y - *bpr->mouseY + wndPosY) < 30 ) {
 
-            if( abs(_X - mouseX + wndPosX) < 30 && abs(_Y - mouseY + wndPosY) < 30 ) {
+                _mouseHover++;
 
-                bpr->player->setEffect(_Effect);
-                _Alive = false;
-                return;
+                if( _mouseHover == 100 ) {
+
+                    bpr->player->setEffect(_Effect);
+                    _Alive = false;
+                    return;
+                }
             }
-        
+            else {
+                _mouseHover = 0;
+            }
         }
 
-        // Гравитационное притяжение бонусов с карты
+        // Гравитационный телекинез
         {
-            static int Const = 1e4;
+            static int Const = 1e4;                 // константу подобрал вручную на глаз
 
             float dx = (_X - playerX + wndPosX);
             float dy = (_Y - playerY + wndPosY);
@@ -41,7 +42,7 @@ void Bonus::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
             float dist2 = (dx*dx + dy*dy);
             float dist1 = sqrt( dist2 );
 
-            dist1 = Const / dist2 / dist1;
+            dist1 = Const / (dist2 * dist1);
 
             _X -= dist1 * dx;
             _Y -= dist1 * dy;

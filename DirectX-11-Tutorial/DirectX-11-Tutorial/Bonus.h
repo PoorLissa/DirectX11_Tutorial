@@ -7,12 +7,6 @@
 
 // ------------------------------------------------------------------------------------------------------------------------
 
-// Вспомогательная структура для передачи параметров в Bonus::Move()
-struct BonusParams {
-    Player *player;
-    int    &mouseX;
-    int    &mouseY;
-};
 
 
 // Класс игрового объекта - Бонус
@@ -27,7 +21,8 @@ class Bonus : public gameObjectBase, public BonusEffects {
             _AngleCounter(rand()%10),
             _ScaleCounter(0),
             _flashCounter(0),
-            _ScaleModifier(1.0f)
+            _ScaleModifier(1.0f),
+            _mouseHover(0)
 	{}
    ~Bonus() {}
 
@@ -38,11 +33,21 @@ class Bonus : public gameObjectBase, public BonusEffects {
     virtual inline cuiRef getAnimPhase() const { return _Effect; }
 
  private:
-	 unsigned int _LifeTime;
-     unsigned int _Effect;
-     float        _AngleCounter;
-     float        _ScaleCounter, _ScaleModifier;
-     unsigned int _flashCounter;
+	 unsigned int   _LifeTime;
+     unsigned int   _Effect;
+     float          _AngleCounter;
+     float          _ScaleCounter, _ScaleModifier;
+     unsigned int   _flashCounter;
+     unsigned short _mouseHover;
+};
+
+#include "Player.h"
+
+// Вспомогательная структура для передачи параметров в Bonus::Move()
+struct BonusParams {
+    Player *player;
+    int    *mouseX;
+    int    *mouseY;
 };
 
 #endif

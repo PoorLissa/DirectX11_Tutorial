@@ -22,6 +22,7 @@ void BulletIon::threadMove()
     float       Rad      = 20.0f;
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
+    int        _squareX0, _squareY0, _squareX1, _squareY1;      // координаты квадрата, описанного вокруг вектора смещения пули в одной итерации
     OlegCell   *Cell;
     std::vector<gameObjectBase*> *vec;
 
