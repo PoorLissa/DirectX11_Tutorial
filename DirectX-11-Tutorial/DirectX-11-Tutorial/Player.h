@@ -32,7 +32,7 @@ class Player : public gameObjectBase {
 
    ~Player() {}
 
-    enum BulletsType { NORMAL, PIERCING, FIRE, ION, ION_EXPLOSION, FREEZE, _lastType };
+    enum BulletsType { NORMAL, PIERCING, FIRE, ION, ION_EXPLOSION, FREEZE, PLASMA, _lastType };
 
     virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr);
 

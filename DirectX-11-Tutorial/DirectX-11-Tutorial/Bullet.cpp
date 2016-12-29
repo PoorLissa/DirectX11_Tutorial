@@ -237,6 +237,7 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
                         (*vec).pop_back();
 
                         // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+
                         _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
 
                         // Если время жизни пули тем или иным образом истекло, то пуля истрачена:

@@ -71,16 +71,22 @@ PixelInputType TextureVertexShader(VertexInputType input)
             input.position.y *= ionFactor;
         break;
 
-        // тестовая пуля
-        case 3321.0f:
-            input.position.x *= 10;
-            input.position.y *= 10;
-        break;
-
         // взрыв ионной пули
         case 4.0f:
             input.position.x *= input.instancePosition.w;
             input.position.y *= input.instancePosition.w;
+        break;
+
+        // плазма-пуля
+        case 6.0f:
+            input.position.x *= 1.0f;
+            input.position.y *= 0.6f;
+        break;
+
+        // тестовая пуля
+        case 3321.0f:
+            input.position.x *= 10;
+            input.position.y *= 10;
         break;
 
         // шлейф обычной пули
@@ -122,6 +128,17 @@ PixelInputType TextureVertexShader(VertexInputType input)
             // масштабирование текстуры
             input.position.x *= dist / texsize;
             input.position.y *= ionFactor;
+        break;
+
+        // шлейф (свечение) плазма-пули
+        case 106.0f:
+
+            input.position.x *= 5.0f;
+            input.position.y *= 5.0f;
+/*
+            input.position.x *= .3 * (0.33f + tan(input.instancePosition.x/3) );
+            input.position.y *= .3 * (0.33f + tan(input.instancePosition.y/3) );
+*/
         break;
     }
 

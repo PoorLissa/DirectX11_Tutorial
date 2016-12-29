@@ -82,6 +82,19 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
         }
         break;
 
+        // Рисуем плазма-пулю
+        case 6.0f:
+        {
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+
+            //return textureColor * float4(1.0f, 0.5f, 0.0f, textureColor.w);
+
+            return textureColor * float4(1.0f, 0.75f, 0.5f, textureColor.w * 2);
+
+            return textureColor * float4(0.75f, input.tex.x, input.tex.y, textureColor.w) * 3;
+        }
+        break;
+
         case 3123123.0f:
         {
             float dx = 2* input.tex.x - 1;
@@ -197,6 +210,58 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
             else
                 return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
 */
+        }
+        break;
+
+        case 106.0f: {
+
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+
+
+
+
+            float  dx = 2 * input.tex.x - 1;
+            float  dy = 2 * input.tex.y - 1;
+            float hyp = dx*dx + dy*dy;
+
+            if( hyp < 1.0f )
+                return //textureColor * 
+                    //float4(1.0, 0.5, 0.1, (1.5f - hyp)/20);
+                    float4(1.0f, 0.2f, 0.1f, (1.0f - hyp)/85) * 2.5f;
+            else
+                return float4(0, 0, 0, 0);
+
+
+
+
+            //textureColor.w /= 5;
+
+            //return float4(1.0f, 0.0f, 0.0f, sin(input.tex.x / 2)/2 + cos(input.tex.y / 2)/2) * 1;
+
+            return textureColor * float4(1.0f, 0.0f, 0.0f, textureColor.w / 10) * 3;
+
+            if( textureColor.w > 1.95f ) {
+            
+                textureColor.w /= 5;
+                return textureColor;
+            }
+            else {
+
+                float2 noise = (frac(sin(dot(float2(input.tex.x, input.tex.y) ,float2(12.9898, 78.233)*2.0)) * 43758.5453));
+
+                float fff = abs(noise.x + noise.y) * 0.5;
+
+                textureColor.w /= fff;
+
+                textureColor.w *= 3;
+
+                return textureColor;
+
+                return float4(1, 1, 1, textureColor.w);
+
+            }
+
+            return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 1;
         }
         break;
 

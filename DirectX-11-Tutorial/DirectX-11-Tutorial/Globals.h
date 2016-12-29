@@ -5,7 +5,7 @@
 // Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             1
+#define MONSTERS_QTY             3
 
 #define fullScreen
 #undef  fullScreen
@@ -26,6 +26,9 @@
 //#undef  useThread
 
 #define BULLET_BONUS_LIFE        0              // для гауссового оружия
+
+#define USE_GRAVITY_TELEKINESIS  false
+#define USE_MOUSE_TELEKINESIS    true
 
 
 

@@ -216,7 +216,8 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
 		WCHAR *frames[] = {	L"../DirectX-11-Tutorial/data/bonus_weapon_Pistol.png",
 							L"../DirectX-11-Tutorial/data/bonus_weapon_Rifle.png",
 							L"../DirectX-11-Tutorial/data/bonus_weapon_Shotgun.png",
-                            L"../DirectX-11-Tutorial/data/bonus_weapon_Ion_gun1.png"
+                            L"../DirectX-11-Tutorial/data/bonus_weapon_Ion_gun1.png",
+                            L"../DirectX-11-Tutorial/data/bonus_weapon_Plasma_gun.png"
 		};
 
         unsigned int framesNum = sizeof(frames) / sizeof(frames[0]);

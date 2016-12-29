@@ -15,6 +15,7 @@ void Bonus::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
     if( true ) {
     
         // “елекинез при помощи мыши
+        if( USE_MOUSE_TELEKINESIS )
         {
             if( abs(_X - *bpr->mouseX + wndPosX) < 30 && abs(_Y - *bpr->mouseY + wndPosY) < 30 ) {
 
@@ -33,6 +34,7 @@ void Bonus::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
         }
 
         // √равитационный телекинез
+        if( USE_GRAVITY_TELEKINESIS )
         {
             static int Const = 1e4;                 // константу подобрал вручную на глаз
 

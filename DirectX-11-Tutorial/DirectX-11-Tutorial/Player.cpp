@@ -243,7 +243,9 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_On (Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
+                setBulletsType_Off(Player::BulletsType::PLASMA);
 
+                _weaponBulletSpeed  = 3;
 #if 0
                 _weaponDelay        = 3;
                 _weaponBulletSpeed  = 30;
@@ -265,6 +267,7 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_On (Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
+                setBulletsType_Off(Player::BulletsType::PLASMA);
                 break;
             }
 
@@ -278,6 +281,7 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_On (Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
+                setBulletsType_Off(Player::BulletsType::PLASMA);
                 break;
             }
 
@@ -290,6 +294,21 @@ void Player::setEffect(const unsigned int &effect)
 
                 setBulletsType_On (Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::NORMAL);
+                setBulletsType_Off(Player::BulletsType::PIERCING);
+                setBulletsType_Off(Player::BulletsType::PLASMA);
+                break;
+            }
+
+            case BonusWeapons::Weapons::PLASMA_GUN:
+            {
+                _weaponDelay        = 1;
+                _weaponBulletSpeed  = 30;
+                _weaponBurstQty     = 1;
+                _weaponBulletSpread = 10;
+
+                setBulletsType_On (Player::BulletsType::PLASMA);
+                setBulletsType_Off(Player::BulletsType::NORMAL);
+                setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
                 break;
             }
@@ -359,6 +378,18 @@ void Player::spawnBullet_Normal(const int &mouseX, const int &mouseY, std::list<
             bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
                 mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
                     _weaponBulletSpeed, Player::BulletsType::PIERCING) );
+
+        bulletListSize += _weaponBurstQty;
+
+        return;
+    }
+
+    if( _bulletsType & 1 << Player::BulletsType::PLASMA )
+    {
+        for (unsigned int i = 0; i < _weaponBurstQty; i++)
+            bulletList->push_back( new Bullet(_X - wndPosX, _Y - wndPosY, 1.0f,
+                mouseX - wndPosX + 0.1 * int(rand() % Spread - halfSpread), mouseY - wndPosY + 0.1 * int(rand() % Spread - halfSpread),
+                    _weaponBulletSpeed, Player::BulletsType::PLASMA) );
 
         bulletListSize += _weaponBurstQty;
 
