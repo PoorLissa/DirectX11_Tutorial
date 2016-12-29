@@ -70,14 +70,15 @@ class Player : public gameObjectBase {
     unsigned int EffectsCounters[BonusEffects::Effects::_totalEffectsQty];      // Массив счетчиков длительности эффектов
 
     // Бонусные эффекты
-    bool _Shielded;
+    bool _Shielded, _SpedUp;
 
     // Эффекты пуль. Устанавливаются на игрока (навсегда или до отмены) и при генерации пуль устанавливаются на каждую пулю в отдельности
     unsigned short _bulletsType, _bulletsType_old;
 
-    unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstQty, _weaponReady, _weaponBulletSpread;
+    unsigned int _weaponDelay, _weaponBulletSpeed, _weaponBurstQty, _weaponReady, _weaponBulletSpread, _weaponBulletsQty;
 };
 
+// Включено здесь по причине перекрестных инклюдов. Если включить его перед классом, все поломается
 #include "Bonus.h"
 
 #endif
