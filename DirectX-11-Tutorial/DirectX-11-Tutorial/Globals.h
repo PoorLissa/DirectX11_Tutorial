@@ -5,7 +5,7 @@
 // Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             3
+#define MONSTERS_QTY             3000
 
 #define fullScreen
 #undef  fullScreen
