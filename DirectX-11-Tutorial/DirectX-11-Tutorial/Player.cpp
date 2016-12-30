@@ -301,15 +301,15 @@ void Player::setEffect(const unsigned int &effect)
 
             case BonusWeapons::Weapons::PLASMA_GUN:
             {
-                _weaponDelay        = 1;
-                _weaponBulletSpeed  = 30;
+                _weaponDelay        = 10;
+                _weaponBulletSpeed  = 1;
                 _weaponBurstQty     = 1;
                 _weaponBulletSpread = 10;
 
-                setBulletsType_On (Player::BulletsType::PLASMA);
                 setBulletsType_Off(Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);
                 setBulletsType_Off(Player::BulletsType::PIERCING);
+                setBulletsType_On (Player::BulletsType::PLASMA);
                 break;
             }
         }

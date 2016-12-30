@@ -19,6 +19,9 @@
 class Player : public gameObjectBase {
 
  public:
+    enum BulletsType { NORMAL, PIERCING, FIRE, ION, ION_EXPLOSION, FREEZE, PLASMA, _lastType };
+
+ public:
     Player(cfRef x, cfRef y, cfRef scale, cfRef angle, cfRef speed, cuiRef interval, cuiRef anim_Qty, HighPrecisionTimer *timer)
 		: gameObjectBase(x, y, scale, angle, speed, PLAYER_DEFAULT_HEALTH),
 		    _Angle0(angle),
@@ -29,10 +32,7 @@ class Player : public gameObjectBase {
         for (unsigned int i = 0; i < BonusEffects::Effects::_totalEffectsQty; i++)
             EffectsCounters[i] = 0;
     }
-
    ~Player() {}
-
-    enum BulletsType { NORMAL, PIERCING, FIRE, ION, ION_EXPLOSION, FREEZE, PLASMA, _lastType };
 
     virtual void Move(cfRef = 0, cfRef = 0, void* = nullptr);
 

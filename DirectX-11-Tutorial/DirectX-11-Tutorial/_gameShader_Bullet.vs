@@ -79,19 +79,21 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // плазма-пуля
         case 6.0f:
+#if 0
             input.position.x *= 1.0f;
             input.position.y *= 0.6f;
-        break;
+#else
 
-        // тестовая пуля
-        case 3321.0f:
-            input.position.x *= 10;
-            input.position.y *= 10;
+            input.position.y *= 5;
+            input.position.x *= 5;
+
+#endif
         break;
 
         // шлейф обычной пули
         case 100.0f:
         case 101.0f:
+        case 199.0f:
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
             dist = sqrt(dX*dX + dY*dY);
@@ -139,6 +141,11 @@ PixelInputType TextureVertexShader(VertexInputType input)
             input.position.x *= .3 * (0.33f + tan(input.instancePosition.x/3) );
             input.position.y *= .3 * (0.33f + tan(input.instancePosition.y/3) );
 */
+        break;
+
+        default:
+            input.position.x *= 5;
+            input.position.y *= 5;
         break;
     }
 

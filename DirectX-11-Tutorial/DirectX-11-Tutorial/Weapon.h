@@ -4,6 +4,7 @@
 
 #include "gameObjectBase.h"
 #include "BonusWeapons.h"
+#include "Bonus.h"
 
 // ------------------------------------------------------------------------------------------------------------------------
 
@@ -22,7 +23,8 @@ class Weapon : public gameObjectBase, public BonusWeapons {
             _AngleCounter(rand()%10),
             _ScaleCounter(0),
             _flashCounter(0),
-            _ScaleModifier(1.0f)
+            _ScaleModifier(1.0f),
+            _mouseHover(0)
 	{}
    ~Weapon() {}
 
@@ -34,11 +36,12 @@ class Weapon : public gameObjectBase, public BonusWeapons {
     virtual inline cuiRef getAnimPhase() const { return _WeaponReduced; }
 
  private:
-	 unsigned int _LifeTime;
-     unsigned int _Weapon, _WeaponReduced;
-     float        _AngleCounter;
-     float        _ScaleCounter, _ScaleModifier;
-     unsigned int _flashCounter;
+	 unsigned int   _LifeTime;
+     unsigned int   _Weapon, _WeaponReduced;
+     float          _AngleCounter;
+     float          _ScaleCounter, _ScaleModifier;
+     unsigned int   _flashCounter;
+     unsigned short _mouseHover;
 };
 
 #endif

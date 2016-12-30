@@ -16,7 +16,8 @@ extern gameCells GameCells;
 Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef speed, UINT bulletType)
 				: gameObjectBase(x, y, scale, 0.0f, speed, BULLET_DEFAULT_HEALTH + BULLET_BONUS_LIFE),
                     _squareSide(20),
-                    _bulletType(bulletType)
+                    _bulletType(bulletType),
+                    _Shot(false)
 {
 	// Вычислим поворот пули на такой угол, чтобы она всегда была повернута от точки выстрела в точку прицеливания
     // Будем затем передавать этот угол в шейдер, одновременно запрещая все другие повороты спрайта
@@ -49,13 +50,16 @@ Bullet::Bullet(cfRef x, cfRef y, cfRef scale, cfRef x_to, cfRef y_to, cfRef spee
     _dX = Speed_Divided_By_Dist * _dX;
     _dY = Speed_Divided_By_Dist * _dY;
 
-    // Зададим пулям разброс по начальной точке, чтобы они не шли ровными рядами
+    _dX0 = _dX * 0.2;
+    _dY0 = _dY * 0.2;
+
+    // Зададим пулям разброс по начальной точке, чтобы они не шли совсем уж ровными рядами
 	float initialMult = float( 1.0 + rand()%10 ) * 0.1f;
 	_X += _dX * initialMult;
 	_Y += _dY * initialMult;
 
     // проставим свойство Piercing
-    _piercing = bulletType & 1 << Player::BulletsType::PIERCING;
+    _piercing = bulletType == Player::BulletsType::PIERCING || bulletType == Player::BulletsType::FIRE;
 
     // смещаем пулю так, чтобы она летела не от центра Игрока, а из среза ствола его пушки
     //static const int gunRadius = 35*2;
@@ -169,6 +173,18 @@ void Bullet::threadMove_VECT(void *Param)
 // Потоковый просчет движения пули и попаданий при помощи ячеек
 void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
 {
+    // после того, как пуля попадает в монстра и гибнет, отрисовываем хвост пули, который плавно доходит до точки столкновения
+    if( _Shot ) {
+
+        _X0 += _dX0;
+        _Y0 += _dY0;
+
+        if( _X0 > _X != _bX || _Y0 > _Y != _bY )
+            this->_Alive = false;
+
+        return;
+    }
+
     float       Rad      = 20.0f;
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
@@ -237,17 +253,30 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
                         (*vec).pop_back();
 
                         // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-
-                        _Health = _bulletType & 1 << Player::BulletsType::PIERCING ? _Health-- : 0;
+                        _Health = _piercing ? _Health-- : 0;
 
                         // Если время жизни пули тем или иным образом истекло, то пуля истрачена:
 			            if( !_Health ) {
 
-			                this->_Alive = false;
+                            if( _bulletType == Player::BulletsType::NORMAL ) {
 
-				            _dX = _dY = 0.0;            // Останавливаем пулю
-				            _X = (float)_monsterX;      // Переносим пулю в центр монстра
-				            _Y = (float)_monsterY;
+                                // будем отрисовывать постепенно исчезающий хвост. пулю прячем
+                                this->_Shot = true;
+                                _dX0 = 2*_dX;
+                                _dY0 = 2*_dY;
+                                _bX = _X0 > _X;
+                                _bY = _Y0 > _Y;
+                                _bulletType = 99;
+                            }
+                            else {
+                            
+                                // пуля сразу гибнет, хвост не отрисовывается
+			                    this->_Alive = false;
+
+				                _dX = _dY = 0.0;            // Останавливаем пулю
+				                _X = (float)_monsterX;      // Переносим пулю в центр монстра
+				                _Y = (float)_monsterY;
+                            }
 
                             // дублируем mutex.unlock, т.к. в противном случае он никогда не будет разлочен
                             Cell->cellMutex.unlock();
@@ -265,6 +294,9 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
 
     _X += _dX;
     _Y += _dY;
+
+    _X0 += _dX0;
+    _Y0 += _dY0;
 
     if ( _X < -100 || _X > _scrWidth || _Y < -100 || _Y > _scrHeight )
         this->_Alive = false;   // пуля ушла в молоко

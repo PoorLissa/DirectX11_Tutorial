@@ -7,13 +7,56 @@
 // ƒл€ бонуса-оружи€ рассчитываем врем€ жизни, поворот, масштаб и взаимодействие с »гроком
 void Weapon::Move(cfRef wndPosX, cfRef wndPosY, void *Param)
 {
-    Player *player = static_cast<Player*>(Param);
+    BonusParams *bpr = static_cast<BonusParams*>(Param);
+
+    float playerX = bpr->player->getPosX();
+    float playerY = bpr->player->getPosY();
+
+    // ѕросчитываем действие эффекта Telekinetic: мышиного и гравитационного
+    if( true ) {
+    
+        // “елекинез при помощи мыши
+        if( USE_MOUSE_TELEKINESIS )
+        {
+            if( abs(_X - *bpr->mouseX + wndPosX) < 30 && abs(_Y - *bpr->mouseY + wndPosY) < 30 ) {
+
+                _mouseHover++;
+
+                if( _mouseHover == 20 ) {
+
+                    bpr->player->setEffect(_Weapon);
+                    _Alive = false;
+                    return;
+                }
+            }
+            else {
+                _mouseHover = 0;
+            }
+        }
+
+        // √равитационный телекинез
+        if( false || USE_GRAVITY_TELEKINESIS )
+        {
+            static int Const = 1e4;                 // константу подобрал вручную на глаз
+
+            float dx = (_X - playerX + wndPosX);
+            float dy = (_Y - playerY + wndPosY);
+
+            float dist2 = (dx*dx + dy*dy);
+            float dist1 = sqrt( dist2 );
+
+            dist1 = Const / (dist2 * dist1);
+
+            _X -= dist1 * dx;
+            _Y -= dist1 * dy;
+        }
+    }
 
     // Ѕонус-оружие вз€т (??? рассто€ние пока что выбрано методом научного тыка и считаетс€ не по окружности, а по квадрату)
     // ѕри этом бонус-оружие умирает, а игрок получает новую пушку
-    if( abs(_X - player->getPosX() + wndPosX) < 30 && abs(_Y - player->getPosY() + wndPosY) < 30 ) {
+    if( abs(_X - bpr->player->getPosX() + wndPosX) < 30 && abs(_Y - bpr->player->getPosY() + wndPosY) < 30 ) {
 
-        player->setEffect(_Weapon);
+        bpr->player->setEffect(_Weapon);
         _Alive = false;
         return;
     }

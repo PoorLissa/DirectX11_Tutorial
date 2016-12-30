@@ -348,6 +348,8 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
     static ID3D11Device        *m_Device     = m_Graphics->m_d3d->GetDevice();
     static ID3D11DeviceContext *m_devContext = m_Graphics->m_d3d->GetDeviceContext();
 
+    static BonusParams bParam;
+
 //    float ZoomFactor = 0.66f;
 
 	// Фон
@@ -416,6 +418,14 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
             std::list<gameObjectBase*>::iterator iter, end;
 
             Player *player = (Player*)m_Player;
+
+            // заполним вспомогательную структуру для передачи параметров в метод Move() для классов Bonus и Weapon
+            if( weaponList1.listSize > 0 || bonusList1.listSize > 0 ) {
+
+                bParam.player = player;
+                bParam.mouseX = const_cast<int*>(&mouseX);
+                bParam.mouseY = const_cast<int*>(&mouseY);
+            }
 
             // --- Player ---
             {
@@ -587,12 +597,6 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                 if( bonusList1.listSize ) {
 
-                    static BonusParams bParam;
-
-                    bParam.player = player;
-                    bParam.mouseX = const_cast<int*>(&mouseX);
-                    bParam.mouseY = const_cast<int*>(&mouseY);
-
                     iter = bonusList1.objList.begin();
                     end  = bonusList1.objList.end();
 
@@ -631,7 +635,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                         if( WeaponObj->isAlive() ) {
 
-                            WeaponObj->Move(wndPosX, wndPosY, m_Player);
+                            WeaponObj->Move(wndPosX, wndPosY, &bParam);
 
                         }
                         else {
