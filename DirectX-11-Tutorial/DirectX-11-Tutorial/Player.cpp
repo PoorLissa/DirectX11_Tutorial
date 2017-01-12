@@ -245,15 +245,6 @@ void Player::setEffect(const unsigned int &effect)
                 setBulletsType_Off(Player::BulletsType::PIERCING);
                 setBulletsType_Off(Player::BulletsType::PLASMA);
 
-                _weaponBulletSpeed  = 3;
-#if 0
-                _weaponDelay        = 3;
-                _weaponBulletSpeed  = 30;
-                _weaponBurstQty     = 1;
-                _weaponBulletSpread = 50;
-
-                //setBulletsType_On (Player::BulletsType::ION);
-#endif
                 break;
             }
 
@@ -302,9 +293,9 @@ void Player::setEffect(const unsigned int &effect)
             case BonusWeapons::Weapons::PLASMA_GUN:
             {
                 _weaponDelay        = 10;
-                _weaponBulletSpeed  = 1;
+                _weaponBulletSpeed  = 10;
                 _weaponBurstQty     = 1;
-                _weaponBulletSpread = 10;
+                _weaponBulletSpread = 33;
 
                 setBulletsType_Off(Player::BulletsType::NORMAL);
                 setBulletsType_Off(Player::BulletsType::ION);

@@ -12,12 +12,13 @@ bool gameCells :: _Single = false;
 // прописываем монстра в €чейки, которые он собою занимает
 // верси€ 3, использует только координаты монстра ƒќ и ѕќ—Ћ≈
 // заполн€ет ровно одну €чейку, в которой находитс€ центр монстра
-void gameCells::UpdateGameCells(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry, float test)
+void gameCells::UpdateGameCells(Monster *obj, const int &oldx, const int &oldy, const int &currx, const int &curry)
 {
-    int oldX      = oldx  * _cellSideInverted;
-    int oldY      = oldy  * _cellSideInverted;
-    int currX     = currx * _cellSideInverted;
-    int currY     = curry * _cellSideInverted;
+    // переводим экранные координаты в сеточные с учетом того, что видима€ область относительно виртуальной лежит со смещением
+    int  oldX     = (oldx  + _extraRange) * _cellSideInverted;
+    int  oldY     = (oldy  + _extraRange) * _cellSideInverted;
+    int  currX    = (currx + _extraRange) * _cellSideInverted;
+    int  currY    = (curry + _extraRange) * _cellSideInverted;
     UINT currCell = obj->getCell();
 
     // если монстр помен€л свою €чейку, перепропишем его в новую €чейку и удалим из старой
@@ -33,7 +34,7 @@ void gameCells::UpdateGameCells(Monster *obj, const int &oldx, const int &oldy, 
 
         (*VEC)[cellId].cellMutex.lock();
 
-            for (int i = 0; i < vec->size(); i++)
+            for (UINT i = 0, vecSize = vec->size(); i < vecSize; i++) {
             
                 if ((*vec)[i] == obj) {
 
@@ -42,6 +43,7 @@ void gameCells::UpdateGameCells(Monster *obj, const int &oldx, const int &oldy, 
 
                     break;
                 }
+            }
 
         (*VEC)[cellId].cellMutex.unlock();
 

@@ -30,8 +30,15 @@
 struct MonsterList {
     std::list<gameObjectBase*> objList;
     unsigned int         listSize;
+    unsigned int         framesQty;
     float                rotationAngle;
     InstancedSprite     *spriteInst;
+
+    // добавл€ем нового монстра в список
+    void pushBack(ciRef x, ciRef y, cfRef scale, cfRef speed, ciRef interval) {
+        objList.push_back(new Monster(x, y, scale, rotationAngle, speed, interval, framesQty));
+        listSize++;
+    }
 };
 
 // Ѕонусы
@@ -91,6 +98,8 @@ class Game {
                              wndPosX, wndPosY,              // смещение видимого окна относительно нулевой координаты
                              bgrWidth, bgrHeight;           // размеры всего игрового пол€ (в норме должны превышать размеры видимого окна)
     int                      borderZone;                    // ширина зазора вдоль границ экрана, на которой начинаетс€ сдвиг экрана
+    unsigned int             qtyToGenerate;
+    float                    timeElapsed;
 
     // ”казатель на GraphicsClass, в котором класс Game объ€влен как дружественный.
     // “аким образом мы сможем из класса игры рендерить объекты, не передава€ в него миллион параметров
@@ -120,9 +129,6 @@ class Game {
     BulletList               bulletList;
 
     gameObjectBase          *m_Player;
-
-//    std::list<gameObjectBase*> bulletList;
-//    unsigned int bulletListSize = 0;
 
     // ¬ектор, в котором содержатс€ все наши списки монстров. ѕередаем его в обработчик перемещени€ каждой пули дл€ просчета стрельбы
     std::vector< MonsterList* > VEC;

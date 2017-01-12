@@ -27,10 +27,7 @@ class Bullet : public gameObjectBase {
             inline cfRef  getY0()        const { return _Y0; }
 
     // просчитываем движение пули, столкновение ее с монстром или конец траектории
-    inline virtual void Move(cfRef wndPosX, cfRef wndPosY, void *Param) {
-        //_thPool->runAsync(&Bullet::threadMove_VECT, this, Param);
-        _thPool->runAsync(&Bullet::threadMove_Cells, this, wndPosX, wndPosY);
-    }
+    inline virtual void Move(cfRef wndPosX, cfRef wndPosY, void *Param) { _thPool->runAsync(&Bullet::threadMove_Cells, this, wndPosX, wndPosY); }
 
     inline       void          setBulletType(const unsigned int &type)  { _bulletType = type; }
     inline const unsigned int& getBulletType()                          { return _bulletType; }
@@ -44,8 +41,8 @@ class Bullet : public gameObjectBase {
 
  private:
     // Потоковый просчет попаданий пули в монстров
-    void threadMove_VECT(void *);
-    void threadMove_Cells(cfRef, cfRef);
+    void threadMove_VECT(void *);           // первый вариант, уже не используется
+    void threadMove_Cells(cfRef, cfRef);    // второй вариант с ячейками, зверский по скорости
 
  protected:
     float      _X0, _Y0;        // изначальная точка, из которой пуля летит

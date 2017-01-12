@@ -24,6 +24,8 @@ struct OlegCell {
     unsigned int                  cellId;       // уникальный id для ячеек
 };
 
+#define EXTRA_RANGE_CELLS 15
+
 // ------------------------------------------------------------------------------------------------------------------------
 
 
@@ -46,11 +48,14 @@ class gameCells {
 
     void Init(int bgrWidth, int bgrHeight, int cellSide = 10) {
 
+        // размер выступающей части должен быть кратен размеру ячейки
+        _extraRange = cellSide * EXTRA_RANGE_CELLS;
+
         // временные константы
-        _lowX = 0;
-        _lowY = 0;
-        _maxX = bgrWidth;
-        _maxY = bgrHeight;
+        _lowX = - _extraRange;
+        _lowY = - _extraRange;
+        _maxX = + _extraRange + bgrWidth;
+        _maxY = + _extraRange + bgrHeight;
 
         _widthPixels  = abs(_maxX - _lowX);
         _heightPixels = abs(_maxY - _lowY);
@@ -59,8 +64,8 @@ class gameCells {
         _cellSide = cellSide;
         _cellSideInverted = 1.0f / _cellSide;
 
-        _widthCells  = _widthPixels  * _cellSideInverted;
-        _heightCells = _heightPixels * _cellSideInverted;
+        _widthCells  = _widthPixels  / _cellSide;
+        _heightCells = _heightPixels / _cellSide;
 
         // создадим вектор с ячейками и раздадим всем ячейкам уникальные id
         VEC = new std::vector<OlegCell>(_widthCells * _heightCells);
@@ -71,15 +76,15 @@ class gameCells {
         return;
     }
 
-    // пересчитываем экранные координаты во внутрисеточный индекс и возвращаем соответствующий вектор
+    // пересчитываем внутрисеточные прямоугольные координаты во внутрисеточный одномерный индекс и возвращаем соответствующий вектор
     inline OlegCell& operator() (const int &posx, const int &posy) {
         return (*VEC)[_widthCells * posy + posx];
     }
 
-    // передаем по ссылке 2 координаты и записываем в них координаты ячейки в сетке
+    // передаем по ссылке 2 реальные экранные координаты и записываем в них координаты ячейки в сетке
     inline void getCellCoordinates(int &x, int &y) {
-        x *= _cellSideInverted;
-        y *= _cellSideInverted;
+        x = (x + _extraRange) * _cellSideInverted;
+        y = (y + _extraRange) * _cellSideInverted;
     }
 
     inline int getDist_inCells(const int &dist) {
@@ -106,7 +111,7 @@ class gameCells {
     }
 
     // прописываем монстра в ячейки, которые он собою занимает
-    void UpdateGameCells(Monster *, const int &, const int &, const int &, const int &, float test);
+    void UpdateGameCells(Monster *, const int &, const int &, const int &, const int &);
 
  private:
     // запрещаем копирование и присваивание
@@ -114,7 +119,8 @@ class gameCells {
     gameCells& operator=(gameCells);
 
  private:
-    short _lowX, _lowY, _maxX, _maxY;               // координаты, для которых строится сетка
+    short          _lowX, _lowY, _maxX, _maxY;      // координаты, для которых строится сетка
+    unsigned short _extraRange;                     // расстояние, на которое виртуальная сетка превышает реальное игровое поле со всех сторон
     unsigned short _cellSide;                       // размер ячейки сетки
     float          _cellSideInverted;               // 1/_cellSide;
     unsigned short _widthPixels, _heightPixels;     // размеры поля в пикселах

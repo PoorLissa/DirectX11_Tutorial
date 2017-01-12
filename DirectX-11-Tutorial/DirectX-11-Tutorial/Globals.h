@@ -5,7 +5,8 @@
 // Let us put our global defines here, which is actually a poor choice since cnahging this global defines rebuilds all the project
 // ------------------------------------------------------------------------------------------------------------------------
 
-#define MONSTERS_QTY             3
+#define MONSTERS_QTY             1              // Число монстров в каждом векторе
+//#define DO_HIDE_MONSTERS                        // Не хотим видеть ни одного монстра
 
 #define fullScreen
 #undef  fullScreen

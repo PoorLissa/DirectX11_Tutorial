@@ -21,26 +21,82 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
 {
     switch( input.trailInfo.z )
     {
-        // обычная или Piercing пуля
+        // === ПРОСТЫЕ ПУЛИ ============================================================================================================
+        // обычная пуля
         case 0.0f:
-        case 1.0f:
         {
             float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-
             return textureColor * float4(1.0f, 1.0f, 0.0f, 1.0f) * 2;
-
-            break;
         }
 
+        // piercing пуля
+        case 1.0f:
+        {
+            float dx = 2* input.tex.x - 1;
+            float dy = 2* input.tex.y - 1;
+            float hyp = (dx * dx + dy * dy);
+
+            if( hyp > 0.1f ) {
+                float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+                return float4(0.95f, 0.95f, 0.95f, 2*textureColor.w);
+                //return float4(0.25f, 0.5f, 0.75f, 2*textureColor.w);
+            }
+
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        // истраченная пуля - совсем ничего не рисуем
+        case 99.0f:
+        {
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
+        }
+
+        // cлед от обычной или piercing пули, или остаточный след от истраченной пули
+        case 100.0f:
+        case 101.0f:
+        case 199.0f:
+        {
+		    if(input.tex.y < 0.25f || input.tex.y > 0.75f)
+			    return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
+
+		    return float4(1.0f, 0.75f, 0.5f, saturate(1.0f - input.tex.x - 0.2f)/2.0f);
+        }
+        // =============================================================================================================================
+
+
+
+        // === ОГНЕННЫЕ ПУЛИ ===========================================================================================================
         // огненная пуля
         case 2.0f:
         {
             float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-            return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
 
-            break;
+            if( input.tex.y <= 0.55f)
+                return 2 * textureColor * float4(1.0f, 1.0f, 1.0f, 0.5f);
+
+            return float4(0.0f, 0.0f, 0.0f, 0.0f);
         }
 
+        // след от огненной пули
+        case 102.0f:
+        {
+            // [1 ... 0 ... 1]
+            float Green = input.tex.y >= 0.5f ? ( 2*input.tex.y - 1.0f) : (1.0f - 2*input.tex.y);
+
+            float R = 1.0f - 0.1f * input.tex.x;
+            float G = saturate(1.0f - (input.tex.y));
+            float B = saturate(0.33f - Green);
+
+            if( input.tex.y < 0.5f )
+                return float4(R, 1.0f-G, B, 3.0f * (1.0f - Green) * saturate((1.0f - 0.67f*input.tex.x) + (input.tex.y - 1.0f) )) * 1.5f;
+            else
+                return float4(R,      G, B, 3.0f * (1.0f - Green) * saturate((1.0f - 0.67f*input.tex.x) - (input.tex.y)        )) * 1.5f;
+        }
+        // =============================================================================================================================
+
+
+
+        // === ИОННЫЕ ПУЛИ =============================================================================================================
         // ионная пуля
         case 3.0f:
         {
@@ -61,13 +117,13 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
             //return float4(1.0f, 1.0f, 1.0f, step(0.5f, textureColor.w));
             //return float4(1.0f, 1.0f, 1.0f, ((textureColor.w / input.tex.x) * 0.1f));
             //return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((0.5f - input.tex.x/2) - (1.0f - input.tex.y)) );
-
-            break;
         }
 
         // взрыв ионной пули
         case 4.0f:
         {
+            // !!! если этот код скопировать в кейс со следом пули, получается интересный эффект - подойдет к отравленной или замораживающей пуле
+
             float dx = 2* input.tex.x - 1;
             float dy = 2* input.tex.y - 1;
             float hyp = (dx * dx + dy * dy);
@@ -82,117 +138,9 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
                     return float4(0.1, 0.5, 0.3, 0.3 - hyp/4) * 3.0;
                 else
                     return float4(0, 0, 0, 0);
-
-            break;
         }
 
-        // плазменная пуля
-        case 6.0f:
-        {
-            float4 textureColor;
-            float G;
-
-            textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-            //return float4(1.0, 0.5, 0.25, 1);
-            return float4(1.0, 0.5, 0.25, textureColor.w);
-
-            float s1 = 3*saturate((1.0f - input.tex.x/2) - (1.0f - input.tex.y));
-            float s2 = 3*saturate((1.0f - input.tex.x/2) - (input.tex.y));
-
-            G = input.tex.y >= 0.5f ? ( input.tex.y) : ((1.0 - input.tex.y));
-
-            if( input.tex.x > 0.25)
-            {
-                if(input.tex.y < 0.5f)
-                    return float4(G, G, 0.25f, s1*2);
-                else
-                    return float4(G, G, 0.25f, s2*2);
-            }
-            else
-            {
-                textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-                return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
-            }
-
-
-            G = input.tex.y >= 0.5f ? ( input.tex.y - 0.5) : ((0.5f - input.tex.y));
-
-            if(input.tex.y < 0.5f)
-                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (1.0f - input.tex.y)) );
-            else
-                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (input.tex.y)) );
-
-            break;
-
-
-
-            textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-            return textureColor * float4(1.0f, 0.0f, 0.0f, 1.0f) * 2.0f;
-
-
-
-            textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-
-            //return textureColor * float4(1.0f, 0.5f, 0.0f, textureColor.w);
-
-            return float4(input.tex.x, input.tex.y, input.tex.y, 1.0);
-
-            float4 addColor;
-
-            if( input.tex.y > 0.33f && input.tex.y < 0.66f && input.tex.x > 0.3 && input.tex.x < 0.7 )
-                addColor = float4(0.75f, 1.0f, 1.0f, textureColor.w);
-            else
-                addColor = float4(1.0f, 0.75f, 0.5f, textureColor.w);
-
-/*
-            if( input.tex.y > 0.33f && input.tex.y < 0.66f ) //&& input.tex.x > 0.2 && input.tex.x < 0.8 )
-                addColor = float4(0.75f, 1.0f, 1.0f, textureColor.w);
-            else
-                addColor = float4(1.0f, 0.75f, 0.5f, textureColor.w);
-*/
-            //return addColor;
-
-            return textureColor * addColor;
-
-            return textureColor * float4(0.75f, input.tex.x, input.tex.y, textureColor.w) * 3;
-
-            break;
-        }
-
-        // истраченная пуля (совсем не рисуем)
-        case 99.0f:
-        {
-            return float4(0.0f, 0.0f, 0.0f, 0.0f);
-            break;
-        }
-
-        // cлед от обычной пули
-        case 100.0f:
-        case 101.0f:
-        case 199.0f:
-        {
-		    if(input.tex.y < 0.25f || input.tex.y > 0.75f)
-			    return float4(1.0f, 1.0f, 1.0f, saturate(1.0f - input.tex.x - 0.4f)/2.0f);
-
-		    return float4(1.0f, 0.75f, 0.5f, saturate(1.0f - input.tex.x - 0.2f)/2.0f);
-
-            break;
-        }
-
-        // Рисуем след от огненной пули
-        case 102.0f:
-        {
-            float G = input.tex.y >= 0.5f ? ( input.tex.y - 0.5) : ((0.5f - input.tex.y));
-
-            if(input.tex.y < 0.5f)
-                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (1.0f - input.tex.y)) );
-            else
-                return 3.0f * float4(1.0f, G, 0.0f, saturate((1.0f - input.tex.x/3) - (input.tex.y)) );
-
-            break;
-        }
-
-        // Рисуем след от ионной пули
+        // след от ионной пули
         case 103.0f:
         {
             if(input.tex.y < 0.5f)
@@ -265,32 +213,36 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
             else
                 return 3.0f * float4(1.0f, 1.0f, 1.0f, saturate((1.0f - input.tex.x/2) - (input.tex.y)) );
 */
-            break;
+        }
+        // =============================================================================================================================
+
+
+
+        // === ПЛАЗМЕННЫЕ ПУЛИ =========================================================================================================
+        // плазменная пуля
+        case 6.0f:
+        {
+            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
+            return 5 * textureColor * float4(1.0, 0.2, 0.1, textureColor.w);    // nice circle
         }
 
         // свечение плазменной пули
-        case 106.0f: {
-
-            return float4(0, 0, 0, 0);
-
-            float4 textureColor = myTextureArray.Sample(SampleType, float3(input.tex.x, input.tex.y, input.trailInfo.z));
-
+        case 106.0f:
+        {
             float  dx = 2 * input.tex.x - 1;
             float  dy = 2 * input.tex.y - 1;
             float hyp = dx*dx + dy*dy;
 
             if( hyp < 1.0f )
-                return //textureColor * 
-                    //float4(1.0, 0.5, 0.1, (1.5f - hyp)/20);
-                    float4(1.0f, 0.2f, 0.1f, (1.0f - hyp)/85) * 2.5f;
+                return float4(1.0f, saturate(1.0f - hyp), saturate(0.3f - hyp), (1.0f - hyp)/10);
             else
                 return float4(0, 0, 0, 0);
-
-            break;
         }
+        // =============================================================================================================================
 
-        // === EXPERIMENTAL CASES =========================================================================================
 
+
+        // === EXPERIMENTAL CASES ======================================================================================================
         case 1000.0f:
         {
             float dx = 2* input.tex.x - 1;
@@ -307,8 +259,6 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
                     return float4(0.1, 0.5, 0.3, 0.3 - hyp/4) * 3.0;
                 else
                     return float4(1, 0, 0, 0);
-
-            break;
         }
 
         case 1001.0f:
@@ -339,11 +289,8 @@ float4 TexturePixelShader(PixelInputType input) : SV_TARGET
                 return float4(1, 1, 1, textureColor.w);
 
             }
-
-            break;
         }
-
-        // ================================================================================================================
+        // =============================================================================================================================
 
         default:
             return float4(0.0f, 0.0f, 0.0f, 0.0f);

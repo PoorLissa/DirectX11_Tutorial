@@ -113,7 +113,7 @@ void Bullet::threadMove_VECT(void *Param)
 
 
 
-    for (unsigned int lst = 0; lst < VEC->size(); lst++) {
+    for (UINT lst = 0, lstSize = VEC->size(); lst < lstSize; lst++) {
         
         std::list<gameObjectBase*> *list = (*VEC)[lst];
 
@@ -189,6 +189,7 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
     int         RadCells = GameCells.getDist_inCells(Rad);
     int        _monsterX, _monsterY, i, j, mon;
     int        _squareX0, _squareY0, _squareX1, _squareY1;      // координаты квадрата, описанного вокруг вектора смещения пули в одной итерации
+    int         vecSize = 0;
     OlegCell   *Cell;
     std::vector<gameObjectBase*> *vec;
 
@@ -230,63 +231,68 @@ void Bullet::threadMove_Cells(cfRef wndPosX, cfRef wndPosY)
         for (j = _squareY0; j < _squareY1; j++) {
 
             // получаем указатель на ячейку и на вектор монстров, прописанный в ней
-            Cell = &( GameCells(i, j) );
-            vec  = &( Cell->cellList  );
+            Cell    = &( GameCells(i, j) );
+            vec     = &( Cell->cellList  );
+            vecSize = vec->size();
 
-            // лочим мьютекс, чтобы никто другой не зашел в эту ячейку, пока мы здесь:
-            // если мы убьем монстра, то нужно удалить запись о нем из вектора, и если мы удалим ее, пока другой поток будет проходить через этот же вектор,
-            // получится очень нехорошо
-            Cell->cellMutex.lock();
+            // занимаем ячейку только в том случае, если в ней реально есть прописанные монстры (т.е. vec->Size() > 0)
+            if( vecSize ) {
 
-                for (mon = 0; mon < vec->size(); mon++) {
+                // лочим мьютекс, чтобы другой поток не зашел в эту ячейку, пока мы здесь:
+                // если мы убьем монстра, то нужно удалить запись о нем из вектора, и если мы удалим ее, пока другой поток будет проходить через этот же вектор,
+                // получится очень нехорошо
+                Cell->cellMutex.lock();
 
-                    _monsterX = (*vec)[mon]->getPosX();
-                    _monsterY = (*vec)[mon]->getPosY();
+                    for (mon = 0; mon < vecSize; mon++) {
 
-                    if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
+                        _monsterX = (*vec)[mon]->getPosX();
+                        _monsterY = (*vec)[mon]->getPosY();
 
-                        (*vec)[mon]->setAlive(false);  // монстр убит
+                        if( commonSectionCircle(_X, _Y, _X + _dX, _Y + _dY, _monsterX, _monsterY, Rad) ) {
 
-                        // копируем последний элемент вектора в текущую позицию, а последний элемент удаляем
-                        if( (*vec)[mon] != (*vec).back() )
-                            (*vec)[mon] = (*vec).back();
-                        (*vec).pop_back();
+                            (*vec)[mon]->setAlive(false);  // монстр убит
 
-                        // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
-                        _Health = _piercing ? _Health-- : 0;
+                            // копируем последний элемент вектора в текущую позицию, а последний элемент удаляем
+                            if( (*vec)[mon] != (*vec).back() )
+                                (*vec)[mon] = (*vec).back();
+                            (*vec).pop_back();
 
-                        // Если время жизни пули тем или иным образом истекло, то пуля истрачена:
-			            if( !_Health ) {
+                            // Если включен бонус Piercing, понижаем время жизни пули на единицу. Если нет, то пуля умирает после первого же попадания.
+                            _Health = _piercing ? _Health-- : 0;
 
-                            if( _bulletType == Player::BulletsType::NORMAL ) {
+                            // Если время жизни пули тем или иным образом истекло, то пуля истрачена:
+			                if( !_Health ) {
 
-                                // будем отрисовывать постепенно исчезающий хвост. пулю прячем
-                                this->_Shot = true;
-                                _dX0 = 2*_dX;
-                                _dY0 = 2*_dY;
-                                _bX = _X0 > _X;
-                                _bY = _Y0 > _Y;
-                                _bulletType = 99;
-                            }
-                            else {
+                                if( _bulletType == Player::BulletsType::NORMAL ) {
+
+                                    // будем отрисовывать постепенно исчезающий хвост. пулю прячем
+                                    this->_Shot = true;
+                                    _dX0 = 2*_dX;
+                                    _dY0 = 2*_dY;
+                                    _bX = _X0 > _X;
+                                    _bY = _Y0 > _Y;
+                                    _bulletType = 99;
+                                }
+                                else {
                             
-                                // пуля сразу гибнет, хвост не отрисовывается
-			                    this->_Alive = false;
+                                    // пуля сразу гибнет, хвост не отрисовывается
+			                        this->_Alive = false;
 
-				                _dX = _dY = 0.0;            // Останавливаем пулю
-				                _X = (float)_monsterX;      // Переносим пулю в центр монстра
-				                _Y = (float)_monsterY;
-                            }
+				                    _dX = _dY = 0.0;            // Останавливаем пулю
+				                    _X = (float)_monsterX;      // Переносим пулю в центр монстра
+				                    _Y = (float)_monsterY;
+                                }
 
-                            // дублируем mutex.unlock, т.к. в противном случае он никогда не будет разлочен
-                            Cell->cellMutex.unlock();
-				            return;
-			            }
+                                // перед return обязательно разлочиваем мьютекс, т.к. в противном случае он никогда не будет разлочен
+                                Cell->cellMutex.unlock();
+				                return;
+			                }
+                        }
                     }
-                }
 
-            // разлочиваем мьютекс
-            Cell->cellMutex.unlock();
+                // разлочиваем мьютекс
+                Cell->cellMutex.unlock();
+            }
         }
     }
 

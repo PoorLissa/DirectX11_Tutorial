@@ -158,7 +158,7 @@ bool TextureArrayClass::Initialize(ID3D11Device* device, WCHAR* filename1, WCHAR
 void TextureArrayClass::Shutdown()
 {
     // Release the texture array resource
-    if (m_textures) {
+    if( m_textures ) {
         m_textures[0].Release();
         m_textures->Release();
         m_textures = 0;

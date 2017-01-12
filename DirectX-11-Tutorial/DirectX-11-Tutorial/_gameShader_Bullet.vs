@@ -54,15 +54,21 @@ PixelInputType TextureVertexShader(VertexInputType input)
     {
         // Обычная пуля: немного сжимаем её
         case 0.0f:
-        case 1.0f:
             input.position.x *= 1.0f;
+            input.position.y *= 0.5f;
+        break;
+
+        // piercing пуля
+        case 1.0f:
+            input.position.x *= 0.5f;
             input.position.y *= 0.5f;
         break;
 
         // огненная пуля
         case 2.0f:
-            input.position.x *= 2.0f;
-            input.position.y *= 2.0f;
+            input.position.x *= 1.85f;
+            input.position.y *= 1.85f;
+            input.instancePosition.z += 1.57f;  // повернем текстуру на 90 градусов
         break;
 
         // ионная пуля
@@ -79,15 +85,14 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // плазма-пуля
         case 6.0f:
-#if 0
-            input.position.x *= 1.0f;
-            input.position.y *= 0.6f;
-#else
+            input.position.y *= 0.75f;
+            input.position.x *= 0.75f;
+        break;
 
-            input.position.y *= 5;
-            input.position.x *= 5;
-
-#endif
+        // шлейф (свечение) плазма-пули
+        case 106.0f:
+            input.position.x *= 7.0f;
+            input.position.y *= 7.0f;
         break;
 
         // шлейф обычной пули
@@ -107,15 +112,17 @@ PixelInputType TextureVertexShader(VertexInputType input)
 
         // шлейф огненной пули
         case 102.0f:
+
             dX = (input.instancePosition.x - input.trailInfo.x);
             dY = (input.instancePosition.y - input.trailInfo.y);
             dist = sqrt(dX*dX + dY*dY);
 
             // масштабирование текстуры
             input.position.x *= dist / texsize;
-            input.position.y *= 2.0f;
+            input.position.y *= 2.5f;
 
             input.position.x += 1.0f;
+
         break;
 
         // шлейф ионной пули
@@ -130,17 +137,6 @@ PixelInputType TextureVertexShader(VertexInputType input)
             // масштабирование текстуры
             input.position.x *= dist / texsize;
             input.position.y *= ionFactor;
-        break;
-
-        // шлейф (свечение) плазма-пули
-        case 106.0f:
-
-            input.position.x *= 5.0f;
-            input.position.y *= 5.0f;
-/*
-            input.position.x *= .3 * (0.33f + tan(input.instancePosition.x/3) );
-            input.position.y *= .3 * (0.33f + tan(input.instancePosition.y/3) );
-*/
         break;
 
         default:

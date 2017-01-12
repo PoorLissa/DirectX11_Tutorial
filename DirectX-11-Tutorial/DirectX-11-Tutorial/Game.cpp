@@ -111,8 +111,9 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         result = sprIns1->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, frames, 1, 45, 45, 200, 310);
         CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object.");
 
-        monsterList1.spriteInst    = sprIns1;
-        monsterList1.rotationAngle = -90.0f;
+        monsterList1.spriteInst    = sprIns1;   // используемый инстанцированный спрайт
+        monsterList1.rotationAngle = -90.0f;    // угол, на который нужно повернуть каждый спрайт
+        monsterList1.framesQty     = 9;         // число кадров анимации в инстанцированном спрайте (зависит только от собственно числа кадров в анимашке)
 
         for (unsigned int i = 0; i < MONSTERS_QTY; i++) {
             int        x = 50 + rand() % (bgrWidth  - 100);
@@ -125,11 +126,7 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
             //speed = 1.0f;
             //speed = 0.0f;
 
-            // в качестве параметра anim_Qty передаем или число загружаемых файлов или [число кадров в текстуре - 1]
-            Monster *monster = new Monster(x, y, scale, monsterList1.rotationAngle, speed, interval, 9);
-
-            monsterList1.objList.push_back(monster);
-            monsterList1.listSize++;
+            monsterList1.pushBack(x, y, scale, speed, interval);
         }
     }
 
@@ -151,8 +148,9 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         result = sprIns2->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, frames, framesNum, 30, 30);
         CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object.");
 
-        monsterList2.spriteInst    = sprIns2;
-        monsterList2.rotationAngle = 0.0f;
+        monsterList2.spriteInst    = sprIns2;   // используемый инстанцированный спрайт
+        monsterList2.rotationAngle = 0.0f;      // угол, на который нужно повернуть каждый спрайт
+        monsterList2.framesQty     = 8;         // число кадров анимации в инстанцированном спрайте (зависит только от собственно числа кадров в анимашке)
 
         for (int i = 0; i < MONSTERS_QTY; i++) {
             int        x = 50 + rand() % (bgrWidth  - 100);
@@ -165,10 +163,7 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
             //speed = 1.0f;
             //speed = 0.0f;
 
-            // в качестве параметра anim_Qty передаем или число загружаемых файлов или (число кадров в текстуре - 1)
-            Monster *monster = new Monster(x, y, scale, monsterList2.rotationAngle, speed, interval, 8);
-            monsterList2.objList.push_back(monster);
-            monsterList2.listSize++;
+            monsterList2.pushBack(x, y, scale, speed, interval);
         }
     }
 
@@ -253,8 +248,9 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
 		m_Player = new Player(scrHalfWidth, scrHalfHeight, screenWidth/800, 90.0f, 5.0f, 1000, 1, appTimer);
         ((Player*)m_Player)->resetBulletsType();
         ((Player*)m_Player)->setEffect(Weapon::BonusWeapons::PISTOL);
-//            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::PIERCING);
-//            ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::ION);
+
+//        ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::PIERCING);
+//        ((Player*)m_Player)->setBulletsType_On(Player::BulletsType::ION);
     }
 
 
@@ -267,7 +263,8 @@ bool Game::Init(int screenWidth, int screenHeight, HighPrecisionTimer *appTimer,
         result = m_BulletBitmapIns->Initialize(m_Graphics->m_d3d->GetDevice(), screenWidth, screenHeight, frames2, 1, 10, 10);
         CHECK_RESULT(hwnd, result, L"Could not initialize the instanced sprite object for the bullet.");
         // ??? если за время игры не была выпущена ни одна пуля, все крашится при выходе
-        bulletList.objList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0, 0));
+        //bulletList.objList.push_back(new Bullet(-100, -100, 1.0f, -105, -105, 1.0, 0));
+        bulletList.objList.push_back(new Bullet(-5, -5, 1.0f, -6, -6, 1.0, 0));
         bulletList.listSize++;
     }
 
@@ -350,6 +347,8 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
     static BonusParams bParam;
 
+    // ??? нужно ли генерить фон и дерево вне таймера?..
+
 //    float ZoomFactor = 0.66f;
 
 	// Фон
@@ -371,7 +370,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 		if ( !m_Graphics->m_TextureShader->Render(m_devContext, m_Bitmap_Bgr->GetIndexCount(),
 				m_Graphics->matrixWorldZ * m_Graphics->matrixTranslation * m_Graphics->matrixScaling,
 					m_Graphics->matrixView, m_Graphics->matrixOrthographic, m_Bitmap_Bgr->GetTexture()) )
-        return false;
+                        return false;
 	}
 
 //    D3DXMatrixScaling(&m_Graphics->matrixScaling, ZoomFactor, ZoomFactor, 1.0f);
@@ -388,7 +387,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 		if ( !m_Graphics->m_TextureShader->Render(m_devContext, m_Graphics->m_Bitmap_Tree->GetIndexCount(),
 				m_Graphics->matrixWorldZ * m_Graphics->matrixTranslation * m_Graphics->matrixScaling,
 					m_Graphics->matrixView, m_Graphics->matrixOrthographic, m_Graphics->m_Bitmap_Tree->GetTexture()) )
-		return false;
+		                return false;
 	}
 
 
@@ -403,7 +402,20 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
         static float playerPosX = 0, playerPosY = 0;
 
         // не нужно пересчитывать и передавать на GPU большие буфера с каждым кадром, пусть они просчитываются в синхронизации с таймером, это добавит нам FPS
-        if( onTimer ) {
+        if( onTimer )
+        {
+            static float timeAdd = appTimerInterval * 0.001;
+
+            // увеличиваем общий счетчик прошедшего времени (в секундах)
+            int t1 = int(timeElapsed);
+            timeElapsed  += timeAdd;                            
+            int t2 = int(timeElapsed);
+
+            // рассчитываем, сколько монстров нужно сгенерить на этой итерации
+            if( t2 > t1 )
+                qtyToGenerate = log10(int(timeElapsed));
+            else
+                qtyToGenerate = 0;
 
             {
 #if defined doLogMessages
@@ -539,7 +551,6 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                         // ??? - поскольку начинаем просчет всегда с одного и того же списка, то все последующие списки имеют меньший шанс, чтобы быть застреленными
                         // ??? - в новой реализации с ячейками, кажется, эта проблема ушла сама собой
-                        //BulletObj->Move(0, 0, &VEC);                // вектор списков
                         BulletObj->Move(wndPosX, wndPosY);
                     }
                     else {
@@ -591,7 +602,7 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
                 }
             }
 
-            // Bonuses
+            // --- Bonuses ---
             {
                 #define BonusObj (*iter)
 
@@ -651,6 +662,31 @@ bool Game::Render2d(const float &rotation, const float &zoom, const int &mouseX,
 
                     if( !weaponList1.spriteInst->initializeInstances(m_Device, &weaponList1.objList, &weaponList1.listSize) )
                         return false;
+                }
+            }
+
+            // --- Generate new Monsters ---
+            {
+                for (int i = 0; i < qtyToGenerate; i++) {
+                
+                    UINT vecNo = rand() % VEC.size();
+
+                    int x, y;
+
+                    if( rand()%2 ) {
+                        x = rand()%(bgrWidth+200) - 100;
+                        y = rand()%2 ? -100 : bgrHeight + 100;
+                    }
+                    else {
+                        y = rand()%(bgrHeight+200) - 100;
+                        x = rand()%2 ? -100 : bgrWidth + 100;
+                    }
+
+                    float  speed = (rand() % 250 + 10) * 0.1f;
+			        float  scale = 0.5f + (rand() % 16) * 0.1f;
+                    int interval = int(50 / speed);
+
+                    VEC[vecNo]->pushBack(x, y, scale, speed, interval);
                 }
             }
 
@@ -807,6 +843,11 @@ void Game::threadMonsterMove(const unsigned int &listNo, const unsigned int &pla
 
             continue;
         }
+
+        // Если не хотим видеть монстров, просто убиваем их после первого же прохода (именно после, т.к. иначе падаем на m_textures->Release())
+        #if defined DO_HIDE_MONSTERS
+                MonsterObj->setAlive(false);
+        #endif
 
         ++iter;
     }

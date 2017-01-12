@@ -19,7 +19,7 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
         float dY = y - _Y;
         float div_Speed_by_Dist = _Speed / sqrt(dX*dX + dY*dY);
 
-        // уберегаемся от бесконечности, если dX или dY стремится к нулю
+        // уберегаемся от бесконечности, когда dX или dY стремится к нулю
         if( std::isinf(div_Speed_by_Dist) )
             return;
 
@@ -44,7 +44,7 @@ void Monster::Move(cfRef x, cfRef y, void *Param)
 	    }
 
         // обновим список ячеек после перемещения монстра
-        GameCells.UpdateGameCells(this, oldX, oldY, _X, _Y, _X);
+        GameCells.UpdateGameCells(this, oldX, oldY, _X, _Y);
     }
 
     return;
